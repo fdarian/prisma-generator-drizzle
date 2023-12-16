@@ -12,7 +12,7 @@ generatorHandler({
     logger.info(`${GENERATOR_NAME}:Registered`)
     return {
       version,
-      defaultOutput: '../generated',
+      defaultOutput: './drizzle',
       prettyName: GENERATOR_NAME,
     }
   },
@@ -22,7 +22,7 @@ generatorHandler({
 
       const writeLocation = path.join(
         options.generator.output?.value!,
-        `${enumInfo.name}.ts`,
+        `${enumInfo.name}.ts`
       )
 
       await writeFileSafely(writeLocation, tsEnum)
