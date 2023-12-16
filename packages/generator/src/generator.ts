@@ -1,3 +1,4 @@
+import fs from 'fs'
 import {
   DMMF,
   generatorHandler,
@@ -23,6 +24,8 @@ generatorHandler({
   onGenerate: async (options: GeneratorOptions) => {
     const basePath = options.generator.output?.value
     if (!basePath) throw new Error('No output path specified')
+
+    fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 
     for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name.toLowerCase())
