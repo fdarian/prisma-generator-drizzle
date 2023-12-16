@@ -17,14 +17,13 @@ generatorHandler({
     }
   },
   onGenerate: async (options: GeneratorOptions) => {
+    const basePath = options.generator.output?.value
+    if (!basePath) throw new Error('No output path specified')
+
     options.dmmf.datamodel.enums.forEach(async (enumInfo) => {
       const tsEnum = genEnum(enumInfo)
 
-      const writeLocation = path.join(
-        options.generator.output?.value!,
-        `${enumInfo.name}.ts`
-      )
-
+      const writeLocation = path.join(basePath, `${enumInfo.name}.ts`)
       await writeFileSafely(writeLocation, tsEnum)
     })
   },
