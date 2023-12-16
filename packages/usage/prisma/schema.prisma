@@ -1,6 +1,5 @@
 generator custom_generator {
   provider = "npx prisma-generator-drizzle"
-  output   = "../types"
 }
 
 datasource db {
