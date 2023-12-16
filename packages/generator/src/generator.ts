@@ -27,7 +27,9 @@ generatorHandler({
     for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name.toLowerCase())
 
-      const fields = model.fields.map(getField)
+      const fields = model.fields
+        .filter((field) => field.kind === 'scalar')
+        .map(getField)
 
       const modelImports = ['pgTable']
       const modelCode = `export const ${name} = pgTable('${
