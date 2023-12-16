@@ -7,3 +7,5 @@ const client = new Client({
 
 await client.connect()
 const db = drizzle(client)
+
+process.exit(0)
