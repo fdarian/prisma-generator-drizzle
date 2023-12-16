@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {},
   "dependencies": {
-    "@prisma/client": "5.7.0"
+    "@prisma/client": "5.7.0",
+    "drizzle-orm": "^0.29.1"
   },
   "devDependencies": {
     "@types/node": "20.10.4",

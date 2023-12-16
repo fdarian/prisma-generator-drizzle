@@ -1,5 +1,5 @@
 generator custom_generator {
-  provider = "npx prisma-generator-drizzle"
+  provider = "bunx prisma-generator-drizzle"
 }
 
 datasource db {
