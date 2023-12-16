@@ -24,7 +24,7 @@ generatorHandler({
     const basePath = options.generator.output?.value
     if (!basePath) throw new Error('No output path specified')
 
-    options.dmmf.datamodel.models.forEach(async function (model) {
+    for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name.toLowerCase())
 
       const fields = model.fields.map(getField)
@@ -48,7 +48,7 @@ generatorHandler({
 
       const writeLocation = path.join(basePath, `${name}.ts`)
       await writeFileSafely(writeLocation, code)
-    })
+    }
   },
 })
 
