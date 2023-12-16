@@ -1,6 +1,8 @@
 import { createValue, IValue } from '../createValue'
 
-export function objectValue(entries: [string, IValue][]) {
+export type Entry = [string, IValue]
+
+export function objectValue(entries: Entry[]) {
   return createValue({
     render(): string {
       return `{ ${entries
