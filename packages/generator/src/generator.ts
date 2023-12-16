@@ -9,6 +9,8 @@ import path from 'path'
 import { GENERATOR_NAME } from './constants'
 import { writeFileSafely } from './utils/writeFileSafely'
 import pluralize from 'pluralize'
+import { camel, dash } from 'radash'
+import { camelCase, kebabCase } from 'lodash'
 
 const { version } = require('../package.json')
 
@@ -28,14 +30,14 @@ generatorHandler({
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 
     for await (const model of options.dmmf.datamodel.models) {
-      const name = pluralize(model.name.toLowerCase())
+      const name = pluralize(model.name)
 
       const fields = model.fields
         .filter((field) => field.kind === 'scalar')
         .map(getField)
 
       const modelImports = ['pgTable']
-      const modelCode = `export const ${name} = pgTable('${
+      const modelCode = `export const ${camelCase(name)} = pgTable('${
         model.name
       }', {${fields.map((field) => field.code).join(', ')}});`
 
@@ -51,7 +53,7 @@ generatorHandler({
 
       const code = `${importCode}\n\n${modelCode}`
 
-      const writeLocation = path.join(basePath, `${name}.ts`)
+      const writeLocation = path.join(basePath, `${kebabCase(name)}.ts`)
       await writeFileSafely(writeLocation, code)
     }
   },
@@ -86,4 +88,17 @@ function getFieldType(type: string) {
     default:
       throw new Error(`Type ${type} is not supported`)
   }
+}
+
+function breakPascal(name: string) {
+  return (
+    // https://stackoverflow.com/a/4149393
+    name
+      // insert a space before all caps
+      .replace(/([A-Z])/g, ' $1')
+      // uppercase the first character
+      .replace(/^./, function (str) {
+        return str.toUpperCase()
+      })
+  )
 }
