@@ -13,7 +13,7 @@
   "scripts": {
     "start": "node dist/bin.js",
     "dev": "npx tsc -w",
-    "build": "npx tsc",
+    "build": "tsup src/generator.ts src/bin.ts",
     "prepack": "yarn build",
     "test": "jest"
   },
@@ -25,11 +25,12 @@
   },
   "devDependencies": {
     "@types/jest": "27.0.3",
-    "@types/node": "20.10.4",
+    "@types/node": "^20.10.4",
     "@types/prettier": "3.0.0",
     "jest": "27.4.7",
     "prisma": "5.7.0",
     "ts-jest": "27.1.4",
+    "tsup": "^8.0.1",
     "typescript": "5.3.3"
   },
   "homepage": "Link to homepage or github readme here",
