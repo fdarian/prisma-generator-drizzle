@@ -33,4 +33,12 @@ describe('funcValue', () => {
     const result = funcValue(name).render()
     expect(result).toBe(expected)
   })
+
+  test('chain', () => {
+    const expected = 'func().func(1)'
+    const result = funcValue('func')
+      .chain(funcValue('func', [numberValue(1)]))
+      .render()
+    expect(result).toBe(expected)
+  })
 })
