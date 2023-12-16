@@ -81,7 +81,7 @@ function getFieldType(type: string) {
       return 'real'
     case 'Int':
       return 'integer'
-    case 'JSON':
+    case 'Json':
       return 'json'
     case 'String':
       return 'text'
