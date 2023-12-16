@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "main": "src/app.js",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "generate": "prisma generate"
+  },
   "dependencies": {
     "@prisma/client": "5.7.0",
     "drizzle-orm": "^0.29.1"
