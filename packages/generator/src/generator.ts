@@ -11,6 +11,7 @@ import { writeFileSafely } from './utils/writeFileSafely'
 import pluralize from 'pluralize'
 import { camel, dash } from 'radash'
 import { camelCase, kebabCase } from 'lodash'
+import { IValue, render, v } from './utils/value'
 
 const { version } = require('../package.json')
 
@@ -60,17 +61,10 @@ generatorHandler({
 })
 
 function getField(field: DMMF.Field) {
-  const getCode = (func: string, options?: [string, string | number][]) => {
-    return `${field.name}: ${func}('${field.dbName ?? field.name}'${
-      options
-        ? `, { ${options
-            .map(
-              ([key, value]) =>
-                `${key}: ${typeof value === 'string' ? `'${value}'` : value}`
-            )
-            .join(', ')} }`
-        : ''
-    })`
+  const renderBaseFunc = (fieldFuncName: string, args: IValue[] = []) => {
+    return `${field.name}: ${v
+      .func(fieldFuncName, [v.string(field.dbName ?? field.name), ...args])
+      .render()}`
   }
 
   switch (field.type) {
@@ -80,7 +74,7 @@ function getField(field: DMMF.Field) {
       const func = 'bigint'
       return {
         imports: [func],
-        code: getCode(func),
+        code: renderBaseFunc(func),
       }
     }
     case 'Boolean': {
@@ -90,7 +84,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: getCode(func),
+        code: renderBaseFunc(func),
       }
     }
     case 'DateTime': {
@@ -100,9 +94,11 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: getCode(func, [
-          ['precision', 3],
-          ['mode', 'date'],
+        code: renderBaseFunc(func, [
+          v.object([
+            ['precision', v.number(3)],
+            ['mode', v.string('date')],
+          ]),
         ]),
       }
     }
@@ -113,9 +109,11 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: getCode(func, [
-          ['precision', 65],
-          ['scale', 30],
+        code: renderBaseFunc(func, [
+          v.object([
+            ['precision', v.number(65)],
+            ['scale', v.number(30)],
+          ]),
         ]),
       }
     }
@@ -126,7 +124,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: getCode(func),
+        code: renderBaseFunc(func),
       }
     }
     case 'Int': {
@@ -136,7 +134,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: getCode(func),
+        code: renderBaseFunc(func),
       }
     }
     case 'Json': {
@@ -146,7 +144,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: getCode(func),
+        code: renderBaseFunc(func),
       }
     }
     case 'String': {
@@ -156,7 +154,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: getCode(func),
+        code: renderBaseFunc(func),
       }
     }
     default:
