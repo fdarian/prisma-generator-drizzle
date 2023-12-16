@@ -12,7 +12,7 @@
   },
   "scripts": {
     "start": "node dist/bin.js",
-    "dev": "npx tsc -w",
+    "dev": "tsup src/generator.ts src/bin.ts --watch",
     "build": "tsup src/generator.ts src/bin.ts",
     "prepack": "yarn build",
     "test": "jest"
