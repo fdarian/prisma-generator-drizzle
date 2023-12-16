@@ -11,7 +11,9 @@ import { writeFileSafely } from './utils/writeFileSafely'
 import pluralize from 'pluralize'
 import { camel, dash } from 'radash'
 import { camelCase, kebabCase } from 'lodash'
-import { IValue, render, v } from './utils/value'
+import { render } from './lib/value/utils'
+import { v } from './lib/value'
+import { IValue } from './lib/value/createValue'
 
 const { version } = require('../package.json')
 
