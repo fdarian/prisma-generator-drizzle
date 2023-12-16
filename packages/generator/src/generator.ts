@@ -14,6 +14,7 @@ import { camelCase, kebabCase } from 'lodash'
 import { render } from './lib/value/utils'
 import { v } from './lib/value'
 import { IValue } from './lib/value/createValue'
+import { Entry } from './lib/value/types/objectValue'
 
 const { version } = require('../package.json')
 
@@ -40,9 +41,12 @@ generatorHandler({
         .map(getField)
 
       const modelImports = ['pgTable']
-      const modelCode = `export const ${camelCase(name)} = pgTable('${
-        model.name
-      }', {${fields.map((field) => field.code).join(', ')}});`
+      const modelCode = `export const ${camelCase(name)} = ${v
+        .func('pgTable', [
+          v.string(model.name),
+          v.object(fields.map((field) => field.code)),
+        ])
+        .render()};`
 
       const imports = new Set()
       fields.forEach((field) => {
@@ -62,11 +66,12 @@ generatorHandler({
   },
 })
 
-function getField(field: DMMF.Field) {
-  const renderBaseFunc = (fieldFuncName: string, args: IValue[] = []) => {
-    return `${field.name}: ${v
-      .func(fieldFuncName, [v.string(field.dbName ?? field.name), ...args])
-      .render()}`
+function getField(field: DMMF.Field): { imports: string[]; code: Entry } {
+  const getEntry = (fieldFuncName: string, args: IValue[] = []): Entry => {
+    return [
+      field.name,
+      v.func(fieldFuncName, [v.string(field.dbName ?? field.name), ...args]),
+    ]
   }
 
   switch (field.type) {
@@ -76,7 +81,7 @@ function getField(field: DMMF.Field) {
       const func = 'bigint'
       return {
         imports: [func],
-        code: renderBaseFunc(func),
+        code: getEntry(func),
       }
     }
     case 'Boolean': {
@@ -86,7 +91,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: renderBaseFunc(func),
+        code: getEntry(func),
       }
     }
     case 'DateTime': {
@@ -96,7 +101,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: renderBaseFunc(func, [
+        code: getEntry(func, [
           v.object([
             ['precision', v.number(3)],
             ['mode', v.string('date')],
@@ -111,7 +116,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: renderBaseFunc(func, [
+        code: getEntry(func, [
           v.object([
             ['precision', v.number(65)],
             ['scale', v.number(30)],
@@ -126,7 +131,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: renderBaseFunc(func),
+        code: getEntry(func),
       }
     }
     case 'Int': {
@@ -136,7 +141,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: renderBaseFunc(func),
+        code: getEntry(func),
       }
     }
     case 'Json': {
@@ -146,7 +151,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: renderBaseFunc(func),
+        code: getEntry(func),
       }
     }
     case 'String': {
@@ -156,7 +161,7 @@ function getField(field: DMMF.Field) {
 
       return {
         imports: [func],
-        code: renderBaseFunc(func),
+        code: getEntry(func),
       }
     }
     default:
