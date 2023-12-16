@@ -68,10 +68,16 @@ generatorHandler({
 
 function getField(field: DMMF.Field): { imports: string[]; code: Entry } {
   const getEntry = (fieldFuncName: string, args: IValue[] = []): Entry => {
-    return [
+    const entry = [
       field.name,
       v.func(fieldFuncName, [v.string(field.dbName ?? field.name), ...args]),
-    ]
+    ] satisfies Entry
+
+    if (field.isId) {
+      return [entry[0], entry[1].chain(v.func('primaryKey'))]
+    }
+
+    return entry
   }
 
   switch (field.type) {
