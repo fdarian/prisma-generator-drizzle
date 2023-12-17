@@ -7,3 +7,5 @@ export function varValue(name: string) {
     },
   })
 }
+
+export type VarValue = ReturnType<typeof varValue>
