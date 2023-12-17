@@ -9,9 +9,7 @@ import path from 'path'
 import { GENERATOR_NAME } from './constants'
 import { writeFileSafely } from './utils/writeFileSafely'
 import pluralize from 'pluralize'
-import { camel, dash } from 'radash'
 import { camelCase, kebabCase } from 'lodash'
-import { render } from './lib/value/utils'
 import { v } from './lib/value'
 import { IValue } from './lib/value/createValue'
 import { Entry } from './lib/value/types/objectValue'
@@ -51,17 +49,49 @@ generatorHandler({
         ])
         .render()};`
 
-      const imports = new Set()
+      const drizzleImports = new Set()
       fields.forEach((field) => {
-        field.imports.forEach((imp) => imports.add(imp))
+        field.imports.forEach((imp) => drizzleImports.add(imp))
       })
-      modelImports.forEach((imp) => imports.add(imp))
+      modelImports.forEach((imp) => drizzleImports.add(imp))
 
-      const importCode = `import { ${Array.from(imports).join(
+      const relationalFields = model.fields.filter(
+        (field) => field.kind === 'object'
+      )
+      const relations = new Set<string>()
+      const relationCode = `export const ${modelVar}Relations = ${v
+        .func('relations', [
+          v.var(modelVar),
+          v.lambda(
+            v.var('helpers'),
+            v.object(
+              relationalFields.map((field) => {
+                const varName = camelCase(pluralize(field.type))
+                relations.add(varName)
+
+                return [
+                  field.name,
+                  v.func(field.isList ? 'helpers.many' : 'helpers.one', [
+                    v.var(varName),
+                  ]),
+                ]
+              })
+            )
+          ),
+        ])
+        .render()};`
+      const relationImports = [
+        `import { relations } from 'drizzle-orm'`,
+        ...Array.from(relations).map(
+          (name) => `import { ${name} } from './${kebabCase(name)}'`
+        ),
+      ].join('\n')
+
+      let importCode = `import { ${Array.from(drizzleImports).join(
         ', '
       )} } from 'drizzle-orm/pg-core'`
 
-      const code = `${importCode}\n\n${modelCode}`
+      const code = `${importCode}\n${relationImports}\n\n${modelCode}\n\n${relationCode}`
 
       const file = kebabCase(name)
       const writeLocation = path.join(basePath, `${file}.ts`)
