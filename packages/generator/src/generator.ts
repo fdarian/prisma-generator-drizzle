@@ -143,7 +143,7 @@ function getField(field: DMMF.Field): { imports: string[]; code: Entry } {
       const func = 'bigint'
       return {
         imports: [func],
-        code: getEntry(func),
+        code: getEntry(func, [v.object([['mode', v.string('bigint')]])]),
       }
     }
     case 'Boolean': {
