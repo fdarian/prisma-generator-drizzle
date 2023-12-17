@@ -74,11 +74,11 @@ generatorHandler({
     }
 
     const importCode = models
-      .map((m) => `import { ${m.name} } from './${m.path}'`)
+      .map((m) => `import * as ${m.name} from './${m.path}'`)
       .join('\n')
 
     const schemaCode = `export const schema = ${v
-      .object(models.map((m) => [m.name, v.var(m.name)]))
+      .object(models.map((m) => v.var(m.name)))
       .render()}`
 
     await writeFileSafely(
