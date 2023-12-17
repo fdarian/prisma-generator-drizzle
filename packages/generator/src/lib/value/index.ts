@@ -5,6 +5,7 @@ import { funcValue } from 'src/lib/value/types/funcValue'
 import { varValue } from './types/varValue'
 import { lambdaValue } from './types/lambdaValue'
 import { destructureValue } from './types/destructureValue'
+import { arrayValue } from './types/arrayValue'
 
 export const v = {
   number: numberValue,
@@ -14,4 +15,5 @@ export const v = {
   var: varValue,
   lambda: lambdaValue,
   destructure: destructureValue,
+  array: arrayValue,
 }
