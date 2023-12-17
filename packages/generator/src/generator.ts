@@ -15,6 +15,7 @@ import { render } from './lib/value/utils'
 import { v } from './lib/value'
 import { IValue } from './lib/value/createValue'
 import { Entry } from './lib/value/types/objectValue'
+import { pipe } from 'fp-ts/lib/function'
 
 const { version } = require('../package.json')
 
@@ -68,16 +69,20 @@ generatorHandler({
 
 function getField(field: DMMF.Field): { imports: string[]; code: Entry } {
   const getEntry = (fieldFuncName: string, args: IValue[] = []): Entry => {
-    const entry = [
+    return [
       field.name,
-      v.func(fieldFuncName, [v.string(field.dbName ?? field.name), ...args]),
-    ] satisfies Entry
-
-    if (field.isId) {
-      return [entry[0], entry[1].chain(v.func('primaryKey'))]
-    }
-
-    return entry
+      pipe(
+        v.func(fieldFuncName, [v.string(field.dbName ?? field.name), ...args]),
+        (funcValue) => {
+          if (!field.isId) return funcValue
+          return funcValue.chain(v.func('primaryKey'))
+        },
+        (funcValue) => {
+          if (field.isId || !field.isRequired) return funcValue
+          return funcValue.chain(v.func('notNull'))
+        }
+      ),
+    ]
   }
 
   switch (field.type) {
