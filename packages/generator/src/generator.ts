@@ -11,7 +11,7 @@ import { writeFileSafely } from './utils/writeFileSafely'
 import pluralize from 'pluralize'
 import { camelCase, kebabCase } from 'lodash'
 import { v } from './lib/value'
-import { IValue } from './lib/value/createValue'
+import { createValue, IValue } from './lib/value/createValue'
 import { Entry } from './lib/value/types/objectValue'
 import { pipe } from 'fp-ts/lib/function'
 
@@ -73,6 +73,35 @@ generatorHandler({
                   field.name,
                   v.func(field.isList ? 'helpers.many' : 'helpers.one', [
                     v.var(varName),
+                    ...(field.relationFromFields &&
+                    field.relationFromFields.length > 0 &&
+                    field.relationToFields &&
+                    field.relationToFields.length > 0
+                      ? [
+                          v.object([
+                            [
+                              'fields',
+                              v.array(
+                                field.relationFromFields.map((f) =>
+                                  createValue({
+                                    render: () => `${modelVar}.${camelCase(f)}`,
+                                  })
+                                )
+                              ),
+                            ],
+                            [
+                              'references',
+                              v.array(
+                                field.relationToFields.map((f) =>
+                                  createValue({
+                                    render: () => `${varName}.${camelCase(f)}`,
+                                  })
+                                )
+                              ),
+                            ],
+                          ]),
+                        ]
+                      : []),
                   ]),
                 ]
               })
