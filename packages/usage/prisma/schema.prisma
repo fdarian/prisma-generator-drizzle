@@ -1,4 +1,4 @@
-generator custom_generator {
+generator drizzle {
   provider = "bunx prisma-generator-drizzle"
 }
 
