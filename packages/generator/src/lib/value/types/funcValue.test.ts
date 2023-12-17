@@ -41,4 +41,15 @@ describe('funcValue', () => {
       .render()
     expect(result).toBe(expected)
   })
+
+  test('chain many functions', () => {
+    const expected = 'func().func(1).func(2).func(3).func(4)'
+    const result = funcValue('func')
+      .chain(funcValue('func', [numberValue(1)]))
+      .chain(funcValue('func', [numberValue(2)]))
+      .chain(funcValue('func', [numberValue(3)]))
+      .chain(funcValue('func', [numberValue(4)]))
+      .render()
+    expect(result).toBe(expected)
+  })
 })

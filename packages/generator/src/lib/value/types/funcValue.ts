@@ -12,12 +12,19 @@ export function funcValue(name: string, args?: IValue[]) {
 
   return createValue({
     render,
-    chain(funcValue: IFuncValue): IValue {
-      return {
-        render() {
-          return `${render()}.${funcValue.render()}`
-        },
-      }
+    chain(funcValue: IFuncValue) {
+      return chainableValue([render, funcValue.render])
+    },
+  })
+}
+
+function chainableValue(renders: (() => string)[]) {
+  return createValue({
+    render() {
+      return renders.map((render) => render()).join('.')
+    },
+    chain(funcValue: IFuncValue) {
+      return chainableValue([...renders, funcValue.render])
     },
   })
 }
