@@ -34,6 +34,7 @@ generatorHandler({
 
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 
+    const models = []
     for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name)
 
@@ -42,7 +43,8 @@ generatorHandler({
         .map(getField)
 
       const modelImports = ['pgTable']
-      const modelCode = `export const ${camelCase(name)} = ${v
+      const modelVar = camelCase(name)
+      const modelCode = `export const ${modelVar} = ${v
         .func('pgTable', [
           v.string(model.name),
           v.object(fields.map((field) => field.code)),
@@ -61,9 +63,28 @@ generatorHandler({
 
       const code = `${importCode}\n\n${modelCode}`
 
-      const writeLocation = path.join(basePath, `${kebabCase(name)}.ts`)
+      const file = kebabCase(name)
+      const writeLocation = path.join(basePath, `${file}.ts`)
       await writeFileSafely(writeLocation, code)
+
+      models.push({
+        name: modelVar,
+        path: `${file}`,
+      })
     }
+
+    const importCode = models
+      .map((m) => `import { ${m.name} } from './${m.path}'`)
+      .join('\n')
+
+    const schemaCode = `export const schema = ${v
+      .object(models.map((m) => [m.name, v.var(m.name)]))
+      .render()}`
+
+    await writeFileSafely(
+      path.join(basePath, 'schema.ts'),
+      `${importCode}\n\n${schemaCode}`
+    )
   },
 })
 
