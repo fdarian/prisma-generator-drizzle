@@ -302,7 +302,9 @@ function getField(adapter: Adapter) {
       }
       case 'Int': {
         // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#int
+
         // https://orm.drizzle.team/docs/column-types/pg/#integer
+        // https://orm.drizzle.team/docs/column-types/mysql#integer
         const func = adapter.functions.int
 
         return {
