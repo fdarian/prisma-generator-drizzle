@@ -16,7 +16,7 @@ import { Entry } from './lib/value/types/objectValue'
 import { pipe } from 'fp-ts/lib/function'
 import { render } from './lib/value/utils'
 import { ImportValue } from './lib/value/types/import'
-import { mysqlAdapter, pgAdapter } from './lib/adapter'
+import { Adapter, mysqlAdapter, pgAdapter } from './lib/adapter'
 
 const { version } = require('../package.json')
 
@@ -82,7 +82,7 @@ generatorHandler({
 
       const fields = model.fields
         .filter((field) => field.kind === 'scalar' || field.kind === 'enum')
-        .map(getField)
+        .map(getField(adapter))
       const modelCode = v
         .defineVar(
           modelVar,
@@ -207,127 +207,132 @@ generatorHandler({
   },
 })
 
-function getField(field: DMMF.Field): {
-  imports: string[] | ImportValue[]
-  code: Entry
-} {
-  const getEntry = (fieldFuncName: string, args: IValue[] = []): Entry => {
-    return [
-      field.name,
-      pipe(
-        v.func(fieldFuncName, [v.string(field.dbName ?? field.name), ...args]),
-        (funcValue) => {
-          if (!field.isId) return funcValue
-          return funcValue.chain(v.func('primaryKey'))
-        },
-        (funcValue) => {
-          if (field.isId || !field.isRequired) return funcValue
-          return funcValue.chain(v.func('notNull'))
+function getField(adapter: Adapter) {
+  return function (field: DMMF.Field): {
+    imports: string[] | ImportValue[]
+    code: Entry
+  } {
+    const getEntry = (fieldFuncName: string, args: IValue[] = []): Entry => {
+      return [
+        field.name,
+        pipe(
+          v.func(fieldFuncName, [
+            v.string(field.dbName ?? field.name),
+            ...args,
+          ]),
+          (funcValue) => {
+            if (!field.isId) return funcValue
+            return funcValue.chain(v.func('primaryKey'))
+          },
+          (funcValue) => {
+            if (field.isId || !field.isRequired) return funcValue
+            return funcValue.chain(v.func('notNull'))
+          }
+        ),
+      ]
+    }
+
+    if (field.kind === 'enum') {
+      const enumVar = getEnumVar(field.type)
+      return {
+        imports: [v.namedImport([enumVar], `./${kebabCase(enumVar)}`)],
+        code: getEntry(enumVar),
+      }
+    }
+
+    switch (field.type) {
+      case 'BigInt': {
+        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#bigint
+        // https://orm.drizzle.team/docs/column-types/pg/#bigint
+        const func = 'bigint'
+        return {
+          imports: [func],
+          code: getEntry(func, [v.object([['mode', v.string('bigint')]])]),
         }
-      ),
-    ]
-  }
-
-  if (field.kind === 'enum') {
-    const enumVar = getEnumVar(field.type)
-    return {
-      imports: [v.namedImport([enumVar], `./${kebabCase(enumVar)}`)],
-      code: getEntry(enumVar),
-    }
-  }
-
-  switch (field.type) {
-    case 'BigInt': {
-      // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#bigint
-      // https://orm.drizzle.team/docs/column-types/pg/#bigint
-      const func = 'bigint'
-      return {
-        imports: [func],
-        code: getEntry(func, [v.object([['mode', v.string('bigint')]])]),
       }
-    }
-    case 'Boolean': {
-      // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#boolean
-      // https://orm.drizzle.team/docs/column-types/pg/#boolean
-      const func = 'boolean'
+      case 'Boolean': {
+        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#boolean
+        // https://orm.drizzle.team/docs/column-types/pg/#boolean
+        const func = 'boolean'
 
-      return {
-        imports: [func],
-        code: getEntry(func),
+        return {
+          imports: [func],
+          code: getEntry(func),
+        }
       }
-    }
-    case 'DateTime': {
-      // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#datetime
-      // https://orm.drizzle.team/docs/column-types/pg/#timestamp
-      const func = 'timestamp'
+      case 'DateTime': {
+        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#datetime
+        // https://orm.drizzle.team/docs/column-types/pg/#timestamp
+        const func = 'timestamp'
 
-      return {
-        imports: [func],
-        code: getEntry(func, [
-          v.object([
-            ['precision', v.number(3)],
-            ['mode', v.string('date')],
+        return {
+          imports: [func],
+          code: getEntry(func, [
+            v.object([
+              ['precision', v.number(3)],
+              ['mode', v.string('date')],
+            ]),
           ]),
-        ]),
+        }
       }
-    }
-    case 'Decimal': {
-      // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#decimal
-      // https://orm.drizzle.team/docs/column-types/pg/#decimal
-      const func = 'decimal'
+      case 'Decimal': {
+        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#decimal
+        // https://orm.drizzle.team/docs/column-types/pg/#decimal
+        const func = 'decimal'
 
-      return {
-        imports: [func],
-        code: getEntry(func, [
-          v.object([
-            ['precision', v.number(65)],
-            ['scale', v.number(30)],
+        return {
+          imports: [func],
+          code: getEntry(func, [
+            v.object([
+              ['precision', v.number(65)],
+              ['scale', v.number(30)],
+            ]),
           ]),
-        ]),
+        }
       }
-    }
-    case 'Float': {
-      // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#float
-      // https://orm.drizzle.team/docs/column-types/pg/#double-precision
-      const func = 'doublePrecision'
+      case 'Float': {
+        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#float
+        // https://orm.drizzle.team/docs/column-types/pg/#double-precision
+        const func = 'doublePrecision'
 
-      return {
-        imports: [func],
-        code: getEntry(func),
+        return {
+          imports: [func],
+          code: getEntry(func),
+        }
       }
-    }
-    case 'Int': {
-      // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#int
-      // https://orm.drizzle.team/docs/column-types/pg/#integer
-      const func = 'integer'
+      case 'Int': {
+        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#int
+        // https://orm.drizzle.team/docs/column-types/pg/#integer
+        const func = adapter.functions.int
 
-      return {
-        imports: [func],
-        code: getEntry(func),
+        return {
+          imports: [func],
+          code: getEntry(func),
+        }
       }
-    }
-    case 'Json': {
-      // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#json
-      // https://orm.drizzle.team/docs/column-types/pg/#jsonb
-      const func = 'jsonb'
+      case 'Json': {
+        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#json
+        // https://orm.drizzle.team/docs/column-types/pg/#jsonb
+        const func = 'jsonb'
 
-      return {
-        imports: [func],
-        code: getEntry(func),
+        return {
+          imports: [func],
+          code: getEntry(func),
+        }
       }
-    }
-    case 'String': {
-      // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string
-      // https://orm.drizzle.team/docs/column-types/pg/#text
-      const func = 'text'
+      case 'String': {
+        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string
+        // https://orm.drizzle.team/docs/column-types/pg/#text
+        const func = 'text'
 
-      return {
-        imports: [func],
-        code: getEntry(func),
+        return {
+          imports: [func],
+          code: getEntry(func),
+        }
       }
+      default:
+        throw new Error(`Type ${field.type} is not supported`)
     }
-    default:
-      throw new Error(`Type ${field.type} is not supported`)
   }
 }
 

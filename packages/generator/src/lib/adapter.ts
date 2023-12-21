@@ -8,6 +8,7 @@ function createAdapter(input: {
   functions: {
     enum: string
     table: string
+    int: string
   }
 }) {
   return {
@@ -31,6 +32,7 @@ export const pgAdapter = createAdapter({
   functions: {
     enum: 'pgEnum',
     table: 'pgTable',
+    int: 'integer',
   },
 })
 
@@ -39,5 +41,6 @@ export const mysqlAdapter = createAdapter({
   functions: {
     enum: 'mysqlEnum',
     table: 'mysqlTable',
+    int: 'int',
   },
 })
