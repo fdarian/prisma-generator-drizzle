@@ -6,6 +6,11 @@ import { varValue } from './types/varValue'
 import { lambdaValue } from './types/lambdaValue'
 import { destructureValue } from './types/destructureValue'
 import { arrayValue } from './types/arrayValue'
+import {
+  defaultImportValue,
+  namedImportValue,
+  wildcardImportValue,
+} from './types/import'
 
 export const v = {
   number: numberValue,
@@ -16,4 +21,7 @@ export const v = {
   lambda: lambdaValue,
   destructure: destructureValue,
   array: arrayValue,
+  namedImport: namedImportValue,
+  wilcardImport: wildcardImportValue,
+  defaultImport: defaultImportValue,
 }

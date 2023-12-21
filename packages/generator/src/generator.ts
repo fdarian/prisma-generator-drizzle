@@ -14,6 +14,7 @@ import { v } from './lib/value'
 import { createValue, IValue } from './lib/value/createValue'
 import { Entry } from './lib/value/types/objectValue'
 import { pipe } from 'fp-ts/lib/function'
+import { render } from './lib/value/utils'
 
 const { version } = require('../package.json')
 
@@ -49,7 +50,7 @@ generatorHandler({
         ])
         .render()};`
 
-      const drizzleImports = new Set()
+      const drizzleImports = new Set<string>()
       fields.forEach((field) => {
         field.imports.forEach((imp) => drizzleImports.add(imp))
       })
@@ -109,18 +110,18 @@ generatorHandler({
           ),
         ])
         .render()};`
-      const relationImports = [
-        `import { relations } from 'drizzle-orm'`,
-        ...Array.from(relations).map(
-          (name) => `import { ${name} } from './${kebabCase(name)}'`
+
+      const imports = [
+        v.namedImport(['relations'], 'drizzle-orm'),
+        v.namedImport(Array.from(drizzleImports), 'drizzle-orm/pg-core'),
+        ...Array.from(relations).map((name) =>
+          v.namedImport([name], `./${kebabCase(name)}`)
         ),
-      ].join('\n')
+      ]
+        .map(render)
+        .join('\n')
 
-      let importCode = `import { ${Array.from(drizzleImports).join(
-        ', '
-      )} } from 'drizzle-orm/pg-core'`
-
-      const code = `${importCode}\n${relationImports}\n\n${modelCode}\n\n${relationCode}`
+      const code = `${imports}\n\n${modelCode}\n\n${relationCode}`
 
       const file = kebabCase(name)
       const writeLocation = path.join(basePath, `${file}.ts`)
@@ -133,7 +134,8 @@ generatorHandler({
     }
 
     const importCode = models
-      .map((m) => `import * as ${m.name} from './${m.path}'`)
+      .map((m) => v.wilcardImport(m.name, `./${m.path}`))
+      .map(render)
       .join('\n')
 
     const schemaCode = `export const schema = ${v
