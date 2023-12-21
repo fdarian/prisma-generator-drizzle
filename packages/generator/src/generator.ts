@@ -221,6 +221,24 @@ function getField(adapter: Adapter) {
             ...args,
           ]),
           (funcValue) => {
+            if (field.documentation) {
+              const typeDef = field.documentation?.startsWith('drizzle.type ')
+              if (typeDef) {
+                const splits = field.documentation
+                  .replaceAll('drizzle.type', '')
+                  .trim()
+                  .split('::')
+                if (splits.length !== 2)
+                  throw new Error(
+                    `Invalid type definition: ${field.documentation}`
+                  )
+                const [module, type] = splits
+                return funcValue.chain(v.func('$type', [], { type }))
+              }
+            }
+            return funcValue
+          },
+          (funcValue) => {
             if (!field.isId) return funcValue
             return funcValue.chain(v.func('primaryKey'))
           },

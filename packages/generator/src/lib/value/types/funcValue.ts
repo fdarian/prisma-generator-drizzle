@@ -5,9 +5,15 @@ interface IFuncValue extends IValue {
   chain(funcValue: IFuncValue): IValue
 }
 
-export function funcValue(name: string, args?: IValue[]) {
+export function funcValue(
+  name: string,
+  args?: IValue[],
+  opts?: { type?: string }
+) {
   function render() {
-    return `${name}(${args?.map(renderValue).join(', ') ?? ''})`
+    let type = ''
+    if (opts?.type) type = `<${opts.type}>`
+    return `${name}${type}(${args?.map(renderValue).join(', ') ?? ''})`
   }
 
   return createValue({
