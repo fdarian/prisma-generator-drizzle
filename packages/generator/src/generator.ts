@@ -15,6 +15,7 @@ import { createValue, IValue } from './lib/value/createValue'
 import { Entry } from './lib/value/types/objectValue'
 import { pipe } from 'fp-ts/lib/function'
 import { render } from './lib/value/utils'
+import { ImportValue, isImportValue } from './lib/value/types/import'
 
 const { version } = require('../package.json')
 
@@ -33,12 +34,33 @@ generatorHandler({
 
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 
+    for await (const eenum of options.dmmf.datamodel.enums) {
+      const varName = getEnumVar(eenum.name)
+
+      const imports = v.namedImport(['pgEnum'], 'drizzle-orm/pg-core')
+      const enumVar = v.defineVar(
+        varName,
+        v.func('pgEnum', [
+          v.string(eenum.dbName ?? eenum.name),
+          v.array(
+            eenum.values.map((value) => v.string(value.dbName ?? value.name))
+          ),
+        ]),
+        { export: true }
+      )
+
+      const code = `${imports.render()}\n\n${enumVar.render()}`
+
+      const writeLocation = path.join(basePath, `${kebabCase(varName)}.ts`)
+      await writeFileSafely(writeLocation, code)
+    }
+
     const models = []
     for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name)
 
       const fields = model.fields
-        .filter((field) => field.kind === 'scalar')
+        .filter((field) => field.kind === 'scalar' || field.kind === 'enum')
         .map(getField)
 
       const modelImports = ['pgTable']
@@ -54,9 +76,14 @@ generatorHandler({
         )
         .render()
 
+      const imports: ImportValue[] = []
+
       const drizzleImports = new Set<string>()
       fields.forEach((field) => {
-        field.imports.forEach((imp) => drizzleImports.add(imp))
+        field.imports.forEach((imp) => {
+          if (typeof imp === 'string') drizzleImports.add(imp)
+          else imports.push(imp)
+        })
       })
       modelImports.forEach((imp) => drizzleImports.add(imp))
 
@@ -121,7 +148,8 @@ generatorHandler({
         )
         .render()
 
-      const imports = [
+      const importCode = [
+        ...imports,
         v.namedImport(['relations'], 'drizzle-orm'),
         v.namedImport(Array.from(drizzleImports), 'drizzle-orm/pg-core'),
         ...Array.from(relations).map((name) =>
@@ -131,7 +159,7 @@ generatorHandler({
         .map(render)
         .join('\n')
 
-      const code = `${imports}\n\n${modelCode}\n\n${relationCode}`
+      const code = `${importCode}\n\n${modelCode}\n\n${relationCode}`
 
       const file = kebabCase(name)
       const writeLocation = path.join(basePath, `${file}.ts`)
@@ -161,7 +189,10 @@ generatorHandler({
   },
 })
 
-function getField(field: DMMF.Field): { imports: string[]; code: Entry } {
+function getField(field: DMMF.Field): {
+  imports: string[] | ImportValue[]
+  code: Entry
+} {
   const getEntry = (fieldFuncName: string, args: IValue[] = []): Entry => {
     return [
       field.name,
@@ -177,6 +208,14 @@ function getField(field: DMMF.Field): { imports: string[]; code: Entry } {
         }
       ),
     ]
+  }
+
+  if (field.kind === 'enum') {
+    const enumVar = getEnumVar(field.type)
+    return {
+      imports: [v.namedImport([enumVar], `./${kebabCase(enumVar)}`)],
+      code: getEntry(enumVar),
+    }
   }
 
   switch (field.type) {
@@ -273,3 +312,9 @@ function getField(field: DMMF.Field): { imports: string[]; code: Entry } {
       throw new Error(`Type ${field.type} is not supported`)
   }
 }
+
+// #region Enum
+function getEnumVar(name: string) {
+  return `${camelCase(name)}Enum`
+}
+// #endregion
