@@ -16,7 +16,7 @@ import { Entry } from './lib/value/types/objectValue'
 import { pipe } from 'fp-ts/lib/function'
 import { render } from './lib/value/utils'
 import { ImportValue } from './lib/value/types/import'
-import { pgAdapter } from './lib/adapter'
+import { mysqlAdapter, pgAdapter } from './lib/adapter'
 
 const { version } = require('../package.json')
 
@@ -35,7 +35,19 @@ generatorHandler({
     if (options.datasources.length > 1)
       throw new Error('Only one datasource is supported')
 
-    const adapter = pgAdapter
+    const adapter = (() => {
+      switch (options.datasources[0].provider) {
+        case 'postgres':
+        case 'postgresql':
+          return pgAdapter
+        case 'mysql':
+          return mysqlAdapter
+        default:
+          throw new Error(
+            `Connector ${options.datasources[0].provider} is not supported`
+          )
+      }
+    })()
 
     const basePath = options.generator.output?.value
     if (!basePath) throw new Error('No output path specified')

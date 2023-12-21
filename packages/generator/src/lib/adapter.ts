@@ -33,3 +33,11 @@ export const pgAdapter = createAdapter({
     table: 'pgTable',
   },
 })
+
+export const mysqlAdapter = createAdapter({
+  module: 'drizzle-orm/mysql-core',
+  functions: {
+    enum: 'mysqlEnum',
+    table: 'mysqlTable',
+  },
+})
