@@ -1,7 +1,7 @@
 import { pipe } from 'fp-ts/lib/function'
-import { v } from './value'
+import { v } from '../value'
 import { map } from 'fp-ts/Array'
-import { Entry } from './value/types/objectValue'
+import { Entry } from '../value/types/objectValue'
 
 function createAdapter(input: {
   module: string
@@ -9,11 +9,17 @@ function createAdapter(input: {
     enum: string
     table: string
     int: string
+    bigint?: string
   }
 }) {
+  const functions = {
+    ...input.functions,
+    bigint: input.functions.bigint ?? 'bigint',
+  }
+
   return {
     module: input.module,
-    functions: input.functions,
+    functions,
     enum(name: string, values: string[]) {
       return v.func(input.functions.enum, [
         v.string(name),
