@@ -77,12 +77,20 @@ generatorHandler({
     for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name)
 
-      const modelImports = [adapter.functions.table]
+      const importMap = new Map<string, Set<string>>()
+      const addImport = (modulePath: string, name: string) => {
+        const val = importMap.get(modulePath) ?? new Set()
+        importMap.set(modulePath, val)
+        val.add(name)
+      }
+
       const modelVar = camelCase(name)
 
       const fields = model.fields
         .filter((field) => field.kind === 'scalar' || field.kind === 'enum')
         .map(getField(adapter))
+
+      addImport(adapter.module, adapter.functions.table)
       const modelCode = v
         .defineVar(
           modelVar,
@@ -96,14 +104,11 @@ generatorHandler({
 
       const imports: ImportValue[] = []
 
-      const drizzleImports = new Set<string>()
       fields.forEach((field) => {
         field.imports.forEach((imp) => {
-          if (typeof imp === 'string') drizzleImports.add(imp)
-          else imports.push(imp)
+          imp.names.forEach((name) => addImport(imp.modulePath, name))
         })
       })
-      modelImports.forEach((imp) => drizzleImports.add(imp))
 
       const relationalFields = model.fields.filter(
         (field) => field.kind === 'object'
@@ -120,6 +125,8 @@ generatorHandler({
                 relationalFields.map((field) => {
                   const varName = camelCase(pluralize(field.type))
                   relations.add(varName)
+
+                  addImport(`./${kebabCase(name)}`, name)
 
                   return [
                     field.name,
@@ -167,12 +174,10 @@ generatorHandler({
         .render()
 
       const importCode = [
-        ...imports,
-        v.namedImport(['relations'], 'drizzle-orm'),
-        v.namedImport(Array.from(drizzleImports), adapter.module),
-        ...Array.from(relations).map((name) =>
-          v.namedImport([name], `./${kebabCase(name)}`)
+        ...[...importMap.entries()].map(([modulePath, names]) =>
+          v.namedImport([...names], modulePath)
         ),
+        v.namedImport(['relations'], 'drizzle-orm'),
       ]
         .map(render)
         .join('\n')
@@ -207,20 +212,27 @@ generatorHandler({
   },
 })
 
+type IImportValue = { names: string[]; modulePath: string }
 function getField(adapter: Adapter) {
   return function (field: DMMF.Field): {
-    imports: string[] | ImportValue[]
+    imports: IImportValue[]
     code: Entry
   } {
-    const getEntry = (fieldFuncName: string, args: IValue[] = []): Entry => {
+    const getEntry = (
+      fieldFuncName: string,
+      args: IValue[] = []
+    ): [string, { imports: IImportValue[]; func: IValue }] => {
       return [
         field.name,
         pipe(
-          v.func(fieldFuncName, [
-            v.string(field.dbName ?? field.name),
-            ...args,
-          ]),
-          (funcValue) => {
+          {
+            imports: [] as IImportValue[],
+            func: v.func(fieldFuncName, [
+              v.string(field.dbName ?? field.name),
+              ...args,
+            ]),
+          },
+          (obj) => {
             if (field.documentation) {
               const typeDef = field.documentation?.startsWith('drizzle.type ')
               if (typeDef) {
@@ -232,19 +244,28 @@ function getField(adapter: Adapter) {
                   throw new Error(
                     `Invalid type definition: ${field.documentation}`
                   )
-                const [module, type] = splits
-                return funcValue.chain(v.func('$type', [], { type }))
+                const [modulePath, type] = splits
+                return {
+                  imports: [...obj.imports, { names: [type], modulePath }],
+                  func: obj.func.chain(v.func('$type', [], { type })),
+                }
               }
             }
-            return funcValue
+            return obj
           },
-          (funcValue) => {
-            if (!field.isId) return funcValue
-            return funcValue.chain(v.func('primaryKey'))
+          (obj) => {
+            if (!field.isId) return obj
+            return {
+              ...obj,
+              func: obj.func.chain(v.func('primaryKey')),
+            }
           },
-          (funcValue) => {
-            if (field.isId || !field.isRequired) return funcValue
-            return funcValue.chain(v.func('notNull'))
+          (obj) => {
+            if (field.isId || !field.isRequired) return obj
+            return {
+              ...obj,
+              func: obj.func.chain(v.func('notNull')),
+            }
           }
         ),
       ]
@@ -252,9 +273,13 @@ function getField(adapter: Adapter) {
 
     if (field.kind === 'enum') {
       const enumVar = getEnumVar(field.type)
+      const [name, a] = getEntry(enumVar)
       return {
-        imports: [v.namedImport([enumVar], `./${kebabCase(enumVar)}`)],
-        code: getEntry(enumVar),
+        imports: [
+          ...a.imports,
+          { names: [enumVar], modulePath: `./${kebabCase(enumVar)}` },
+        ],
+        code: [name, a.func],
       }
     }
 
@@ -263,9 +288,16 @@ function getField(adapter: Adapter) {
         // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#bigint
         // https://orm.drizzle.team/docs/column-types/pg/#bigint
         const func = 'bigint'
+
+        const [name, a] = getEntry(func, [
+          v.object([['mode', v.string('bigint')]]),
+        ])
         return {
-          imports: [func],
-          code: getEntry(func, [v.object([['mode', v.string('bigint')]])]),
+          imports: [
+            ...a.imports,
+            { names: [func], modulePath: adapter.module },
+          ],
+          code: [name, a.func],
         }
       }
       case 'Boolean': {
@@ -273,49 +305,64 @@ function getField(adapter: Adapter) {
         // https://orm.drizzle.team/docs/column-types/pg/#boolean
         const func = 'boolean'
 
+        const [name, a] = getEntry(func)
         return {
-          imports: [func],
-          code: getEntry(func),
+          imports: [
+            ...a.imports,
+            { names: [func], modulePath: adapter.module },
+          ],
+          code: [name, a.func],
         }
       }
       case 'DateTime': {
         // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#datetime
         // https://orm.drizzle.team/docs/column-types/pg/#timestamp
         const func = 'timestamp'
+        const [name, a] = getEntry(func, [
+          v.object([
+            ['precision', v.number(3)],
+            ['mode', v.string('date')],
+          ]),
+        ])
 
         return {
-          imports: [func],
-          code: getEntry(func, [
-            v.object([
-              ['precision', v.number(3)],
-              ['mode', v.string('date')],
-            ]),
-          ]),
+          imports: [
+            ...a.imports,
+            { names: [func], modulePath: adapter.module },
+          ],
+          code: [name, a.func],
         }
       }
       case 'Decimal': {
         // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#decimal
         // https://orm.drizzle.team/docs/column-types/pg/#decimal
         const func = 'decimal'
+        const [name, a] = getEntry(func, [
+          v.object([
+            ['precision', v.number(65)],
+            ['scale', v.number(30)],
+          ]),
+        ])
 
         return {
-          imports: [func],
-          code: getEntry(func, [
-            v.object([
-              ['precision', v.number(65)],
-              ['scale', v.number(30)],
-            ]),
-          ]),
+          imports: [
+            ...a.imports,
+            { names: [func], modulePath: adapter.module },
+          ],
+          code: [name, a.func],
         }
       }
       case 'Float': {
         // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#float
         // https://orm.drizzle.team/docs/column-types/pg/#double-precision
         const func = 'doublePrecision'
-
+        const [name, a] = getEntry(func)
         return {
-          imports: [func],
-          code: getEntry(func),
+          imports: [
+            ...a.imports,
+            { names: [func], modulePath: adapter.module },
+          ],
+          code: [name, a.func],
         }
       }
       case 'Int': {
@@ -324,30 +371,39 @@ function getField(adapter: Adapter) {
         // https://orm.drizzle.team/docs/column-types/pg/#integer
         // https://orm.drizzle.team/docs/column-types/mysql#integer
         const func = adapter.functions.int
-
+        const [name, a] = getEntry(func)
         return {
-          imports: [func],
-          code: getEntry(func),
+          imports: [
+            ...a.imports,
+            { names: [func], modulePath: adapter.module },
+          ],
+          code: [name, a.func],
         }
       }
       case 'Json': {
         // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#json
         // https://orm.drizzle.team/docs/column-types/pg/#jsonb
         const func = 'jsonb'
-
+        const [name, a] = getEntry(func)
         return {
-          imports: [func],
-          code: getEntry(func),
+          imports: [
+            ...a.imports,
+            { names: [func], modulePath: adapter.module },
+          ],
+          code: [name, a.func],
         }
       }
       case 'String': {
         // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string
         // https://orm.drizzle.team/docs/column-types/pg/#text
         const func = 'text'
-
+        const [name, a] = getEntry(func)
         return {
-          imports: [func],
-          code: getEntry(func),
+          imports: [
+            ...a.imports,
+            { names: [func], modulePath: adapter.module },
+          ],
+          code: [name, a.func],
         }
       }
       default:
