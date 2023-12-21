@@ -29,6 +29,11 @@ generatorHandler({
     }
   },
   onGenerate: async (options: GeneratorOptions) => {
+    if (options.datasources.length === 0)
+      throw new Error('No datasource specified')
+    if (options.datasources.length > 1)
+      throw new Error('Only one datasource is supported')
+
     const basePath = options.generator.output?.value
     if (!basePath) throw new Error('No output path specified')
 
