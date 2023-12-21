@@ -32,17 +32,17 @@ export function defineColumn<TAdapter extends Adapter>(
     field: field.name,
     render: pipe(
       input.columnFunc,
-      when(() => chainable.shouldChain(), chainable.getFunc()),
-      when(() => field.isId, v.func('primaryKey')),
-      when(() => !field.isId && field.isRequired, v.func('notNull'))
+      when(chainable.shouldChain(), () => chainable.getFunc()),
+      when(field.isId, () => v.func('primaryKey')),
+      when(!field.isId && field.isRequired, () => v.func('notNull'))
     ).render,
   })
 }
 
-function when(shouldChain: () => boolean, chainedFunc: IChainableValue) {
+function when(shouldChain: boolean, chainedFunc: () => IChainableValue) {
   return function (func: IChainableValue) {
-    if (!shouldChain()) return func
-    return func.chain(chainedFunc)
+    if (shouldChain) return func
+    return func.chain(chainedFunc())
   }
 }
 
