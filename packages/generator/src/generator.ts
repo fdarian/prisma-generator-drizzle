@@ -15,7 +15,8 @@ import { createValue, IValue } from './lib/value/createValue'
 import { Entry } from './lib/value/types/objectValue'
 import { pipe } from 'fp-ts/lib/function'
 import { render } from './lib/value/utils'
-import { ImportValue, isImportValue } from './lib/value/types/import'
+import { ImportValue } from './lib/value/types/import'
+import { pgAdapter } from './lib/adapter'
 
 const { version } = require('../package.json')
 
@@ -34,6 +35,8 @@ generatorHandler({
     if (options.datasources.length > 1)
       throw new Error('Only one datasource is supported')
 
+    const adapter = pgAdapter
+
     const basePath = options.generator.output?.value
     if (!basePath) throw new Error('No output path specified')
 
@@ -42,15 +45,13 @@ generatorHandler({
     for await (const eenum of options.dmmf.datamodel.enums) {
       const varName = getEnumVar(eenum.name)
 
-      const imports = v.namedImport(['pgEnum'], 'drizzle-orm/pg-core')
+      const imports = v.namedImport([adapter.functions.enum], adapter.module)
       const enumVar = v.defineVar(
         varName,
-        v.func('pgEnum', [
-          v.string(eenum.dbName ?? eenum.name),
-          v.array(
-            eenum.values.map((value) => v.string(value.dbName ?? value.name))
-          ),
-        ]),
+        adapter.enum(
+          eenum.dbName ?? eenum.name,
+          eenum.values.map((value) => value.dbName ?? value.name)
+        ),
         { export: true }
       )
 
@@ -64,19 +65,19 @@ generatorHandler({
     for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name)
 
+      const modelImports = [adapter.functions.table]
+      const modelVar = camelCase(name)
+
       const fields = model.fields
         .filter((field) => field.kind === 'scalar' || field.kind === 'enum')
         .map(getField)
-
-      const modelImports = ['pgTable']
-      const modelVar = camelCase(name)
       const modelCode = v
         .defineVar(
           modelVar,
-          v.func('pgTable', [
-            v.string(model.name),
-            v.object(fields.map((field) => field.code)),
-          ]),
+          adapter.table(
+            model.name,
+            fields.map((field) => field.code)
+          ),
           { export: true }
         )
         .render()
@@ -156,7 +157,7 @@ generatorHandler({
       const importCode = [
         ...imports,
         v.namedImport(['relations'], 'drizzle-orm'),
-        v.namedImport(Array.from(drizzleImports), 'drizzle-orm/pg-core'),
+        v.namedImport(Array.from(drizzleImports), adapter.module),
         ...Array.from(relations).map((name) =>
           v.namedImport([name], `./${kebabCase(name)}`)
         ),
