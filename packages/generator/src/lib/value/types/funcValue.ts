@@ -1,8 +1,8 @@
 import { createValue, IValue } from '../createValue'
 import { render as renderValue } from '../utils'
 
-interface IFuncValue extends IValue {
-  chain(funcValue: IFuncValue): IValue
+export interface IChainableValue extends IValue {
+  chain(funcValue: IChainableValue): IChainableValue
 }
 
 export function funcValue(
@@ -18,7 +18,7 @@ export function funcValue(
 
   return createValue({
     render,
-    chain(funcValue: IFuncValue) {
+    chain(funcValue: IChainableValue) {
       return chainableValue([render, funcValue.render])
     },
   })
@@ -29,7 +29,7 @@ function chainableValue(renders: (() => string)[]) {
     render() {
       return renders.map((render) => render()).join('.')
     },
-    chain(funcValue: IFuncValue) {
+    chain(funcValue: IChainableValue) {
       return chainableValue([...renders, funcValue.render])
     },
   })
