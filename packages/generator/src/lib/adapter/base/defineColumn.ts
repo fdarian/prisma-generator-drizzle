@@ -32,17 +32,23 @@ export function defineColumn<TAdapter extends Adapter>(
     field: field.name,
     render: pipe(
       input.columnFunc,
-      when(chainable.shouldChain(), () => chainable.getFunc()),
+      when(chainable.shouldChain(), () => {
+        console.log({
+          chainable: chainable.shouldChain(),
+          field: JSON.stringify(field, null, 2),
+        })
+        return chainable.getFunc()
+      }),
       when(field.isId, () => v.func('primaryKey')),
       when(!field.isId && field.isRequired, () => v.func('notNull'))
     ).render,
   })
 }
 
-function when(shouldChain: boolean, chainedFunc: () => IChainableValue) {
+function when(shouldChain: boolean, getChainedFunc: () => IChainableValue) {
   return function (func: IChainableValue) {
-    if (shouldChain) return func
-    return func.chain(chainedFunc())
+    if (!shouldChain) return func
+    return func.chain(getChainedFunc())
   }
 }
 
@@ -58,7 +64,8 @@ abstract class Extension {
 
 class ChainableExtension extends Extension {
   type: string | undefined
-  modulePath: string | undefined
+  module: string | undefined
+  enabled = false
 
   constructor(field: DMMF.Field) {
     super()
@@ -74,11 +81,8 @@ class ChainableExtension extends Extension {
       .split('::')
     if (splits.length !== 2)
       throw new Error(`Invalid type definition: ${field.documentation}`)
-    ;[this.modulePath, this.type] = splits
-  }
-
-  get enabled() {
-    return this.modulePath != null && this.type != null
+    ;[this.module, this.type] = splits
+    this.enabled = true
   }
 
   shouldChain() {
@@ -92,7 +96,7 @@ class ChainableExtension extends Extension {
 
   getImports() {
     if (!this.enabled) return []
-    return [{ module: this.modulePath!, name: this.type! }]
+    return [{ module: this.module!, name: this.type! }]
   }
 }
 // #endregion
