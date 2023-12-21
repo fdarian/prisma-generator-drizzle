@@ -259,16 +259,3 @@ function getField(field: DMMF.Field): { imports: string[]; code: Entry } {
       throw new Error(`Type ${field.type} is not supported`)
   }
 }
-
-function breakPascal(name: string) {
-  return (
-    // https://stackoverflow.com/a/4149393
-    name
-      // insert a space before all caps
-      .replace(/([A-Z])/g, ' $1')
-      // uppercase the first character
-      .replace(/^./, function (str) {
-        return str.toUpperCase()
-      })
-  )
-}
