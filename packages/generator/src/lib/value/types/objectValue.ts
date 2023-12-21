@@ -1,9 +1,9 @@
 import { createValue, IValue } from '../createValue'
-import { VarValue } from './varValue'
+import { UseVarValue } from './useVarValue'
 
 export type Entry = [string, IValue]
 
-export function objectValue(entries: (Entry | VarValue)[]) {
+export function objectValue(entries: (Entry | UseVarValue)[]) {
   return createValue({
     render(): string {
       if (entries.length === 0) return `{}`

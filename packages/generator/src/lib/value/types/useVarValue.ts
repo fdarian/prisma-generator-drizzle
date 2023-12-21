@@ -1,6 +1,6 @@
 import { createValue } from '../createValue'
 
-export function varValue(name: string) {
+export function useVarValue(name: string) {
   return createValue({
     render() {
       return name
@@ -8,4 +8,4 @@ export function varValue(name: string) {
   })
 }
 
-export type VarValue = ReturnType<typeof varValue>
+export type UseVarValue = ReturnType<typeof useVarValue>

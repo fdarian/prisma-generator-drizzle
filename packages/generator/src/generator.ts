@@ -43,12 +43,16 @@ generatorHandler({
 
       const modelImports = ['pgTable']
       const modelVar = camelCase(name)
-      const modelCode = `export const ${modelVar} = ${v
-        .func('pgTable', [
-          v.string(model.name),
-          v.object(fields.map((field) => field.code)),
-        ])
-        .render()};`
+      const modelCode = v
+        .defineVar(
+          modelVar,
+          v.func('pgTable', [
+            v.string(model.name),
+            v.object(fields.map((field) => field.code)),
+          ]),
+          { export: true }
+        )
+        .render()
 
       const drizzleImports = new Set<string>()
       fields.forEach((field) => {
@@ -60,56 +64,62 @@ generatorHandler({
         (field) => field.kind === 'object'
       )
       const relations = new Set<string>()
-      const relationCode = `export const ${modelVar}Relations = ${v
-        .func('relations', [
-          v.var(modelVar),
-          v.lambda(
-            v.var('helpers'),
-            v.object(
-              relationalFields.map((field) => {
-                const varName = camelCase(pluralize(field.type))
-                relations.add(varName)
+      const relationCode = v
+        .defineVar(
+          `${modelVar}Relations`,
+          v.func('relations', [
+            v.useVar(modelVar),
+            v.lambda(
+              v.useVar('helpers'),
+              v.object(
+                relationalFields.map((field) => {
+                  const varName = camelCase(pluralize(field.type))
+                  relations.add(varName)
 
-                return [
-                  field.name,
-                  v.func(field.isList ? 'helpers.many' : 'helpers.one', [
-                    v.var(varName),
-                    ...(field.relationFromFields &&
-                    field.relationFromFields.length > 0 &&
-                    field.relationToFields &&
-                    field.relationToFields.length > 0
-                      ? [
-                          v.object([
-                            [
-                              'fields',
-                              v.array(
-                                field.relationFromFields.map((f) =>
-                                  createValue({
-                                    render: () => `${modelVar}.${camelCase(f)}`,
-                                  })
-                                )
-                              ),
-                            ],
-                            [
-                              'references',
-                              v.array(
-                                field.relationToFields.map((f) =>
-                                  createValue({
-                                    render: () => `${varName}.${camelCase(f)}`,
-                                  })
-                                )
-                              ),
-                            ],
-                          ]),
-                        ]
-                      : []),
-                  ]),
-                ]
-              })
-            )
-          ),
-        ])
-        .render()};`
+                  return [
+                    field.name,
+                    v.func(field.isList ? 'helpers.many' : 'helpers.one', [
+                      v.useVar(varName),
+                      ...(field.relationFromFields &&
+                      field.relationFromFields.length > 0 &&
+                      field.relationToFields &&
+                      field.relationToFields.length > 0
+                        ? [
+                            v.object([
+                              [
+                                'fields',
+                                v.array(
+                                  field.relationFromFields.map((f) =>
+                                    createValue({
+                                      render: () =>
+                                        `${modelVar}.${camelCase(f)}`,
+                                    })
+                                  )
+                                ),
+                              ],
+                              [
+                                'references',
+                                v.array(
+                                  field.relationToFields.map((f) =>
+                                    createValue({
+                                      render: () =>
+                                        `${varName}.${camelCase(f)}`,
+                                    })
+                                  )
+                                ),
+                              ],
+                            ]),
+                          ]
+                        : []),
+                    ]),
+                  ]
+                })
+              )
+            ),
+          ]),
+          { export: true }
+        )
+        .render()
 
       const imports = [
         v.namedImport(['relations'], 'drizzle-orm'),
@@ -138,9 +148,11 @@ generatorHandler({
       .map(render)
       .join('\n')
 
-    const schemaCode = `export const schema = ${v
-      .object(models.map((m) => v.var(m.name)))
-      .render()}`
+    const schemaCode = v
+      .defineVar('schema', v.object(models.map((m) => v.useVar(m.name))), {
+        export: true,
+      })
+      .render()
 
     await writeFileSafely(
       path.join(basePath, 'schema.ts'),
