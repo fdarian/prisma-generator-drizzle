@@ -13,10 +13,11 @@ import { camelCase, kebabCase } from 'lodash'
 import { v } from './lib/value'
 import { createValue, IValue } from './lib/value/createValue'
 import { Entry } from './lib/value/types/objectValue'
-import { pipe } from 'fp-ts/lib/function'
+import { flow, pipe } from 'fp-ts/lib/function'
 import { render } from './lib/value/utils'
 import { ImportValue } from './lib/value/types/import'
 import { Adapter, mysqlAdapter, pgAdapter } from './lib/adapter'
+import { or } from 'fp-ts/lib/Refinement'
 
 const { version } = require('../package.json')
 
@@ -87,7 +88,7 @@ generatorHandler({
       const modelVar = camelCase(name)
 
       const fields = model.fields
-        .filter((field) => field.kind === 'scalar' || field.kind === 'enum')
+        .filter(pipe(isKind('scalar'), or(isKind('enum'))))
         .map(getField(adapter))
 
       addImport(adapter.module, adapter.functions.table)
@@ -417,3 +418,7 @@ function getEnumVar(name: string) {
   return `${camelCase(name)}Enum`
 }
 // #endregion
+
+function isKind(kind: DMMF.FieldKind) {
+  return (field: DMMF.Field): field is DMMF.Field => field.kind === kind
+}
