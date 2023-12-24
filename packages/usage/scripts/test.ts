@@ -20,12 +20,8 @@ const promises = [
 
 await Promise.all(promises)
 
-try {
-  execSync(`DATABASE_URL=${env.PG_DATABASE_URL} bun test`, {
-    stdio: 'inherit',
-  })
-} catch (err) {
-  console.log((err as Error).message)
-}
+execSync(`DATABASE_URL=${env.PG_DATABASE_URL} bun test`, {
+  stdio: 'inherit',
+})
 
 process.exit(0)
