@@ -1,0 +1,33 @@
+generator drizzle {
+  provider = "bunx prisma-generator-drizzle"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+}
+
+enum NotificationType {
+  newPosts
+  newComments
+  newFollowers
+  reply
+  heartOnPost
+  heartOnComment
+  heartOnReply
+}
+
+enum Language {
+  Typescript
+  Javascript
+  Rust
+  Go
+  Python
+  Cpp
+}

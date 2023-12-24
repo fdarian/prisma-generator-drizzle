@@ -11,6 +11,7 @@
   "dependencies": {
     "@prisma/client": "5.7.0",
     "drizzle-orm": "^0.29.1",
+    "mysql2": "^3.6.5",
     "pg": "^8.11.3",
     "postgres": "^3.4.3",
     "valibot": "^0.24.1"

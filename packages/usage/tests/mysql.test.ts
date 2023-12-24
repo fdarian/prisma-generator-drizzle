@@ -1,5 +1,5 @@
-import { users } from 'prisma/drizzle/users'
-import { db } from 'src/lib/postgres'
+import { users } from 'prisma/mysql/drizzle/users'
+import { db } from 'src/lib/mysql'
 
 beforeEach(async () => {
   await db.delete(users)

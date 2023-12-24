@@ -5,10 +5,10 @@ import { object, parse, string, url } from 'valibot'
 
 const env = parse(
   object({
-    DATABASE_URL: string([url()]),
+    PG_DATABASE_URL: string([url()]),
   }),
   process.env
 )
 
-const queryClient = postgres(env.DATABASE_URL)
+const queryClient = postgres(env.PG_DATABASE_URL)
 export const db = drizzle(queryClient, { schema })

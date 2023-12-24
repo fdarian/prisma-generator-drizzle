@@ -3,17 +3,25 @@ import { object, parse, string, url } from 'valibot'
 
 const env = parse(
   object({
-    TEST_DATABASE_URL: string([url()]),
+    PG_DATABASE_URL: string([url()]),
+    MYSQL_DATABASE_URL: string([url()]),
   }),
   process.env
 )
 
-execSync(
-  `DATABASE_URL=${env.TEST_DATABASE_URL} bun prisma db push --force-reset --accept-data-loss`
-)
+const promises = [
+  execSync(
+    `DATABASE_URL=${env.PG_DATABASE_URL} bun prisma db push --schema prisma/schema.prisma --force-reset --accept-data-loss`
+  ),
+  execSync(
+    `DATABASE_URL=${env.MYSQL_DATABASE_URL} bun prisma db push --schema prisma/mysql/schema.prisma --force-reset --accept-data-loss`
+  ),
+]
+
+await Promise.all(promises)
 
 try {
-  execSync(`DATABASE_URL=${env.TEST_DATABASE_URL} bun test`, {
+  execSync(`DATABASE_URL=${env.PG_DATABASE_URL} bun test`, {
     stdio: 'inherit',
   })
 } catch (err) {
