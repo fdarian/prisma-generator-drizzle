@@ -4,7 +4,16 @@
 
 In this version, the focus is on the query and mutation capabilities of the generated Drizzle schema.
 
-## Usage
+## Features
+
+- 🤝 1:1 Prisma to Drizzle schema generation
+- ✨ Compatible with all \*scalars, enums, and \*constraints
+- 📦 Supports drizzle relational query
+- 🚀 Generates drizzle-specific features like the `.$type<..>()` method
+
+_\*Only supports default scalar for now and more constraints will be added in future_
+
+## Installation
 
 ### 1. Install the package
 
@@ -28,3 +37,57 @@ generator drizzle {
 ```bash
 prisma generate
 ```
+
+## Usages
+
+> **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
+
+**prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for Prisma client.
+
+In addition to the Prisma features, you can also generate Drizzle-specific features:
+
+1. [`.$type<..>()`](https://orm.drizzle.team/docs/column-types/mysql#customizing-column-data-type)
+
+   > The syntax is still experimental, feel free to suggest a better approach.
+
+   Add `/// drizzle.type <module>::<named-import>` directive above the field definition.
+
+   ```prisma
+   model Wallet {
+     /// drizzle.type viem::Address
+     address     String?
+     ...
+   }
+   ```
+
+   This will result to:
+
+   ```ts
+   import { Address } from 'viem'
+   ...
+
+   export const users = pgTable('User', {
+     address: text('address').$type<Address>(),
+     ...
+   })
+   ```
+
+   Or with a relative import
+
+   ```prisma
+   model Wallet {
+     /// drizzle.type viem::Address
+     address     String?
+     ...
+   }
+   ```
+
+   ```ts
+   import { Email } from '../my-type'
+   ...
+
+   export const users = pgTable('User', {
+     email: text('email').$type<Email>(),
+     ...
+   })
+   ```
