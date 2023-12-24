@@ -120,10 +120,11 @@ generatorHandler({
               v.useVar('helpers'),
               v.object(
                 relationalFields.map((field) => {
-                  const varName = camelCase(pluralize(field.type))
+                  const model = pluralize(field.type)
+                  const varName = camelCase(model)
                   relations.add(varName)
 
-                  addImport(`./${kebabCase(name)}`, name)
+                  addImport(`./${kebabCase(model)}`, varName)
 
                   return [
                     field.name,
