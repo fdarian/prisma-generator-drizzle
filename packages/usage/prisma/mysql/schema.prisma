@@ -7,27 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserType {
+  TypeOne
+  TypeTwo
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-}
-
-enum NotificationType {
-  newPosts
-  newComments
-  newFollowers
-  reply
-  heartOnPost
-  heartOnComment
-  heartOnReply
-}
-
-enum Language {
-  Typescript
-  Javascript
-  Rust
-  Go
-  Python
-  Cpp
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  name     String?
+  bigint   BigInt
+  boolean  Boolean
+  datetime DateTime
+  decimal  Decimal
+  enum     UserType
+  float    Float
+  json     Json
 }

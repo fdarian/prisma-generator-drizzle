@@ -6,10 +6,17 @@ beforeEach(async () => {
 })
 
 test('findFirst', async () => {
-  const user = {
+  const user: typeof users.$inferInsert = {
     id: 1,
     name: 'John',
     email: 'john@email.com',
+    bigint: 123n,
+    boolean: true,
+    datetime: new Date(),
+    decimal: '0.123',
+    enum: 'TypeOne',
+    float: 0.123,
+    json: { key: 'value' },
   }
   await db.insert(users).values(user)
 
