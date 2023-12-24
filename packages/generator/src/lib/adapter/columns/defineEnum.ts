@@ -11,7 +11,7 @@ export function defineEnum(adapter: Adapter, field: DMMF.Field) {
   return defineColumn({
     field,
     adapter,
-    imports: [{ module: `./${kebabCase(field.type)}`, name: func }],
+    imports: [{ module: `./${kebabCase(field.type)}-enum`, name: func }],
     columnFunc: fieldFunc(func, field),
   })
 }
