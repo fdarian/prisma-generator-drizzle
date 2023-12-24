@@ -12,4 +12,4 @@ const env = parse(
 
 const connection = await mysql.createConnection(env.MYSQL_DATABASE_URL)
 
-export const db = drizzle(connection, { schema, mode: 'default' })
+export const db = drizzle(connection, { schema, mode: 'default', logger: true })

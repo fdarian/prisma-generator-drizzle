@@ -11,4 +11,4 @@ const env = parse(
 )
 
 const queryClient = postgres(env.PG_DATABASE_URL)
-export const db = drizzle(queryClient, { schema })
+export const db = drizzle(queryClient, { schema, logger: true })
