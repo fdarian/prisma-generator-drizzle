@@ -12,7 +12,6 @@ export function defineDatetime(adapter: Adapter, field: DMMF.Field) {
     imports: [{ module: adapter.module, name: adapter.functions.datetime }],
     columnFunc: fieldFunc(adapter.functions.datetime, field, {
       ...adapter.definition.datetime.opts,
-      mode: v.string('date'),
     }),
   })
 }
