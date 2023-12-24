@@ -10,11 +10,30 @@ function createAdapter(input: {
     table: string
     int: string
     bigint?: string
+    boolean?: string
+    datetime?: string
+    decimal?: string
+    float?: string
+    json?: string
+    string?: string
   }
 }) {
   const functions = {
     ...input.functions,
+    // https://orm.drizzle.team/docs/column-types/pg/#bigint
     bigint: input.functions.bigint ?? 'bigint',
+    // https://orm.drizzle.team/docs/column-types/pg/#boolean
+    boolean: input.functions.boolean ?? 'boolean',
+    // https://orm.drizzle.team/docs/column-types/pg/#timestamp
+    datetime: input.functions.datetime ?? 'timestamp',
+    // https://orm.drizzle.team/docs/column-types/pg/#decimal
+    decimal: input.functions.decimal ?? 'decimal',
+    // https://orm.drizzle.team/docs/column-types/pg/#double-precision
+    float: input.functions.float ?? 'doublePrecision',
+    // https://orm.drizzle.team/docs/column-types/pg/#jsonb
+    json: input.functions.json ?? 'jsonb',
+    // https://orm.drizzle.team/docs/column-types/pg/#text
+    string: input.functions.string ?? 'text',
   }
 
   return {
@@ -38,6 +57,7 @@ export const pgAdapter = createAdapter({
   functions: {
     enum: 'pgEnum',
     table: 'pgTable',
+    // https://orm.drizzle.team/docs/column-types/pg/#integer
     int: 'integer',
   },
 })
@@ -47,6 +67,7 @@ export const mysqlAdapter = createAdapter({
   functions: {
     enum: 'mysqlEnum',
     table: 'mysqlTable',
+    // https://orm.drizzle.team/docs/column-types/mysql#integer
     int: 'int',
   },
 })

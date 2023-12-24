@@ -16,8 +16,18 @@ import { Entry } from './lib/value/types/objectValue'
 import { flow, pipe } from 'fp-ts/lib/function'
 import { render } from './lib/value/utils'
 import { ImportValue } from './lib/value/types/import'
-import { Adapter, mysqlAdapter, pgAdapter } from './lib/adapter'
+import { Adapter, mysqlAdapter, pgAdapter } from './lib/adapter/adapter'
 import { or } from 'fp-ts/lib/Refinement'
+import { defineBigint } from './lib/adapter/columns/defineBigint'
+import { IColumnValue } from './lib/adapter/base/defineColumn'
+import { defineBoolean } from './lib/adapter/columns/defineBoolean'
+import { defineDatetime } from './lib/adapter/columns/defineDatetime'
+import { defineDecimal } from './lib/adapter/columns/defineDecimal'
+import { defineFloat } from './lib/adapter/columns/defineFloat'
+import { defineInt } from './lib/adapter/columns/defineInt'
+import { defineJson } from './lib/adapter/columns/defineJson'
+import { defineString } from './lib/adapter/columns/defineString'
+import { defineEnum } from './lib/adapter/columns/defineEnum'
 
 const { version } = require('../package.json')
 
@@ -97,17 +107,15 @@ generatorHandler({
           modelVar,
           adapter.table(
             model.name,
-            fields.map((field) => field.code)
+            fields.map((field) => [field.field, field])
           ),
           { export: true }
         )
         .render()
 
-      const imports: ImportValue[] = []
-
       fields.forEach((field) => {
         field.imports.forEach((imp) => {
-          imp.names.forEach((name) => addImport(imp.modulePath, name))
+          addImport(imp.module, imp.name)
         })
       })
 
@@ -213,199 +221,36 @@ generatorHandler({
   },
 })
 
-type IImportValue = { names: string[]; modulePath: string }
 function getField(adapter: Adapter) {
-  return function (field: DMMF.Field): {
-    imports: IImportValue[]
-    code: Entry
-  } {
-    const getEntry = (
-      fieldFuncName: string,
-      args: IValue[] = []
-    ): [string, { imports: IImportValue[]; func: IValue }] => {
-      return [
-        field.name,
-        pipe(
-          {
-            imports: [] as IImportValue[],
-            func: v.func(fieldFuncName, [
-              v.string(field.dbName ?? field.name),
-              ...args,
-            ]),
-          },
-          (obj) => {
-            if (field.documentation) {
-              const typeDef = field.documentation?.startsWith('drizzle.type ')
-              if (typeDef) {
-                const splits = field.documentation
-                  .replaceAll('drizzle.type', '')
-                  .trim()
-                  .split('::')
-                if (splits.length !== 2)
-                  throw new Error(
-                    `Invalid type definition: ${field.documentation}`
-                  )
-                const [modulePath, type] = splits
-                return {
-                  imports: [...obj.imports, { names: [type], modulePath }],
-                  func: obj.func.chain(v.func('$type', [], { type })),
-                }
-              }
-            }
-            return obj
-          },
-          (obj) => {
-            if (!field.isId) return obj
-            return {
-              ...obj,
-              func: obj.func.chain(v.func('primaryKey')),
-            }
-          },
-          (obj) => {
-            if (field.isId || !field.isRequired) return obj
-            return {
-              ...obj,
-              func: obj.func.chain(v.func('notNull')),
-            }
-          }
-        ),
-      ]
-    }
-
+  return function (field: DMMF.Field): IColumnValue {
     if (field.kind === 'enum') {
-      const enumVar = getEnumVar(field.type)
-      const [name, a] = getEntry(enumVar)
-      return {
-        imports: [
-          ...a.imports,
-          { names: [enumVar], modulePath: `./${kebabCase(enumVar)}` },
-        ],
-        code: [name, a.func],
-      }
+      return defineEnum(adapter, field)
     }
 
     switch (field.type) {
       case 'BigInt': {
-        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#bigint
-        // https://orm.drizzle.team/docs/column-types/pg/#bigint
-        const func = 'bigint'
-
-        const [name, a] = getEntry(func, [
-          v.object([['mode', v.string('bigint')]]),
-        ])
-        return {
-          imports: [
-            ...a.imports,
-            { names: [func], modulePath: adapter.module },
-          ],
-          code: [name, a.func],
-        }
+        return defineBigint(adapter, field)
       }
       case 'Boolean': {
-        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#boolean
-        // https://orm.drizzle.team/docs/column-types/pg/#boolean
-        const func = 'boolean'
-
-        const [name, a] = getEntry(func)
-        return {
-          imports: [
-            ...a.imports,
-            { names: [func], modulePath: adapter.module },
-          ],
-          code: [name, a.func],
-        }
+        return defineBoolean(adapter, field)
       }
       case 'DateTime': {
-        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#datetime
-        // https://orm.drizzle.team/docs/column-types/pg/#timestamp
-        const func = 'timestamp'
-        const [name, a] = getEntry(func, [
-          v.object([
-            ['precision', v.number(3)],
-            ['mode', v.string('date')],
-          ]),
-        ])
-
-        return {
-          imports: [
-            ...a.imports,
-            { names: [func], modulePath: adapter.module },
-          ],
-          code: [name, a.func],
-        }
+        return defineDatetime(adapter, field)
       }
       case 'Decimal': {
-        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#decimal
-        // https://orm.drizzle.team/docs/column-types/pg/#decimal
-        const func = 'decimal'
-        const [name, a] = getEntry(func, [
-          v.object([
-            ['precision', v.number(65)],
-            ['scale', v.number(30)],
-          ]),
-        ])
-
-        return {
-          imports: [
-            ...a.imports,
-            { names: [func], modulePath: adapter.module },
-          ],
-          code: [name, a.func],
-        }
+        return defineDecimal(adapter, field)
       }
       case 'Float': {
-        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#float
-        // https://orm.drizzle.team/docs/column-types/pg/#double-precision
-        const func = 'doublePrecision'
-        const [name, a] = getEntry(func)
-        return {
-          imports: [
-            ...a.imports,
-            { names: [func], modulePath: adapter.module },
-          ],
-          code: [name, a.func],
-        }
+        return defineFloat(adapter, field)
       }
       case 'Int': {
-        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#int
-
-        // https://orm.drizzle.team/docs/column-types/pg/#integer
-        // https://orm.drizzle.team/docs/column-types/mysql#integer
-        const func = adapter.functions.int
-        const [name, a] = getEntry(func)
-        return {
-          imports: [
-            ...a.imports,
-            { names: [func], modulePath: adapter.module },
-          ],
-          code: [name, a.func],
-        }
+        return defineInt(adapter, field)
       }
       case 'Json': {
-        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#json
-        // https://orm.drizzle.team/docs/column-types/pg/#jsonb
-        const func = 'jsonb'
-        const [name, a] = getEntry(func)
-        return {
-          imports: [
-            ...a.imports,
-            { names: [func], modulePath: adapter.module },
-          ],
-          code: [name, a.func],
-        }
+        return defineJson(adapter, field)
       }
       case 'String': {
-        // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string
-        // https://orm.drizzle.team/docs/column-types/pg/#text
-        const func = 'text'
-        const [name, a] = getEntry(func)
-        return {
-          imports: [
-            ...a.imports,
-            { names: [func], modulePath: adapter.module },
-          ],
-          code: [name, a.func],
-        }
+        return defineString(adapter, field)
       }
       default:
         throw new Error(`Type ${field.type} is not supported`)

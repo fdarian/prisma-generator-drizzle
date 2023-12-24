@@ -33,10 +33,6 @@ export function defineColumn<TAdapter extends Adapter>(
     render: pipe(
       input.columnFunc,
       when(chainable.shouldChain(), () => {
-        console.log({
-          chainable: chainable.shouldChain(),
-          field: JSON.stringify(field, null, 2),
-        })
         return chainable.getFunc()
       }),
       when(field.isId, () => v.func('primaryKey')),

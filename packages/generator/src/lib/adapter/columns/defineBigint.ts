@@ -10,7 +10,6 @@ export function defineBigint(adapter: Adapter, field: DMMF.Field) {
     adapter,
     imports: [{ module: adapter.module, name: adapter.functions.bigint }],
     columnFunc: v.func(adapter.functions.bigint, [
-      // https://orm.drizzle.team/docs/column-types/pg/#bigint
       v.object({ mode: v.string('bigint') }),
     ]),
   })
