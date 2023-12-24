@@ -6,7 +6,7 @@ import { camelCase, kebabCase } from 'lodash'
 import { fieldFunc } from './fieldFunc'
 
 export function defineEnum(adapter: Adapter, field: DMMF.Field) {
-  const func = camelCase(field.type)
+  const func = `${camelCase(field.type)}Enum`
 
   return defineColumn({
     field,
