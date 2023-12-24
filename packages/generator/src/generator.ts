@@ -59,7 +59,7 @@ generatorHandler({
       const imports = v.namedImport([adapter.functions.enum], adapter.module)
       const enumVar = v.defineVar(
         varName,
-        adapter.enum(
+        adapter.definition.enum.declare(
           eenum.dbName ?? eenum.name,
           eenum.values.map((value) => value.dbName ?? value.name)
         ),

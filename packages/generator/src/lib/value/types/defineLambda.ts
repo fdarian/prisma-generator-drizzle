@@ -1,7 +1,7 @@
 import { IValue, createValue } from '../createValue'
 import { DestructureValue } from './destructureValue'
 
-export function args(name: string, type: string) {
+function args(name: string, type: string) {
   return createValue({
     render() {
       return `${name}: ${type}`
@@ -10,7 +10,7 @@ export function args(name: string, type: string) {
 }
 type ArgsValue = ReturnType<typeof args>
 
-export function lambdaValue(args: DestructureValue | ArgsValue, returnVal: IValue) {
+export function defineLambda(args: ArgsValue, returnVal: IValue) {
   return createValue({
     render() {
       return `(${args.render()}) => { return ${returnVal.render()}; }`
