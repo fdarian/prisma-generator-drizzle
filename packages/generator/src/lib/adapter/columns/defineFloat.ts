@@ -1,4 +1,3 @@
-import { v } from '../../value'
 import { DMMF } from '@prisma/generator-helper'
 import { defineColumn } from '../base/defineColumn'
 import { Adapter } from '../adapter'

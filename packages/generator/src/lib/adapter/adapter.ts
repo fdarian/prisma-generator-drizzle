@@ -9,11 +9,11 @@ function createAdapter(input: {
     enum: string
     table: string
     int: string
+    float: string
     bigint?: string
     boolean?: string
     datetime?: string
     decimal?: string
-    float?: string
     json?: string
     string?: string
   }
@@ -28,8 +28,6 @@ function createAdapter(input: {
     datetime: input.functions.datetime ?? 'timestamp',
     // https://orm.drizzle.team/docs/column-types/pg/#decimal
     decimal: input.functions.decimal ?? 'decimal',
-    // https://orm.drizzle.team/docs/column-types/pg/#double-precision
-    float: input.functions.float ?? 'doublePrecision',
     // https://orm.drizzle.team/docs/column-types/pg/#jsonb
     json: input.functions.json ?? 'jsonb',
     // https://orm.drizzle.team/docs/column-types/pg/#text
@@ -59,6 +57,8 @@ export const pgAdapter = createAdapter({
     table: 'pgTable',
     // https://orm.drizzle.team/docs/column-types/pg/#integer
     int: 'integer',
+    // https://orm.drizzle.team/docs/column-types/pg/#double-precision
+    float: 'doublePrecision',
   },
 })
 
@@ -69,5 +69,7 @@ export const mysqlAdapter = createAdapter({
     table: 'mysqlTable',
     // https://orm.drizzle.team/docs/column-types/mysql#integer
     int: 'int',
+    // https://orm.drizzle.team/docs/column-types/mysql#float
+    float: 'float',
   },
 })
