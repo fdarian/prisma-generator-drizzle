@@ -33,7 +33,7 @@ const { version } = require('../package.json')
 
 generatorHandler({
   onManifest() {
-    logger.info(`${GENERATOR_NAME}:Registered`)
+    logger.info(`${GENERATOR_NAME} Generatinnp drizzle schema...`)
     return {
       version,
       defaultOutput: './drizzle',
@@ -53,6 +53,7 @@ generatorHandler({
 
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 
+    const enumStart = Date.now()
     for await (const eenum of options.dmmf.datamodel.enums) {
       const varName = getEnumVar(eenum.name)
 
@@ -71,7 +72,13 @@ generatorHandler({
       const writeLocation = path.join(basePath, `${kebabCase(varName)}.ts`)
       await writeFileSafely(writeLocation, code)
     }
+    logger.info(
+      `${options.dmmf.datamodel.enums.length} Enums generated in ${
+        Date.now() - enumStart
+      }ms`
+    )
 
+    const modelStart = Date.now()
     const models = []
     for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name)
@@ -191,6 +198,11 @@ generatorHandler({
         path: `${file}`,
       })
     }
+    logger.info(
+      `${options.dmmf.datamodel.enums.length} models generated in ${
+        Date.now() - modelStart
+      }ms`
+    )
 
     const importCode = models
       .map((m) => v.wilcardImport(m.name, `./${m.path}`))
