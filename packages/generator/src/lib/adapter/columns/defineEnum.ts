@@ -3,6 +3,7 @@ import { DMMF } from '@prisma/generator-helper'
 import { defineColumn } from '../base/defineColumn'
 import { Adapter } from '../adapter'
 import { camelCase, kebabCase } from 'lodash'
+import { fieldFunc } from './fieldFunc'
 
 export function defineEnum(adapter: Adapter, field: DMMF.Field) {
   const func = camelCase(field.type)
@@ -11,6 +12,6 @@ export function defineEnum(adapter: Adapter, field: DMMF.Field) {
     field,
     adapter,
     imports: [{ module: `./${kebabCase(field.type)}`, name: func }],
-    columnFunc: v.func(func),
+    columnFunc: fieldFunc(func, field),
   })
 }
