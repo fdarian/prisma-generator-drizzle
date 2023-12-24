@@ -20,7 +20,15 @@ test('findFirst', async () => {
     float: 0.123,
     json: { key: 'value' },
   }
-  await db.insert(users).values(user)
+
+  const query = db.insert(users).values(user)
+  try {
+    await query.execute()
+  } catch (err) {
+    console.log('error when executing this SQL:')
+    console.log(query.toSQL())
+    throw err
+  }
 
   expect(user).toStrictEqual(
     await db.query.users.findFirst({
