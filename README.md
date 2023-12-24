@@ -6,12 +6,17 @@ In this version, the focus is on the query and mutation capabilities of the gene
 
 ## Features
 
+
+https://github.com/farreldarian/prisma-generator-drizzle/assets/62016900/35b57135-614e-4e07-920b-9e9a487eb6cb
+
 - 🤝 1:1 Prisma to Drizzle schema generation
 - ✨ Compatible with all \*scalars, enums, and \*constraints
 - 📦 Supports drizzle relational query
 - 🚀 Generates drizzle-specific features like the `.$type<..>()` method
 
 _\*Only supports default scalar for now and more constraints will be added in future_
+
+> This project is still considered as experimental, but you can safely use it for production. Follow the progress on [v1](https://github.com/farreldarian/prisma-generator-drizzle/issues/1).
 
 ## Installation
 
