@@ -33,7 +33,7 @@ const { version } = require('../package.json')
 
 generatorHandler({
   onManifest() {
-    logger.info(`${GENERATOR_NAME} Generatinnp drizzle schema...`)
+    logger.info(`${GENERATOR_NAME} Generating drizzle schema...`)
     return {
       version,
       defaultOutput: './drizzle',
