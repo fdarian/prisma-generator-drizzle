@@ -13,7 +13,9 @@ execSync(
 )
 
 try {
-  execSync(`DATABASE_URL=${env.TEST_DATABASE_URL} bun test`)
+  execSync(`DATABASE_URL=${env.TEST_DATABASE_URL} bun test`, {
+    stdio: 'inherit',
+  })
 } catch (err) {
   console.log((err as Error).message)
 }
