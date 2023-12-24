@@ -199,7 +199,7 @@ generatorHandler({
       })
     }
     logger.info(
-      `${options.dmmf.datamodel.enums.length} models generated in ${
+      `${options.dmmf.datamodel.enums.length} Models generated in ${
         Date.now() - modelStart
       }ms`
     )
