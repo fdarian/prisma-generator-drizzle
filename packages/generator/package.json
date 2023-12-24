@@ -15,7 +15,7 @@
     "dev": "tsup src/generator.ts src/bin.ts --watch",
     "build": "tsup src/generator.ts src/bin.ts",
     "prepack": "yarn build",
-    "test": "vitest run --globals"
+    "test": "bun test"
   },
   "dependencies": {
     "@prisma/client": "5.7.0",
@@ -24,8 +24,7 @@
     "fp-ts": "^2.16.1",
     "lodash": "^4.17.21",
     "pluralize": "^8.0.0",
-    "prettier": "3.1.1",
-    "vitest": "^1.1.0"
+    "prettier": "3.1.1"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.202",

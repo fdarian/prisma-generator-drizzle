@@ -41,28 +41,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Bun
-      # - uses: oven-sh/setup-bun@v1
-      # - name: Install turbo globally
-      #   run: bun -g add turbo
-      # - name: Install packages
-      #   run: bun install
-      # -
-
-      # Pnpm
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - name: Use Node.js 20
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          cache: 'pnpm'
-      - name: Install turbo
-        run: pnpm -g add turbo
-      - name: Install dependencies
-        run: pnpm install
-      # -
+      - uses: oven-sh/setup-bun@v1
+      - name: Install turbo globally
+        run: bun -g add turbo
+      - name: Install packages
+        run: bun install
 
       - name: Set environment variables
         run: |
