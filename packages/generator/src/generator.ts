@@ -5,7 +5,7 @@ import {
   GeneratorOptions,
 } from '@prisma/generator-helper'
 import { logger } from '@prisma/sdk'
-import path from 'path'
+import path, { relative } from 'path'
 import { GENERATOR_NAME } from './constants'
 import { writeFileSafely } from './utils/writeFileSafely'
 import pluralize from 'pluralize'
@@ -218,6 +218,13 @@ generatorHandler({
     await writeFileSafely(
       path.join(basePath, 'schema.ts'),
       `${importCode}\n\n${schemaCode}`
+    )
+
+    logger.info(
+      `✨ Successfully generated Drizzle schema to ${relative(
+        process.cwd(),
+        basePath
+      )}`
     )
   },
 })
