@@ -46,19 +46,7 @@ generatorHandler({
     if (options.datasources.length > 1)
       throw new Error('Only one datasource is supported')
 
-    const adapter = (() => {
-      switch (options.datasources[0].provider) {
-        case 'postgres':
-        case 'postgresql':
-          return pgAdapter
-        case 'mysql':
-          return mysqlAdapter
-        default:
-          throw new Error(
-            `Connector ${options.datasources[0].provider} is not supported`
-          )
-      }
-    })()
+    const adapter = getAdapter(options)
 
     const basePath = options.generator.output?.value
     if (!basePath) throw new Error('No output path specified')
@@ -220,6 +208,22 @@ generatorHandler({
     )
   },
 })
+
+function getAdapter(options: GeneratorOptions) {
+  return (() => {
+    switch (options.datasources[0].provider) {
+      case 'postgres':
+      case 'postgresql':
+        return pgAdapter
+      case 'mysql':
+        return mysqlAdapter
+      default:
+        throw new Error(
+          `Connector ${options.datasources[0].provider} is not supported`
+        )
+    }
+  })()
+}
 
 function getField(adapter: Adapter) {
   return function (field: DMMF.Field): IColumnValue {
