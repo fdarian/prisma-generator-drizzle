@@ -12,15 +12,23 @@ enum UserType {
   TypeTwo
 }
 
+model Team {
+  id    Int    @id @default(autoincrement())
+  name  String
+  users User[]
+}
+
 model User {
-  id       Int      @id @default(autoincrement())
-  email    String   @unique
+  id       Int       @id @default(autoincrement())
+  email    String    @unique
   name     String?
-  bigint   BigInt
-  boolean  Boolean
-  datetime DateTime
-  decimal  Decimal
+  bigint   BigInt?
+  boolean  Boolean?
+  datetime DateTime?
+  decimal  Decimal?
   enum     UserType
-  float    Float
-  json     Json
+  float    Float?
+  json     Json?
+  team     Team?     @relation(fields: [teamId], references: [id])
+  teamId   Int?
 }

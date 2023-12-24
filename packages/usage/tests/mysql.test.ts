@@ -1,31 +1,67 @@
 import { users } from 'prisma/mysql/drizzle/users'
 import { db } from 'src/lib/mysql'
+import {
+  team,
+  user_insert,
+  user2_insert,
+  user2_result,
+  user_result,
+} from './dummy'
+import { teams } from 'prisma/mysql/drizzle/teams'
 
 beforeEach(async () => {
   await db.delete(users)
+  await db.delete(teams)
 })
 
-test('findFirst', async () => {
-  const user: typeof users.$inferInsert = {
-    id: 1,
-    name: 'John',
-    email: 'john@email.com',
-    bigint: 123n,
-    boolean: true,
-    // precision 3
-    datetime: new Date('2020-01-23T12:01:30Z'),
-    // 65, 30 precision
-    decimal: '0.123000000000000000000000000000',
-    enum: 'TypeOne',
-    float: 0.123,
-    json: { key: 'value' },
-  }
+test('insert + select', async () => {
+  await db.insert(users).values(user_insert)
 
-  await db.insert(users).values(user)
+  const result = await db.query.users.findFirst({
+    where: (User, { eq }) => eq(User.id, user_insert.id),
+  })
+  expect(result).toStrictEqual(user_result)
+})
 
-  expect(user).toStrictEqual(
-    await db.query.users.findFirst({
-      where: (User, { eq }) => eq(User.id, user.id),
-    })
-  )
+test('insert + select (variant 2)', async () => {
+  await db.insert(users).values(user2_insert)
+
+  const result = await db.query.users.findFirst({
+    where: (User, { eq }) => eq(User.id, user2_insert.id),
+  })
+  expect(result).toStrictEqual(user2_result)
+})
+
+test('relations', async () => {
+  await db.insert(teams).values(team)
+  await db.insert(users).values({ ...user_insert, teamId: team.id })
+  await db.insert(users).values({ ...user2_insert, teamId: team.id })
+
+  //  Team.users
+  const teamWithUsers = await db.query.teams.findFirst({
+    where: (Team, { eq }) => eq(Team.id, team.id),
+    with: {
+      users: {
+        columns: {
+          id: true,
+        },
+      },
+    },
+  })
+
+  expect(teamWithUsers).toStrictEqual({
+    ...team,
+    users: [{ id: user_result.id }, { id: user2_result.id }],
+  })
+
+  // user.team
+  const userWithTeam = await db.query.users.findFirst({
+    where: (Team, { eq }) => eq(Team.id, user_result.id),
+    with: { team: true },
+  })
+  expect(userWithTeam).toStrictEqual({
+    ...user_result,
+    teamId: team.id,
+    team: team,
+  })
 })
