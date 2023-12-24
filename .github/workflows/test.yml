@@ -18,6 +18,8 @@ jobs:
           MYSQL_DATABASE: testdb
           MYSQL_USER: testuser
           MYSQL_PASSWORD: testpassword
+        ports:
+          - 3306:3306
 
       postgres:
         image: postgres
@@ -25,6 +27,8 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +41,7 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "PG_DATABASE_URL=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" >> $GITHUB_ENV
-          echo "MYSQL_DATABASE_URL=mysql://$MYSQL_USER:$MYSQL_PASSWORD@127.0.0.1:3306/$MYSQL_DATABASE" >> $GITHUB_ENV
+          echo "PG_DATABASE_URL=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@0.0.0.0:5432/$POSTGRES_DB" >> $GITHUB_ENV
+          echo "MYSQL_DATABASE_URL=mysql://$MYSQL_USER:$MYSQL_PASSWORD@0.0.0.0:3306/$MYSQL_DATABASE" >> $GITHUB_ENV
       - name: Test
         run: turbo test
