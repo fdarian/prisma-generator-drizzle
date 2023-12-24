@@ -2,6 +2,7 @@ import { pipe } from 'fp-ts/lib/function'
 import { v } from '../value'
 import { map } from 'fp-ts/Array'
 import { Entry } from '../value/types/objectValue'
+import { IValue } from '../value/createValue'
 
 function createAdapter(input: {
   module: string
@@ -13,9 +14,12 @@ function createAdapter(input: {
     json: string
     bigint?: string
     boolean?: string
-    datetime?: string
+    datetime: string
     decimal?: string
     string?: string
+  }
+  definition: {
+    datetime: { opts: Record<string, IValue> }
   }
 }) {
   const functions = {
@@ -24,8 +28,6 @@ function createAdapter(input: {
     bigint: input.functions.bigint ?? 'bigint',
     // https://orm.drizzle.team/docs/column-types/pg/#boolean
     boolean: input.functions.boolean ?? 'boolean',
-    // https://orm.drizzle.team/docs/column-types/pg/#timestamp
-    datetime: input.functions.datetime ?? 'timestamp',
     // https://orm.drizzle.team/docs/column-types/pg/#decimal
     decimal: input.functions.decimal ?? 'decimal',
     // https://orm.drizzle.team/docs/column-types/pg/#text
@@ -35,6 +37,7 @@ function createAdapter(input: {
   return {
     module: input.module,
     functions,
+    definition: input.definition,
     enum(name: string, values: string[]) {
       return v.func(input.functions.enum, [
         v.string(name),
@@ -59,6 +62,15 @@ export const pgAdapter = createAdapter({
     float: 'doublePrecision',
     // https://orm.drizzle.team/docs/column-types/pg/#jsonb
     json: 'jsonb',
+    // https://orm.drizzle.team/docs/column-types/pg/#timestamp
+    datetime: 'timestamp',
+  },
+  definition: {
+    datetime: {
+      opts: {
+        precision: v.number(3),
+      },
+    },
   },
 })
 
@@ -73,5 +85,14 @@ export const mysqlAdapter = createAdapter({
     float: 'float',
     // https://orm.drizzle.team/docs/column-types/mysql#json
     json: 'json',
+    // https://orm.drizzle.team/docs/column-types/mysql#datetime
+    datetime: 'datetime',
+  },
+  definition: {
+    datetime: {
+      opts: {
+        fsp: v.number(3),
+      },
+    },
   },
 })
