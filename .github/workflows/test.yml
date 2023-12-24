@@ -38,6 +38,6 @@ jobs:
       - name: Set environment variables
         run: |
           echo "PG_DATABASE_URL=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" >> $GITHUB_ENV
-          echo "MYSQL_DATABASE_URL=mysql://$MYSQL_USER:$MYSQL_PASSWORD@localhost:3306/$MYSQL_DATABASE" >> $GITHUB_ENV
+          echo "MYSQL_DATABASE_URL=mysql://$MYSQL_USER:$MYSQL_PASSWORD@127.0.0.1:3306/$MYSQL_DATABASE" >> $GITHUB_ENV
       - name: Test
         run: turbo test
