@@ -3,9 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
-    "start": "bun run src/index.ts",
-    "test": "bun run scripts/test.ts",
+    "start": "tsx run src/index.ts",
+    "test": "tsx scripts/test.ts --globals",
     "generate": "prisma generate"
   },
   "dependencies": {
@@ -19,9 +20,11 @@
   "devDependencies": {
     "@types/node": "20.10.4",
     "@types/pg": "^8.10.9",
-    "bun-types": "^1.0.19",
+    "dotenv": "^16.3.1",
     "prisma": "5.7.0",
     "prisma-generator-drizzle": "workspace:*",
-    "typescript": "5.3.3"
+    "tsx": "^4.7.0",
+    "typescript": "5.3.3",
+    "vitest": "^1.1.0"
   }
 }

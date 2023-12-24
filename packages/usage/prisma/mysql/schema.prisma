@@ -1,5 +1,5 @@
 generator drizzle {
-  provider = "bunx prisma-generator-drizzle"
+  provider = "prisma-generator-drizzle"
 }
 
 datasource db {
