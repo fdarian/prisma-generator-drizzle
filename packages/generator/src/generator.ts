@@ -28,6 +28,7 @@ import { defineInt } from './lib/adapter/columns/defineInt'
 import { defineJson } from './lib/adapter/columns/defineJson'
 import { defineString } from './lib/adapter/columns/defineString'
 import { defineEnum } from './lib/adapter/columns/defineEnum'
+import { ImportBuilder } from './lib/import-builder'
 
 const { version } = require('../package.json')
 
@@ -84,20 +85,14 @@ generatorHandler({
     for await (const model of options.dmmf.datamodel.models) {
       const name = pluralize(model.name)
 
-      const importMap = new Map<string, Set<string>>()
-      const addImport = (modulePath: string, name: string) => {
-        const val = importMap.get(modulePath) ?? new Set()
-        importMap.set(modulePath, val)
-        val.add(name)
-      }
-
+      const importBuilder = new ImportBuilder()
       const modelVar = camelCase(name)
 
       const fields = model.fields
         .filter(pipe(isKind('scalar'), or(isKind('enum'))))
         .map(getField(adapter))
 
-      addImport(adapter.module, adapter.functions.table)
+      importBuilder.add(adapter.module, adapter.functions.table)
       const modelCode = v.defineVar(
         modelVar,
         adapter.table(
@@ -109,10 +104,11 @@ generatorHandler({
 
       fields.forEach((field) => {
         field.imports.forEach((imp) => {
-          addImport(imp.module, imp.name)
+          importBuilder.add(imp.module, imp.name)
         })
       })
 
+      importBuilder.add('drizzle-orm', 'relations')
       const relationalFields = model.fields.filter(
         (field) => field.kind === 'object'
       )
@@ -129,7 +125,7 @@ generatorHandler({
                 const varName = camelCase(model)
                 relations.add(varName)
 
-                addImport(`./${kebabCase(model)}`, varName)
+                importBuilder.add(`./${kebabCase(model)}`, varName)
 
                 return [
                   field.name,
@@ -173,16 +169,9 @@ generatorHandler({
         { export: true }
       )
 
-      const imports = [
-        ...[...importMap.entries()].map(([modulePath, names]) =>
-          v.namedImport([...names], modulePath)
-        ),
-        v.namedImport(['relations'], 'drizzle-orm'),
-      ]
-
       const moduleName = kebabCase(name)
       await writeCode({
-        declarations: [imports, modelCode, relationCode],
+        declarations: [importBuilder.toDeclaration(), modelCode, relationCode],
         path: basePath,
         name: moduleName,
       })
