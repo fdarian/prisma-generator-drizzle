@@ -57,20 +57,21 @@ generatorHandler({
     for await (const eenum of options.dmmf.datamodel.enums) {
       const varName = getEnumVar(eenum.name)
 
-      const imports = v.namedImport([adapter.functions.enum], adapter.module)
-      const enumVar = v.defineVar(
-        varName,
-        adapter.definition.enum.declare(
-          eenum.dbName ?? eenum.name,
-          eenum.values.map((value) => value.dbName ?? value.name)
-        ),
-        { export: true }
-      )
-
-      const code = `${imports.render()}\n\n${enumVar.render()}`
-
-      const writeLocation = path.join(basePath, `${kebabCase(varName)}.ts`)
-      await writeFileSafely(writeLocation, code)
+      await writeCode({
+        declarations: [
+          v.namedImport([adapter.functions.enum], adapter.module),
+          v.defineVar(
+            varName,
+            adapter.definition.enum.declare(
+              eenum.dbName ?? eenum.name,
+              eenum.values.map((value) => value.dbName ?? value.name)
+            ),
+            { export: true }
+          ),
+        ],
+        path: basePath,
+        name: kebabCase(varName),
+      })
     }
     logger.info(
       `${options.dmmf.datamodel.enums.length} Enums generated in ${
@@ -97,16 +98,14 @@ generatorHandler({
         .map(getField(adapter))
 
       addImport(adapter.module, adapter.functions.table)
-      const modelCode = v
-        .defineVar(
-          modelVar,
-          adapter.table(
-            model.name,
-            fields.map((field) => [field.field, field])
-          ),
-          { export: true }
-        )
-        .render()
+      const modelCode = v.defineVar(
+        modelVar,
+        adapter.table(
+          model.name,
+          fields.map((field) => [field.field, field])
+        ),
+        { export: true }
+      )
 
       fields.forEach((field) => {
         field.imports.forEach((imp) => {
@@ -118,84 +117,79 @@ generatorHandler({
         (field) => field.kind === 'object'
       )
       const relations = new Set<string>()
-      const relationCode = v
-        .defineVar(
-          `${modelVar}Relations`,
-          v.func('relations', [
-            v.useVar(modelVar),
-            v.lambda(
-              v.useVar('helpers'),
-              v.object(
-                relationalFields.map((field) => {
-                  const model = pluralize(field.type)
-                  const varName = camelCase(model)
-                  relations.add(varName)
+      const relationCode = v.defineVar(
+        `${modelVar}Relations`,
+        v.func('relations', [
+          v.useVar(modelVar),
+          v.lambda(
+            v.useVar('helpers'),
+            v.object(
+              relationalFields.map((field) => {
+                const model = pluralize(field.type)
+                const varName = camelCase(model)
+                relations.add(varName)
 
-                  addImport(`./${kebabCase(model)}`, varName)
+                addImport(`./${kebabCase(model)}`, varName)
 
-                  return [
-                    field.name,
-                    v.func(field.isList ? 'helpers.many' : 'helpers.one', [
-                      v.useVar(varName),
-                      ...(field.relationFromFields &&
-                      field.relationFromFields.length > 0 &&
-                      field.relationToFields &&
-                      field.relationToFields.length > 0
-                        ? [
-                            v.object([
-                              [
-                                'fields',
-                                v.array(
-                                  field.relationFromFields.map((f) =>
-                                    createValue({
-                                      render: () =>
-                                        `${modelVar}.${camelCase(f)}`,
-                                    })
-                                  )
-                                ),
-                              ],
-                              [
-                                'references',
-                                v.array(
-                                  field.relationToFields.map((f) =>
-                                    createValue({
-                                      render: () =>
-                                        `${varName}.${camelCase(f)}`,
-                                    })
-                                  )
-                                ),
-                              ],
-                            ]),
-                          ]
-                        : []),
-                    ]),
-                  ]
-                })
-              )
-            ),
-          ]),
-          { export: true }
-        )
-        .render()
+                return [
+                  field.name,
+                  v.func(field.isList ? 'helpers.many' : 'helpers.one', [
+                    v.useVar(varName),
+                    ...(field.relationFromFields &&
+                    field.relationFromFields.length > 0 &&
+                    field.relationToFields &&
+                    field.relationToFields.length > 0
+                      ? [
+                          v.object([
+                            [
+                              'fields',
+                              v.array(
+                                field.relationFromFields.map((f) =>
+                                  createValue({
+                                    render: () => `${modelVar}.${camelCase(f)}`,
+                                  })
+                                )
+                              ),
+                            ],
+                            [
+                              'references',
+                              v.array(
+                                field.relationToFields.map((f) =>
+                                  createValue({
+                                    render: () => `${varName}.${camelCase(f)}`,
+                                  })
+                                )
+                              ),
+                            ],
+                          ]),
+                        ]
+                      : []),
+                  ]),
+                ]
+              })
+            )
+          ),
+        ]),
+        { export: true }
+      )
 
-      const importCode = [
+      const imports = [
         ...[...importMap.entries()].map(([modulePath, names]) =>
           v.namedImport([...names], modulePath)
         ),
         v.namedImport(['relations'], 'drizzle-orm'),
       ]
-        .map(render)
-        .join('\n')
 
-      const code = `${importCode}\n\n${modelCode}\n\n${relationCode}`
-
-      const file = kebabCase(name)
-      const writeLocation = path.join(basePath, `${file}.ts`)
-      await writeFileSafely(writeLocation, code)
+      const moduleName = kebabCase(name)
+      await writeCode({
+        declarations: [imports, modelCode, relationCode],
+        path: basePath,
+        name: moduleName,
+      })
 
       models.push({
         name: modelVar,
-        path: `${file}`,
+        path: `${moduleName}`,
       })
     }
     logger.info(
@@ -204,21 +198,21 @@ generatorHandler({
       }ms`
     )
 
-    const importCode = models
-      .map((m) => v.wilcardImport(m.name, `./${m.path}`))
-      .map(render)
-      .join('\n')
-
-    const schemaCode = v
-      .defineVar('schema', v.object(models.map((m) => v.useVar(m.name))), {
-        export: true,
-      })
-      .render()
-
-    await writeFileSafely(
-      path.join(basePath, 'schema.ts'),
-      `${importCode}\n\n${schemaCode}`
-    )
+    await writeCode({
+      path: basePath,
+      name: 'schema',
+      declarations: [
+        models.map((m) =>
+          // Schema imports
+          v.wilcardImport(m.name, `./${m.path}`)
+        ),
+        v.defineVar(
+          'schema', // Aggregated schemas
+          v.object(models.map((m) => v.useVar(m.name))),
+          { export: true }
+        ),
+      ],
+    })
 
     logger.info(
       `✨ Successfully generated Drizzle schema to ${relative(
@@ -228,6 +222,25 @@ generatorHandler({
     )
   },
 })
+
+async function writeCode(input: {
+  declarations: (IValue | IValue[])[]
+  path: string
+  name: string
+}) {
+  const code = input.declarations
+    .map((declaration) =>
+      // Grouped declaration (e.g imports)
+      Array.isArray(declaration)
+        ? declaration.map(render).join('\n')
+        : // Separate
+          declaration.render()
+    )
+    .join('\n\n')
+
+  const writeLocation = path.join(input.path, `${input.name}.ts`)
+  await writeFileSafely(writeLocation, code)
+}
 
 function getAdapter(options: GeneratorOptions) {
   return (() => {
