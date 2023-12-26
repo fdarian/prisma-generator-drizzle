@@ -20,8 +20,16 @@ export interface PrismaEnumField extends Omit<DMMF.Field, 'kind'> {
   type: string
 }
 export interface PrismaRelationField
-  extends Omit<DMMF.Field, 'relationFromFields' | 'relationToFields' | 'kind'>,
-    Required<Pick<DMMF.Field, 'relationFromFields' | 'relationToFields'>> {
+  extends Omit<
+      DMMF.Field,
+      'relationFromFields' | 'relationToFields' | 'relationName' | 'kind'
+    >,
+    Required<
+      Pick<
+        DMMF.Field,
+        'relationFromFields' | 'relationToFields' | 'relationName'
+      >
+    > {
   kind: 'object'
 }
 

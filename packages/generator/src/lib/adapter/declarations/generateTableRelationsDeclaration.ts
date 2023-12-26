@@ -2,9 +2,10 @@ import { map } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import { camelCase } from 'lodash'
 import { array } from '~/lib/definitions/types/array'
+import { string } from '~/lib/definitions/types/string'
 import { PrismaRelationField } from '~/lib/prisma-helpers/field'
 import { getModelModuleName, getModelVarName } from '~/lib/prisma-helpers/model'
-import { createDef } from '../../definitions/createDef'
+import { Definition, createDef } from '../../definitions/createDef'
 import { constDeclaration } from '../../definitions/types/constDeclaration'
 import { funcCall } from '../../definitions/types/funcCall'
 import { namedImport } from '../../definitions/types/imports'
@@ -41,25 +42,29 @@ function getRelationField(tableVarName: string) {
   return function (field: PrismaRelationField) {
     const relationVarName = getModelVarName(field.type)
 
-    const args = [useVar(relationVarName)]
+    const opts: Partial<
+      Record<'relationName' | 'fields' | 'references', Definition>
+    > = {
+      relationName: string(field.relationName),
+    }
+
     if (hasReference(field)) {
-      args.push(
-        object({
-          fields: pipe(
-            field.relationFromFields,
-            map((f) => useVar(`${tableVarName}.${camelCase(f)}`)),
-            array
-          ),
-          references: pipe(
-            field.relationToFields,
-            map((f) => useVar(`${relationVarName}.${camelCase(f)}`)),
-            array
-          ),
-        })
+      opts.fields = pipe(
+        field.relationFromFields,
+        map((f) => useVar(`${tableVarName}.${camelCase(f)}`)),
+        array
+      )
+      opts.references = pipe(
+        field.relationToFields,
+        map((f) => useVar(`${relationVarName}.${camelCase(f)}`)),
+        array
       )
     }
 
-    const func = funcCall(field.isList ? 'helpers.many' : 'helpers.one', args)
+    const func = funcCall(field.isList ? 'helpers.many' : 'helpers.one', [
+      useVar(relationVarName),
+      object(opts),
+    ])
 
     return createDef({
       name: field.name,
