@@ -5,7 +5,7 @@ import {
   GeneratorOptions,
 } from '@prisma/generator-helper'
 import { logger } from './lib/logger'
-import path, { relative } from 'path'
+import path from 'path'
 import { GENERATOR_NAME } from './constants'
 import { writeFileSafely } from './utils/writeFileSafely'
 import pluralize from 'pluralize'
@@ -17,7 +17,7 @@ import { render } from './lib/value/utils'
 import { Adapter, mysqlAdapter, pgAdapter } from './lib/adapter/adapter'
 import { or } from 'fp-ts/lib/Refinement'
 import { defineBigint } from './lib/adapter/columns/defineBigint'
-import { DefineImport, IColumnValue } from './lib/adapter/base/defineColumn'
+import { IColumnValue } from './lib/adapter/base/defineColumn'
 import { defineBoolean } from './lib/adapter/columns/defineBoolean'
 import { defineDatetime } from './lib/adapter/columns/defineDatetime'
 import { defineDecimal } from './lib/adapter/columns/defineDecimal'
@@ -55,57 +55,48 @@ generatorHandler({
 
     for await (const prismaEnum of options.dmmf.datamodel.enums) {
       const enumCreation = logger.createTask()
-      const enumVar = defineEnumVar(adapter, prismaEnum)
 
-      const moduleName = getEnumModuleName(prismaEnum)
-      await writeCode({
-        declarations: [enumVar],
-        path: basePath,
-        name: moduleName,
+      const enumModule = defineModule({
+        name: getEnumModuleName(prismaEnum),
+        declarations: [defineEnumVar(adapter, prismaEnum)],
       })
-      enumCreation.end(`◟ ${moduleName}.ts`)
+      await writeModule(basePath, enumModule)
+
+      enumCreation.end(`◟ ${enumModule.name}.ts`)
     }
 
-    const models = []
+    const models: ModelModule[] = []
     for await (const model of options.dmmf.datamodel.models) {
       const modelCreation = logger.createTask()
-      const tableVar = defineTableVar(adapter, model)
 
-      const relationalFields = model.fields.filter(isRelationField)
-      const relationsVar = isEmpty(relationalFields)
-        ? null
-        : defineTableRelationsVar(tableVar.name, relationalFields)
+      const modelModule = defineModelModule({ adapter, model })
+      await writeModule(basePath, modelModule)
 
-      const moduleName = getModelModuleName(model)
-      await writeCode({
-        declarations: [tableVar, ...insertIf(relationsVar)],
-        path: basePath,
-        name: moduleName,
-      })
+      models.push(modelModule)
 
-      models.push({
-        name: tableVar.name,
-        path: `${moduleName}`,
-      })
-      modelCreation.end(`◟ ${moduleName}.ts`)
+      modelCreation.end(`◟ ${modelModule.name}.ts`)
     }
 
-    const schemaVar = createValue({
-      imports: models.map((m) => v.wilcardImport(m.name, `./${m.path}`)),
-      render: v.defineVar(
-        'schema', // Aggregated schemas
-        v.object(models.map((m) => v.useVar(m.name))),
-        { export: true }
-      ).render,
-    })
-
-    await writeCode({
-      path: basePath,
+    const schemaModule = defineModule({
       name: 'schema',
-      declarations: [schemaVar],
+      declarations: [defineSchemaVar(models)],
     })
+    await writeModule(basePath, schemaModule)
   },
 })
+
+function defineSchemaVar(models: ModelModule[]) {
+  const aliasFor = (m: ModelModule) => camelCase(m.name)
+
+  return createValue({
+    imports: models.map((m) => v.wilcardImport(aliasFor(m), `./${m.name}`)),
+    render: v.defineVar(
+      'schema', // Aggregated schemas
+      v.object(models.map((m) => v.useVar(aliasFor(m)))),
+      { export: true }
+    ).render,
+  })
+}
 
 function defineEnumVar(adapter: Adapter, prismaEnum: DMMF.DatamodelEnum) {
   const varName = getEnumVarName(prismaEnum)
@@ -207,24 +198,9 @@ function defineTableRelationsVar(
   })
 }
 
-async function writeCode(input: {
-  declarations: (IValue & { imports: ImportValue[] })[]
-  path: string
-  name: string
-}) {
-  const imports = pipe(
-    input.declarations,
-    flatMap((d) => d.imports),
-    reduceImports
-  )
-
-  const code = [
-    imports.map(render).join('\n'),
-    ...input.declarations.map(render),
-  ].join('\n\n')
-
-  const writeLocation = path.join(input.path, `${input.name}.ts`)
-  await writeFileSafely(writeLocation, code)
+async function writeModule(basePath: string, module: Module) {
+  const writeLocation = path.join(basePath, `${module.name}.ts`)
+  await writeFileSafely(writeLocation, module.render())
 }
 
 function getAdapter(options: GeneratorOptions) {
@@ -366,3 +342,40 @@ function hasReference(field: DMMFRelationField) {
     field.relationFromFields.length > 0 && field.relationToFields.length > 0
   )
 }
+
+function defineModule(input: {
+  declarations: (IValue & { imports: ImportValue[] })[]
+  name: string
+}) {
+  return createValue({
+    name: input.name,
+    render() {
+      const imports = pipe(
+        input.declarations,
+        flatMap((d) => d.imports),
+        reduceImports
+      )
+
+      return [
+        imports.map(render).join('\n'),
+        ...input.declarations.map(render),
+      ].join('\n\n')
+    },
+  })
+}
+type Module = ReturnType<typeof defineModule>
+
+function defineModelModule(input: { model: DMMF.Model; adapter: Adapter }) {
+  const tableVar = defineTableVar(input.adapter, input.model)
+
+  const relationalFields = input.model.fields.filter(isRelationField)
+  const relationsVar = isEmpty(relationalFields)
+    ? null
+    : defineTableRelationsVar(tableVar.name, relationalFields)
+
+  return defineModule({
+    name: getModelModuleName(input.model),
+    declarations: [tableVar, ...insertIf(relationsVar)],
+  })
+}
+type ModelModule = ReturnType<typeof defineModelModule>
