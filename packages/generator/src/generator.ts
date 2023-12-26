@@ -63,7 +63,7 @@ generatorHandler({
     for await (const prismaEnum of options.dmmf.datamodel.enums) {
       const enumCreation = logger.createTask()
 
-      const enumModule = defineModule({
+      const enumModule = createModule({
         name: getEnumModuleName(prismaEnum),
         declarations: [defineEnumVar(adapter, prismaEnum)],
       })
@@ -76,7 +76,7 @@ generatorHandler({
     for await (const model of options.dmmf.datamodel.models) {
       const modelCreation = logger.createTask()
 
-      const modelModule = defineModelModule({ adapter, model })
+      const modelModule = createModelModule({ adapter, model })
       await writeModule(basePath, modelModule)
 
       models.push(modelModule)
@@ -84,7 +84,7 @@ generatorHandler({
       modelCreation.end(`◟ ${modelModule.name}.ts`)
     }
 
-    const schemaModule = defineModule({
+    const schemaModule = createModule({
       name: 'schema',
       declarations: [defineSchemaVar(models)],
     })
@@ -326,7 +326,7 @@ function hasReference(field: DMMFRelationField) {
   )
 }
 
-function defineModule(input: {
+function createModule(input: {
   declarations: (IValue & { imports: ImportValue[] })[]
   name: string
 }) {
@@ -346,9 +346,9 @@ function defineModule(input: {
     },
   })
 }
-type Module = ReturnType<typeof defineModule>
+type Module = ReturnType<typeof createModule>
 
-function defineModelModule(input: { model: DMMF.Model; adapter: Adapter }) {
+function createModelModule(input: { model: DMMF.Model; adapter: Adapter }) {
   const tableVar = defineTableVar(input.adapter, input.model)
 
   const relationalFields = input.model.fields.filter(isRelationField)
@@ -356,9 +356,9 @@ function defineModelModule(input: { model: DMMF.Model; adapter: Adapter }) {
     ? null
     : defineTableRelationsVar(tableVar.name, relationalFields)
 
-  return defineModule({
+  return createModule({
     name: getModelModuleName(input.model),
     declarations: [tableVar, ...insertIf(relationsVar)],
   })
 }
-type ModelModule = ReturnType<typeof defineModelModule>
+type ModelModule = ReturnType<typeof createModelModule>
