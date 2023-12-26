@@ -33,7 +33,7 @@ const { version } = require('../package.json')
 
 generatorHandler({
   onManifest() {
-    logger.info('Generating drizzle schema...')
+    logger.log('Generating drizzle schema...')
     return {
       version,
       defaultOutput: './drizzle',
@@ -53,21 +53,22 @@ generatorHandler({
 
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 
-    const enumCreation = logger.createTask()
     for await (const prismaEnum of options.dmmf.datamodel.enums) {
+      const enumCreation = logger.createTask()
       const enumVar = defineEnumVar(adapter, prismaEnum)
 
+      const moduleName = getEnumModuleName(prismaEnum)
       await writeCode({
         declarations: [enumVar],
         path: basePath,
-        name: getEnumModuleName(prismaEnum),
+        name: moduleName,
       })
+      enumCreation.end(`◟ ${moduleName}.ts`)
     }
-    enumCreation.end(`${options.dmmf.datamodel.enums.length} Enums generated`)
 
-    const modelCreation = logger.createTask()
     const models = []
     for await (const model of options.dmmf.datamodel.models) {
+      const modelCreation = logger.createTask()
       const tableVar = defineTableVar(adapter, model)
 
       const relationalFields = model.fields.filter(isRelationField)
@@ -86,8 +87,8 @@ generatorHandler({
         name: tableVar.name,
         path: `${moduleName}`,
       })
+      modelCreation.end(`◟ ${moduleName}.ts`)
     }
-    modelCreation.end(`${options.dmmf.datamodel.enums.length} Models generated`)
 
     const schemaVar = createValue({
       imports: models.map((m) => v.wilcardImport(m.name, `./${m.path}`)),
@@ -103,13 +104,6 @@ generatorHandler({
       name: 'schema',
       declarations: [schemaVar],
     })
-
-    logger.info(
-      `✨ Successfully generated Drizzle schema to ${relative(
-        process.cwd(),
-        basePath
-      )}`
-    )
   },
 })
 
