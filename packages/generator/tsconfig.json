@@ -16,7 +16,10 @@
     "moduleResolution": "Node",
     "outDir": "./dist",
     "rootDir": "./src",
-    "newLine": "lf"
+    "newLine": "lf",
+    "paths": {
+      "~/*": ["src/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["**/node_modules"]
