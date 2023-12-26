@@ -9,7 +9,7 @@ export function defineDatetime(adapter: Adapter, field: DMMF.Field) {
   return defineColumn({
     field,
     adapter,
-    imports: [{ module: adapter.module, name: adapter.functions.datetime }],
+    imports: [v.namedImport([adapter.functions.datetime], adapter.module)],
     columnFunc: fieldFunc(adapter.functions.datetime, field, {
       ...adapter.definition.datetime.opts,
       mode: v.string('date'),

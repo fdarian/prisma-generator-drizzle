@@ -9,7 +9,7 @@ export function defineBigint(adapter: Adapter, field: DMMF.Field) {
   return defineColumn({
     field,
     adapter,
-    imports: [{ module: adapter.module, name: adapter.functions.bigint }],
+    imports: [v.namedImport([adapter.functions.bigint], adapter.module)],
     columnFunc: fieldFunc(adapter.functions.bigint, field, {
       mode: v.string('bigint'),
     }),

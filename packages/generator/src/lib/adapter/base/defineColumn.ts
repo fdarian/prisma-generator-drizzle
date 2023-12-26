@@ -4,8 +4,9 @@ import { DMMF } from '@prisma/generator-helper'
 import { createValue } from '../../value/createValue'
 import { IChainableValue } from '../../value/types/funcValue'
 import { Adapter } from '../adapter'
+import { ImportValue } from 'src/lib/value/types/import'
 
-type DefineImport = {
+export type DefineImport = {
   module: string
   name: string
 }
@@ -13,7 +14,7 @@ type DefineImport = {
 interface DefineColumnInput<TAdapter extends Adapter> {
   adapter: TAdapter
   field: DMMF.Field
-  imports?: DefineImport[]
+  imports?: ImportValue[]
   columnFunc: IChainableValue
 }
 
@@ -53,7 +54,7 @@ abstract class Extension {
   abstract shouldChain(): boolean
   abstract getFunc(): IChainableValue
 
-  getImports(): DefineImport[] {
+  getImports(): ImportValue[] {
     return []
   }
 }
@@ -92,7 +93,7 @@ class ChainableExtension extends Extension {
 
   getImports() {
     if (!this.enabled) return []
-    return [{ module: this.module!, name: this.type! }]
+    return [v.namedImport([this.type!], this.module!)]
   }
 }
 // #endregion

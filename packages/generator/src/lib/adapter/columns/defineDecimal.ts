@@ -9,7 +9,7 @@ export function defineDecimal(adapter: Adapter, field: DMMF.Field) {
   return defineColumn({
     field,
     adapter,
-    imports: [{ module: adapter.module, name: adapter.functions.decimal }],
+    imports: [v.namedImport([adapter.functions.decimal], adapter.module)],
     columnFunc: fieldFunc(adapter.functions.decimal, field, {
       precision: v.number(65),
       scale: v.number(30),

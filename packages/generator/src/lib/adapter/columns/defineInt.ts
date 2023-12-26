@@ -9,7 +9,7 @@ export function defineInt(adapter: Adapter, field: DMMF.Field) {
   return defineColumn({
     field,
     adapter,
-    imports: [{ module: adapter.module, name: adapter.functions.int }],
+    imports: [v.namedImport([adapter.functions.int], adapter.module)],
     columnFunc: fieldFunc(adapter.functions.int, field),
   })
 }

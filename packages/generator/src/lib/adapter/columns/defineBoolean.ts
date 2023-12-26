@@ -9,7 +9,7 @@ export function defineBoolean(adapter: Adapter, field: DMMF.Field) {
   return defineColumn({
     field,
     adapter,
-    imports: [{ module: adapter.module, name: adapter.functions.boolean }],
+    imports: [v.namedImport([adapter.functions.boolean], adapter.module)],
     columnFunc: fieldFunc(adapter.functions.boolean, field),
   })
 }

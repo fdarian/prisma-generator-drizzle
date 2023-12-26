@@ -9,7 +9,7 @@ export function defineJson(adapter: Adapter, field: DMMF.Field) {
   return defineColumn({
     field,
     adapter,
-    imports: [{ module: adapter.module, name: adapter.functions.json }],
+    imports: [v.namedImport([adapter.functions.json], adapter.module)],
     columnFunc: fieldFunc(adapter.functions.json, field),
   })
 }
