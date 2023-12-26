@@ -13,13 +13,13 @@ enum UserType {
 }
 
 model Team {
-  id    Int    @id @default(autoincrement())
+  id    String @id
   name  String
   users User[]
 }
 
 model User {
-  id                Int        @id @default(autoincrement())
+  id                String     @id
   email             String     @unique
   name              String?
   bigint            BigInt?
@@ -30,7 +30,7 @@ model User {
   float             Float?
   json              Json?
   team              Team?      @relation(fields: [teamId], references: [id])
-  teamId            Int?
+  teamId            String?
   receivedTransfers Transfer[] @relation("transfer_to")
   sentTransfers     Transfer[] @relation("transfer_from")
 }
@@ -38,8 +38,8 @@ model User {
 model Transfer {
   id        String   @id
   from      User     @relation("transfer_from", fields: [fromId], references: [id])
-  fromId    Int
+  fromId    String
   to        User     @relation("transfer_to", fields: [toId], references: [id])
-  toId      Int
+  toId      String
   createdAt DateTime @default(now())
 }

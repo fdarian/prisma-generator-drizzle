@@ -4,7 +4,7 @@ import { transfers } from 'prisma/drizzle/transfers'
 import { users } from 'prisma/drizzle/users'
 
 export const user_insert = {
-  id: 1,
+  id: createId(),
   name: 'John',
   email: 'john@email.com',
   bigint: 123n,
@@ -24,7 +24,7 @@ export const user_result: typeof users.$inferSelect = {
 }
 
 export const user2_insert = {
-  id: 2,
+  id: createId(),
   name: 'Jane',
   email: 'jane@email.com',
   enum: 'TypeTwo',
@@ -41,14 +41,14 @@ export const user2_result: typeof users.$inferSelect = {
 }
 
 export const user3_insert = {
-  id: 3,
+  id: createId(),
   name: 'Bob',
   email: 'bob@email.com',
   enum: 'TypeTwo',
 } satisfies typeof users.$inferInsert
 
 export const team: typeof teams.$inferInsert = {
-  id: 1,
+  id: createId(),
   name: 'Team',
 }
 

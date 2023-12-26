@@ -1,4 +1,5 @@
 import { teams } from 'prisma/mysql/drizzle/teams'
+import { transfers } from 'prisma/mysql/drizzle/transfers'
 import { users } from 'prisma/mysql/drizzle/users'
 import { db } from 'src/lib/mysql'
 import {
@@ -12,9 +13,9 @@ import {
   user_insert,
   user_result,
 } from './dummy'
-import { transfers } from 'prisma/mysql/drizzle/transfers'
 
 beforeEach(async () => {
+  await db.delete(transfers)
   await db.delete(users)
   await db.delete(teams)
 })
@@ -88,7 +89,7 @@ test('disambiguating relations', async () => {
   expect(transfer.from).toStrictEqual({ id: user_result.id })
   expect(transfer.to).toStrictEqual({ id: user2_result.id })
 
-  async function fetchUser(userId: number) {
+  async function fetchUser(userId: string) {
     const user = await db.query.users.findFirst({
       where: (User, { eq }) => eq(User.id, userId),
       with: {

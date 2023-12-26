@@ -89,7 +89,7 @@ test('disambiguating relations', async () => {
   expect(transfer.from).toStrictEqual({ id: user_result.id })
   expect(transfer.to).toStrictEqual({ id: user2_result.id })
 
-  async function fetchUser(userId: number) {
+  async function fetchUser(userId: string) {
     const user = await db.query.users.findFirst({
       where: (User, { eq }) => eq(User.id, userId),
       with: {
