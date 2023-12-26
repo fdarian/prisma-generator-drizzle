@@ -23,7 +23,7 @@ export function defaultImportValue(name: string, path: string) {
   })
 }
 
-export function wildcardImportValue(alias: string, path: string) {
+export function wildcardImport(alias: string, path: string) {
   return createValue({
     type: 'wildcardImport' as const,
     module: path,
@@ -36,4 +36,4 @@ export function wildcardImportValue(alias: string, path: string) {
 export type ImportValue =
   | NamedImport
   | ReturnType<typeof defaultImportValue>
-  | ReturnType<typeof wildcardImportValue>
+  | ReturnType<typeof wildcardImport>

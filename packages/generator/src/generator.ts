@@ -27,7 +27,12 @@ import { defineJson } from './lib/adapter/columns/defineJson'
 import { defineString } from './lib/adapter/columns/defineString'
 import { defineEnum } from './lib/adapter/columns/defineEnum'
 import { flatMap, map, reduce } from 'fp-ts/lib/Array'
-import { ImportValue, namedImport, NamedImport } from './lib/value/types/import'
+import {
+  ImportValue,
+  namedImport,
+  NamedImport,
+  wildcardImport,
+} from './lib/value/types/import'
 import { defineVar } from './lib/value/types/defineVar'
 
 const { version } = require('../package.json')
@@ -90,7 +95,7 @@ function defineSchemaVar(models: ModelModule[]) {
   const aliasFor = (m: ModelModule) => camelCase(m.name)
 
   return createValue({
-    imports: models.map((m) => v.wilcardImport(aliasFor(m), `./${m.name}`)),
+    imports: models.map((m) => wildcardImport(aliasFor(m), `./${m.name}`)),
     render: defineVar(
       'schema', // Aggregated schemas
       v.object(models.map((m) => v.useVar(aliasFor(m)))),
