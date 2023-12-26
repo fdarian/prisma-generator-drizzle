@@ -1,119 +1,36 @@
-import { map } from 'fp-ts/Array'
-import { pipe } from 'fp-ts/lib/function'
-import { v } from '../value'
-import { IValue } from '../value/createValue'
-import { args } from '../value/types/lambdaValue'
-import { useVar } from '../value/types/useVar'
+import { ImportableDefinition } from '../definitions/createDef'
+import { PrismaEnumField, PrismaScalarField } from '../prisma-helpers/field'
+import { FieldDefinition } from './fields/createField'
 
-function createAdapter<TName extends string>(input: {
+type ParsableField = PrismaScalarField | PrismaEnumField
+
+export function createAdapter<TName extends string>(impl: {
   name: TName
-  module: string
-  functions: {
-    enum: string
-    table: string
-    int: string
-    float: string
-    json: string
-    bigint?: string
-    boolean?: string
-    datetime: string
-    decimal?: string
-    string?: string
+  getDeclarationFunc: {
+    enum: (name: string, values: string[]) => ImportableDefinition
+    table: (name: string, fields: FieldDefinition[]) => ImportableDefinition
   }
-  definition: {
-    enum: { declare(name: string, values: string[]): IValue }
-    datetime: { opts: Record<string, IValue> }
-  }
+  fields: Partial<
+    Record<
+      PrismaScalarField['type'] | 'enum',
+      (field: ParsableField) => FieldDefinition
+    >
+  >
 }) {
-  const functions = {
-    ...input.functions,
-    // https://orm.drizzle.team/docs/column-types/pg/#bigint
-    bigint: input.functions.bigint ?? 'bigint',
-    // https://orm.drizzle.team/docs/column-types/pg/#boolean
-    boolean: input.functions.boolean ?? 'boolean',
-    // https://orm.drizzle.team/docs/column-types/pg/#decimal
-    decimal: input.functions.decimal ?? 'decimal',
-    // https://orm.drizzle.team/docs/column-types/pg/#text
-    string: input.functions.string ?? 'text',
-  }
-
   return {
-    name: input.name,
-    module: input.module,
-    functions,
-    definition: input.definition,
+    ...impl,
+    parseField(field: ParsableField) {
+      const fieldType = field.kind === 'enum' ? 'enum' : field.type
+      const fieldFunc =
+        fieldType in impl.fields ? impl.fields[fieldType] : undefined
+
+      if (fieldFunc == null) {
+        throw new Error(
+          `Adapter ${impl.name} does not support ${field.type} field`
+        )
+      }
+
+      return fieldFunc(field)
+    },
   }
 }
-
-const pgFunctions = {
-  enum: 'pgEnum',
-  table: 'pgTable',
-  // https://orm.drizzle.team/docs/column-types/pg/#integer
-  int: 'integer',
-  // https://orm.drizzle.team/docs/column-types/pg/#double-precision
-  float: 'doublePrecision',
-  // https://orm.drizzle.team/docs/column-types/pg/#jsonb
-  json: 'jsonb',
-  // https://orm.drizzle.team/docs/column-types/pg/#timestamp
-  datetime: 'timestamp',
-}
-
-export const pgAdapter = createAdapter({
-  name: 'postgres',
-  module: 'drizzle-orm/pg-core',
-  functions: pgFunctions,
-  definition: {
-    enum: {
-      declare(name: string, values: string[]) {
-        return v.func(pgFunctions.enum, [
-          v.string(name),
-          v.array(pipe(values, map(v.string))),
-        ])
-      },
-    },
-    datetime: {
-      opts: {
-        precision: v.number(3),
-      },
-    },
-  },
-})
-
-const mysqlFunctions = {
-  enum: 'mysqlEnum',
-  table: 'mysqlTable',
-  // https://orm.drizzle.team/docs/column-types/mysql#integer
-  int: 'int',
-  // https://orm.drizzle.team/docs/column-types/mysql#float
-  float: 'float',
-  // https://orm.drizzle.team/docs/column-types/mysql#json
-  json: 'json',
-  // https://orm.drizzle.team/docs/column-types/mysql#datetime
-  datetime: 'datetime',
-}
-
-export const mysqlAdapter = createAdapter({
-  name: 'mysql',
-  module: 'drizzle-orm/mysql-core',
-  functions: mysqlFunctions,
-  definition: {
-    enum: {
-      declare(_name: string, values: string[]) {
-        return v.lambda(
-          args('name', 'string'),
-          v.func(mysqlFunctions.enum, [
-            useVar('name'),
-            v.array(pipe(values, map(v.string))),
-          ])
-        )
-      },
-    },
-    datetime: {
-      opts: {
-        fsp: v.number(3),
-      },
-    },
-  },
-})
-
-export type Adapter = typeof pgAdapter | typeof mysqlAdapter

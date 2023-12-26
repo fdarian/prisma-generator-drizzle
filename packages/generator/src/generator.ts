@@ -6,34 +6,27 @@ import {
 import { flatMap, map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import fs from 'fs'
-import { camelCase, isEmpty, kebabCase } from 'lodash'
+import { isEmpty } from 'lodash'
 import path from 'path'
-import pluralize from 'pluralize'
 import { GENERATOR_NAME } from './constants'
-import { Adapter, mysqlAdapter, pgAdapter } from './lib/adapter/adapter'
-import { IColumnValue } from './lib/adapter/base/defineColumn'
-import { defineBigint } from './lib/adapter/columns/defineBigint'
-import { defineBoolean } from './lib/adapter/columns/defineBoolean'
-import { defineDatetime } from './lib/adapter/columns/defineDatetime'
-import { defineDecimal } from './lib/adapter/columns/defineDecimal'
-import { defineEnum } from './lib/adapter/columns/defineEnum'
-import { defineFloat } from './lib/adapter/columns/defineFloat'
-import { defineInt } from './lib/adapter/columns/defineInt'
-import { defineJson } from './lib/adapter/columns/defineJson'
-import { defineString } from './lib/adapter/columns/defineString'
-import { defineTableVar as generateTableDeclaration } from './lib/adapter/vars/defineTableVar'
-import { logger } from './lib/logger'
-import { v } from './lib/value'
-import { createValue, IValue } from './lib/value/createValue'
-import { constDeclaration } from './lib/value/types/constDeclaration'
+import { generateEnumDeclaration } from './lib/adapter/declarations/generateEnumDeclaration'
+import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
+import { generateTableDeclaration } from './lib/adapter/declarations/generateTableDeclaration'
+import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
+import { mysqlAdapter } from './lib/adapter/providers/mysql'
+import { postgresAdapter } from './lib/adapter/providers/postgres'
+import { Adapter } from './lib/adapter/types'
+import { createDef, ImportableDefinition } from './lib/definitions/createDef'
 import {
   ImportValue,
   namedImport,
   NamedImport,
-  wildcardImport,
-} from './lib/value/types/import'
-import { useVar } from './lib/value/types/useVar'
-import { render } from './lib/value/utils'
+} from './lib/definitions/types/imports'
+import { render } from './lib/definitions/utils'
+import { logger } from './lib/logger'
+import { getEnumModuleName } from './lib/prisma-helpers/enums'
+import { isRelationField } from './lib/prisma-helpers/field'
+import { getModelModuleName } from './lib/prisma-helpers/model'
 import { writeFileSafely } from './utils/writeFileSafely'
 
 const { version } = require('../package.json')
@@ -86,43 +79,11 @@ generatorHandler({
 
     const schemaModule = createModule({
       name: 'schema',
-      declarations: [defineSchemaVar(models)],
+      declarations: [generateSchemaDeclaration(models)],
     })
     await writeModule(basePath, schemaModule)
   },
 })
-
-function defineSchemaVar(models: ModelModule[]) {
-  const aliasFor = (m: ModelModule) => camelCase(m.name)
-
-  return createValue({
-    imports: models.map((m) => wildcardImport(aliasFor(m), `./${m.name}`)),
-    render: constDeclaration(
-      'schema', // Aggregated schemas
-      v.object(models.map((m) => useVar(aliasFor(m)))),
-      { export: true }
-    ),
-  })
-}
-
-function generateEnumDeclaration(
-  adapter: Adapter,
-  prismaEnum: DMMF.DatamodelEnum
-) {
-  const varName = getEnumVarName(prismaEnum)
-
-  return createValue({
-    imports: [namedImport([adapter.functions.enum], adapter.module)],
-    render: constDeclaration(
-      varName,
-      adapter.definition.enum.declare(
-        prismaEnum.dbName ?? prismaEnum.name,
-        prismaEnum.values.map((value) => value.dbName ?? value.name)
-      ),
-      { export: true }
-    ),
-  })
-}
 
 function reduceImports(imports: ImportValue[]) {
   type Plan = { toReduce: NamedImport[]; skipped: ImportValue[] }
@@ -157,31 +118,6 @@ function reduceImports(imports: ImportValue[]) {
   ]
 }
 
-function generateTableRelationsDeclaration(
-  tableVarName: string,
-  fields: DMMFRelationField[]
-) {
-  const _fields = fields.map(getRelationField(tableVarName))
-
-  return createValue({
-    imports: [
-      namedImport(['relations'], 'drizzle-orm'),
-      ..._fields.flatMap((field) => field.imports),
-    ],
-    render: constDeclaration(
-      `${tableVarName}Relations`,
-      v.func('relations', [
-        useVar(tableVarName),
-        v.lambda(
-          useVar('helpers'),
-          v.object(_fields.map((field) => [field.name, field]))
-        ),
-      ]),
-      { export: true }
-    ),
-  })
-}
-
 async function writeModule(basePath: string, module: Module) {
   const writeLocation = path.join(basePath, `${module.name}.ts`)
   await writeFileSafely(writeLocation, module.render())
@@ -192,7 +128,7 @@ function getAdapter(options: GeneratorOptions) {
     switch (options.datasources[0].provider) {
       case 'postgres':
       case 'postgresql':
-        return pgAdapter
+        return postgresAdapter
       case 'mysql':
         return mysqlAdapter
       default:
@@ -203,135 +139,16 @@ function getAdapter(options: GeneratorOptions) {
   })()
 }
 
-export function getField(adapter: Adapter) {
-  return function (field: DMMF.Field): IColumnValue {
-    if (field.kind === 'enum') {
-      return defineEnum(adapter, field)
-    }
-
-    switch (field.type) {
-      case 'BigInt': {
-        return defineBigint(adapter, field)
-      }
-      case 'Boolean': {
-        return defineBoolean(adapter, field)
-      }
-      case 'DateTime': {
-        return defineDatetime(adapter, field)
-      }
-      case 'Decimal': {
-        return defineDecimal(adapter, field)
-      }
-      case 'Float': {
-        return defineFloat(adapter, field)
-      }
-      case 'Int': {
-        return defineInt(adapter, field)
-      }
-      case 'Json': {
-        return defineJson(adapter, field)
-      }
-      case 'String': {
-        return defineString(adapter, field)
-      }
-      default:
-        throw new Error(`Type ${field.type} is not supported`)
-    }
-  }
-}
-
-function getRelationField(tableVarName: string) {
-  return function (field: DMMFRelationField) {
-    const relationVarName = getModelVarName(field.type)
-
-    const args = [useVar(relationVarName)]
-    if (hasReference(field)) {
-      args.push(
-        v.object([
-          [
-            'fields',
-            pipe(
-              field.relationFromFields,
-              map((f) => useVar(`${tableVarName}.${camelCase(f)}`)),
-              v.array
-            ),
-          ],
-          [
-            'references',
-            pipe(
-              field.relationToFields,
-              map((f) => useVar(`${relationVarName}.${camelCase(f)}`)),
-              v.array
-            ),
-          ],
-        ])
-      )
-    }
-
-    const func = v.func(field.isList ? 'helpers.many' : 'helpers.one', args)
-
-    return createValue({
-      name: field.name,
-      imports: [
-        namedImport([relationVarName], `./${getModelModuleName(field.type)}`),
-      ],
-      render: func.render,
-    })
-  }
-}
-
-// #region Enum
-function getEnumVarName(prismaEnum: DMMF.DatamodelEnum) {
-  return `${camelCase(prismaEnum.name)}Enum`
-}
-
-function getEnumModuleName(prismaEnum: DMMF.DatamodelEnum) {
-  return kebabCase(getEnumVarName(prismaEnum))
-}
-// #endregion
-
-export function isKind(kind: DMMF.FieldKind) {
-  return (field: DMMF.Field): field is DMMF.Field => field.kind === kind
-}
-
-export function getModelVarName(model: DMMF.Model | string) {
-  return camelCase(pluralize(typeof model === 'string' ? model : model.name))
-}
-
-function getModelModuleName(model: DMMF.Model | string) {
-  return kebabCase(pluralize(typeof model === 'string' ? model : model.name))
-}
-
-type DMMFRelationField = DMMF.Field &
-  Required<Pick<DMMF.Field, 'relationFromFields' | 'relationToFields'>>
-
-function isRelationField(field: DMMF.Field): field is DMMFRelationField {
-  return (
-    field.kind === 'object' &&
-    field.relationFromFields != null &&
-    field.relationToFields != null
-  )
-}
-
-function insertIf<T>(value: T | null | undefined): T[] {
+function ifExists<T>(value: T | null | undefined): T[] {
   if (value == null) return []
   return [value]
 }
 
-/**
- * Not a derived relation in which the model holds the reference
- */
-function hasReference(field: DMMFRelationField) {
-  return (
-    field.relationFromFields.length > 0 && field.relationToFields.length > 0
-  )
-}
-
 function createModule(input: {
-  declarations: (IValue & { imports: ImportValue[] })[]
+  declarations: ImportableDefinition[]
   name: string
 }) {
-  return createValue({
+  return createDef({
     name: input.name,
     render() {
       const imports = pipe(
@@ -359,7 +176,7 @@ function createModelModule(input: { model: DMMF.Model; adapter: Adapter }) {
 
   return createModule({
     name: getModelModuleName(input.model),
-    declarations: [tableVar, ...insertIf(relationsVar)],
+    declarations: [tableVar, ...ifExists(relationsVar)],
   })
 }
-type ModelModule = ReturnType<typeof createModelModule>
+export type ModelModule = ReturnType<typeof createModelModule>
