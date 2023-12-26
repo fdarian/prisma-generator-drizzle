@@ -48,6 +48,7 @@ test('relations', async () => {
     where: (Team, { eq }) => eq(Team.id, team.id),
     with: {
       users: {
+        orderBy: (User, { asc }) => asc(User.createdAt),
         columns: {
           id: true,
         },
@@ -93,8 +94,12 @@ test('disambiguating relations', async () => {
     const user = await db.query.users.findFirst({
       where: (User, { eq }) => eq(User.id, userId),
       with: {
-        receivedTransfers: true,
-        sentTransfers: true,
+        receivedTransfers: {
+          orderBy: (Transfer, { asc }) => asc(Transfer.createdAt),
+        },
+        sentTransfers: {
+          orderBy: (Transfer, { asc }) => asc(Transfer.createdAt),
+        },
       },
     })
     if (!user) throw new Error('user is null')

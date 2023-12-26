@@ -16,6 +16,7 @@ model Team {
   id    String @id
   name  String
   users User[]
+  createdAt DateTime @default(now())
 }
 
 model User {
@@ -33,6 +34,7 @@ model User {
   teamId            String?
   receivedTransfers Transfer[] @relation("transfer_to")
   sentTransfers     Transfer[] @relation("transfer_from")
+  createdAt DateTime @default(now())
 }
 
 model Transfer {
