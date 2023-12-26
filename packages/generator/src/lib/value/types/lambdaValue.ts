@@ -10,7 +10,10 @@ export function args(name: string, type: string) {
 }
 type ArgsValue = ReturnType<typeof args>
 
-export function lambdaValue(args: DestructureValue | ArgsValue, returnVal: IValue) {
+export function lambdaValue(
+  args: DestructureValue | ArgsValue,
+  returnVal: IValue
+) {
   return createValue({
     render() {
       return `(${args.render()}) => { return ${returnVal.render()}; }`

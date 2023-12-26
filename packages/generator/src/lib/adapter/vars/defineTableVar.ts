@@ -1,12 +1,12 @@
 import { DMMF } from '@prisma/generator-helper'
-import { createValue } from '../../value/createValue'
-import { pipe } from 'fp-ts/lib/function'
-import { Adapter } from '../adapter'
 import { or } from 'fp-ts/lib/Refinement'
-import { namedImport } from '../../value/types/import'
-import { constDeclaration } from '../../value/types/constDeclaration'
-import { isKind, getField, getModelVarName } from '../../../generator'
+import { pipe } from 'fp-ts/lib/function'
 import { v } from 'src/lib/value'
+import { getField, getModelVarName, isKind } from '../../../generator'
+import { createValue } from '../../value/createValue'
+import { constDeclaration } from '../../value/types/constDeclaration'
+import { namedImport } from '../../value/types/import'
+import { Adapter } from '../adapter'
 
 export function defineTableVar(adapter: Adapter, model: DMMF.Model) {
   const fields = model.fields

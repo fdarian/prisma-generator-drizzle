@@ -1,5 +1,4 @@
 import { destructureValue } from './destructureValue'
-import { createValue } from '../createValue'
 
 describe('destructureValue', () => {
   test('renders correctly', () => {

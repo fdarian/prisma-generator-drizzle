@@ -1,10 +1,10 @@
-import { pipe } from 'fp-ts/lib/function'
-import { v } from '../../value'
 import { DMMF } from '@prisma/generator-helper'
+import { pipe } from 'fp-ts/lib/function'
+import { ImportValue, namedImport } from 'src/lib/value/types/import'
+import { v } from '../../value'
 import { createValue } from '../../value/createValue'
 import { IChainableValue } from '../../value/types/funcValue'
 import { Adapter } from '../adapter'
-import { ImportValue, namedImport } from 'src/lib/value/types/import'
 
 export type DefineImport = {
   module: string

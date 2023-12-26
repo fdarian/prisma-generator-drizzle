@@ -1,7 +1,6 @@
+import { map } from 'fp-ts/Array'
 import { pipe } from 'fp-ts/lib/function'
 import { v } from '../value'
-import { map } from 'fp-ts/Array'
-import { Entry } from '../value/types/objectValue'
 import { IValue } from '../value/createValue'
 import { args } from '../value/types/lambdaValue'
 import { useVar } from '../value/types/useVar'

@@ -1,5 +1,5 @@
-import { lambdaValue } from './lambdaValue'
 import { createValue } from '../createValue'
+import { lambdaValue } from './lambdaValue'
 
 describe('lambdaValue', () => {
   test('renders correctly', () => {

@@ -1,9 +1,9 @@
-import { v } from '../../value'
 import { DMMF } from '@prisma/generator-helper'
-import { defineColumn } from '../base/defineColumn'
-import { Adapter } from '../adapter'
-import { fieldFunc } from './fieldFunc'
 import { namedImport } from 'src/lib/value/types/import'
+import { v } from '../../value'
+import { Adapter } from '../adapter'
+import { defineColumn } from '../base/defineColumn'
+import { fieldFunc } from './fieldFunc'
 
 // https://www.prisma.io/docs/orm/reference/prisma-schema-reference#datetime
 export function defineDatetime(adapter: Adapter, field: DMMF.Field) {

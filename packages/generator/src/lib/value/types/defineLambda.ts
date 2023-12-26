@@ -1,5 +1,4 @@
 import { IValue, createValue } from '../createValue'
-import { DestructureValue } from './destructureValue'
 
 function args(name: string, type: string) {
   return createValue({

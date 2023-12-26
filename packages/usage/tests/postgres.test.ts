@@ -1,13 +1,13 @@
+import { teams } from 'prisma/drizzle/teams'
 import { users } from 'prisma/drizzle/users'
 import { db } from 'src/lib/postgres'
 import {
-  user_insert,
+  team,
   user2_insert,
   user2_result,
+  user_insert,
   user_result,
-  team,
 } from './dummy'
-import { teams } from 'prisma/drizzle/teams'
 
 beforeEach(async () => {
   await db.delete(users)

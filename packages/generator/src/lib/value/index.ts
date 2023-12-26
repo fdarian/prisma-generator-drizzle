@@ -1,13 +1,12 @@
-import { numberValue } from 'src/lib/value/types/numberValue'
-import { stringValue } from 'src/lib/value/types/stringValue'
-import { objectValue } from 'src/lib/value/types/objectValue'
 import { funcValue } from 'src/lib/value/types/funcValue'
-import { useVar } from './types/useVar'
-import { lambdaValue } from './types/lambdaValue'
-import { destructureValue } from './types/destructureValue'
+import { numberValue } from 'src/lib/value/types/numberValue'
+import { objectValue } from 'src/lib/value/types/objectValue'
+import { stringValue } from 'src/lib/value/types/stringValue'
 import { arrayValue } from './types/arrayValue'
+import { destructureValue } from './types/destructureValue'
 import { defaultImportValue, namedImport, wildcardImport } from './types/import'
-import { constDeclaration } from './types/constDeclaration'
+import { lambdaValue } from './types/lambdaValue'
+import { useVar } from './types/useVar'
 
 export const v = {
   number: numberValue,

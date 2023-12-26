@@ -1,40 +1,40 @@
-import fs from 'fs'
 import {
   DMMF,
   generatorHandler,
   GeneratorOptions,
 } from '@prisma/generator-helper'
-import { logger } from './lib/logger'
-import path from 'path'
-import { GENERATOR_NAME } from './constants'
-import { writeFileSafely } from './utils/writeFileSafely'
-import pluralize from 'pluralize'
-import { camelCase, isEmpty, kebabCase } from 'lodash'
-import { v } from './lib/value'
-import { createValue, IValue } from './lib/value/createValue'
+import { flatMap, map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
-import { render } from './lib/value/utils'
+import fs from 'fs'
+import { camelCase, isEmpty, kebabCase } from 'lodash'
+import path from 'path'
+import pluralize from 'pluralize'
+import { GENERATOR_NAME } from './constants'
 import { Adapter, mysqlAdapter, pgAdapter } from './lib/adapter/adapter'
-import { defineBigint } from './lib/adapter/columns/defineBigint'
 import { IColumnValue } from './lib/adapter/base/defineColumn'
+import { defineBigint } from './lib/adapter/columns/defineBigint'
 import { defineBoolean } from './lib/adapter/columns/defineBoolean'
 import { defineDatetime } from './lib/adapter/columns/defineDatetime'
 import { defineDecimal } from './lib/adapter/columns/defineDecimal'
+import { defineEnum } from './lib/adapter/columns/defineEnum'
 import { defineFloat } from './lib/adapter/columns/defineFloat'
 import { defineInt } from './lib/adapter/columns/defineInt'
 import { defineJson } from './lib/adapter/columns/defineJson'
 import { defineString } from './lib/adapter/columns/defineString'
-import { defineEnum } from './lib/adapter/columns/defineEnum'
-import { flatMap, map, reduce } from 'fp-ts/lib/Array'
+import { defineTableVar as generateTableDeclaration } from './lib/adapter/vars/defineTableVar'
+import { logger } from './lib/logger'
+import { v } from './lib/value'
+import { createValue, IValue } from './lib/value/createValue'
+import { constDeclaration } from './lib/value/types/constDeclaration'
 import {
   ImportValue,
   namedImport,
   NamedImport,
   wildcardImport,
 } from './lib/value/types/import'
-import { constDeclaration } from './lib/value/types/constDeclaration'
 import { useVar } from './lib/value/types/useVar'
-import { defineTableVar as generateTableDeclaration } from './lib/adapter/vars/defineTableVar'
+import { render } from './lib/value/utils'
+import { writeFileSafely } from './utils/writeFileSafely'
 
 const { version } = require('../package.json')
 

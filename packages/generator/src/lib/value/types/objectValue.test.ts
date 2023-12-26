@@ -1,6 +1,6 @@
+import { numberValue } from './numberValue'
 import { Entry, objectValue } from './objectValue'
 import { stringValue } from './stringValue'
-import { numberValue } from './numberValue'
 
 describe('objectValue', () => {
   test('with one entry', () => {

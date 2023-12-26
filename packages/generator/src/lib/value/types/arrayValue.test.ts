@@ -1,7 +1,7 @@
 import { arrayValue } from './arrayValue'
-import { stringValue } from './stringValue'
 import { numberValue } from './numberValue'
 import { objectValue } from './objectValue'
+import { stringValue } from './stringValue'
 
 test('arrayValue', () => {
   const values = [
