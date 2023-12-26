@@ -101,14 +101,14 @@ function defineSchemaVar(models: ModelModule[]) {
       'schema', // Aggregated schemas
       v.object(models.map((m) => useVar(aliasFor(m)))),
       { export: true }
-    ).render,
+    ),
   })
 }
 
 function defineEnumVar(adapter: Adapter, prismaEnum: DMMF.DatamodelEnum) {
   const varName = getEnumVarName(prismaEnum)
 
-  const enumDef = createValue({
+  return createValue({
     imports: [namedImport([adapter.functions.enum], adapter.module)],
     render: defineVar(
       varName,
@@ -117,9 +117,8 @@ function defineEnumVar(adapter: Adapter, prismaEnum: DMMF.DatamodelEnum) {
         prismaEnum.values.map((value) => value.dbName ?? value.name)
       ),
       { export: true }
-    ).render,
+    ),
   })
-  return enumDef
 }
 
 function reduceImports(imports: ImportValue[]) {

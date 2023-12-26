@@ -1,7 +1,17 @@
-export interface IValue {
-  render(): string
+type IRenderable = {
+  render: () => string
 }
 
-export function createValue<TValue extends IValue>(options: TValue) {
-  return options
+type CreateValueOpts = {
+  render: IRenderable['render'] | IRenderable
 }
+
+export function createValue<TOpts extends CreateValueOpts>(options: TOpts) {
+  const { render, ...rest } = options
+  return {
+    ...rest,
+    render: typeof render === 'function' ? render : render.render,
+  }
+}
+
+export type IValue = ReturnType<typeof createValue>

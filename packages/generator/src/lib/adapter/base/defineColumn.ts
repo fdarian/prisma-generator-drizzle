@@ -38,7 +38,7 @@ export function defineColumn<TAdapter extends Adapter>(
       }),
       when(field.isId, () => v.func('primaryKey')),
       when(!field.isId && field.isRequired, () => v.func('notNull'))
-    ).render,
+    ),
   })
 }
 

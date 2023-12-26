@@ -27,6 +27,6 @@ export function defineTableVar(adapter: Adapter, model: DMMF.Model) {
         v.object(fields.map((field) => [field.field, field])),
       ]),
       { export: true }
-    ).render,
+    ),
   })
 }
