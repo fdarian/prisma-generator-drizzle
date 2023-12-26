@@ -1,6 +1,6 @@
 import { IValue, createValue } from '../createValue'
 
-export function defineVar(
+export function constDeclaration(
   name: string,
   value: IValue,
   opts?: {

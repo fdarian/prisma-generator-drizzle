@@ -32,7 +32,7 @@ import {
   NamedImport,
   wildcardImport,
 } from './lib/value/types/import'
-import { defineVar } from './lib/value/types/defineVar'
+import { constDeclaration } from './lib/value/types/constDeclaration'
 import { useVar } from './lib/value/types/useVar'
 import { defineTableVar } from './lib/adapter/vars/defineTableVar'
 
@@ -97,7 +97,7 @@ function defineSchemaVar(models: ModelModule[]) {
 
   return createValue({
     imports: models.map((m) => wildcardImport(aliasFor(m), `./${m.name}`)),
-    render: defineVar(
+    render: constDeclaration(
       'schema', // Aggregated schemas
       v.object(models.map((m) => useVar(aliasFor(m)))),
       { export: true }
@@ -110,7 +110,7 @@ function defineEnumVar(adapter: Adapter, prismaEnum: DMMF.DatamodelEnum) {
 
   return createValue({
     imports: [namedImport([adapter.functions.enum], adapter.module)],
-    render: defineVar(
+    render: constDeclaration(
       varName,
       adapter.definition.enum.declare(
         prismaEnum.dbName ?? prismaEnum.name,
@@ -160,7 +160,7 @@ function defineTableRelationsVar(
 ) {
   const _fields = fields.map(getRelationField(tableVarName))
 
-  const relationVar = defineVar(
+  const relationVar = constDeclaration(
     `${tableVarName}Relations`,
     v.func('relations', [
       useVar(tableVarName),

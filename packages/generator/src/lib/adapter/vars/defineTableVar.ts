@@ -4,7 +4,7 @@ import { pipe } from 'fp-ts/lib/function'
 import { Adapter } from '../adapter'
 import { or } from 'fp-ts/lib/Refinement'
 import { namedImport } from '../../value/types/import'
-import { defineVar } from '../../value/types/defineVar'
+import { constDeclaration } from '../../value/types/constDeclaration'
 import { isKind, getField, getModelVarName } from '../../../generator'
 import { v } from 'src/lib/value'
 
@@ -20,7 +20,7 @@ export function defineTableVar(adapter: Adapter, model: DMMF.Model) {
       namedImport([adapter.functions.table], adapter.module),
       ...fields.flatMap((field) => field.imports),
     ],
-    render: defineVar(
+    render: constDeclaration(
       name,
       v.func(adapter.functions.table, [
         v.string(model.name),

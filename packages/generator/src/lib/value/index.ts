@@ -7,7 +7,7 @@ import { lambdaValue } from './types/lambdaValue'
 import { destructureValue } from './types/destructureValue'
 import { arrayValue } from './types/arrayValue'
 import { defaultImportValue, namedImport, wildcardImport } from './types/import'
-import { defineVar } from './types/defineVar'
+import { constDeclaration } from './types/constDeclaration'
 
 export const v = {
   number: numberValue,
@@ -15,7 +15,6 @@ export const v = {
   object: objectValue,
   func: funcValue,
   useVar: useVar,
-  defineVar: defineVar,
   lambda: lambdaValue,
   destructure: destructureValue,
   array: arrayValue,
