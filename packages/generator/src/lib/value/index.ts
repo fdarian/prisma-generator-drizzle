@@ -11,7 +11,7 @@ import {
   namedImportValue,
   wildcardImportValue,
 } from './types/import'
-import { defineVarValue } from './types/defineVarValue'
+import { defineVar } from './types/defineVar'
 
 export const v = {
   number: numberValue,
@@ -19,7 +19,7 @@ export const v = {
   object: objectValue,
   func: funcValue,
   useVar: useVarValue,
-  defineVar: defineVarValue,
+  defineVar: defineVar,
   lambda: lambdaValue,
   destructure: destructureValue,
   array: arrayValue,

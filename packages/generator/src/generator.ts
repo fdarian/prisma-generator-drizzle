@@ -28,6 +28,7 @@ import { defineString } from './lib/adapter/columns/defineString'
 import { defineEnum } from './lib/adapter/columns/defineEnum'
 import { flatMap, map, reduce } from 'fp-ts/lib/Array'
 import { ImportValue, NamedImport } from './lib/value/types/import'
+import { defineVar } from './lib/value/types/defineVar'
 
 const { version } = require('../package.json')
 
@@ -90,7 +91,7 @@ function defineSchemaVar(models: ModelModule[]) {
 
   return createValue({
     imports: models.map((m) => v.wilcardImport(aliasFor(m), `./${m.name}`)),
-    render: v.defineVar(
+    render: defineVar(
       'schema', // Aggregated schemas
       v.object(models.map((m) => v.useVar(aliasFor(m)))),
       { export: true }
@@ -103,7 +104,7 @@ function defineEnumVar(adapter: Adapter, prismaEnum: DMMF.DatamodelEnum) {
 
   const enumDef = createValue({
     imports: [v.namedImport([adapter.functions.enum], adapter.module)],
-    render: v.defineVar(
+    render: defineVar(
       varName,
       adapter.definition.enum.declare(
         prismaEnum.dbName ?? prismaEnum.name,
@@ -160,7 +161,7 @@ function defineTableVar(adapter: Adapter, model: DMMF.Model) {
       v.namedImport([adapter.functions.table], adapter.module),
       ...fields.flatMap((field) => field.imports),
     ],
-    render: v.defineVar(
+    render: defineVar(
       name,
       adapter.table(
         model.name,
@@ -177,7 +178,7 @@ function defineTableRelationsVar(
 ) {
   const _fields = fields.map(getRelationField(tableVarName))
 
-  const relationVar = v.defineVar(
+  const relationVar = defineVar(
     `${tableVarName}Relations`,
     v.func('relations', [
       v.useVar(tableVarName),
