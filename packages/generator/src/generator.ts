@@ -34,6 +34,7 @@ import {
   wildcardImport,
 } from './lib/value/types/import'
 import { defineVar } from './lib/value/types/defineVar'
+import { useVar } from './lib/value/types/useVar'
 
 const { version } = require('../package.json')
 
@@ -98,7 +99,7 @@ function defineSchemaVar(models: ModelModule[]) {
     imports: models.map((m) => wildcardImport(aliasFor(m), `./${m.name}`)),
     render: defineVar(
       'schema', // Aggregated schemas
-      v.object(models.map((m) => v.useVar(aliasFor(m)))),
+      v.object(models.map((m) => useVar(aliasFor(m)))),
       { export: true }
     ).render,
   })
@@ -186,9 +187,9 @@ function defineTableRelationsVar(
   const relationVar = defineVar(
     `${tableVarName}Relations`,
     v.func('relations', [
-      v.useVar(tableVarName),
+      useVar(tableVarName),
       v.lambda(
-        v.useVar('helpers'),
+        useVar('helpers'),
         v.object(_fields.map((field) => [field.name, field]))
       ),
     ]),
@@ -266,7 +267,7 @@ function getRelationField(tableVarName: string) {
   return function (field: DMMFRelationField) {
     const relationVarName = getModelVarName(field.type)
 
-    const args = [v.useVar(relationVarName)]
+    const args = [useVar(relationVarName)]
     if (hasReference(field)) {
       args.push(
         v.object([
@@ -274,7 +275,7 @@ function getRelationField(tableVarName: string) {
             'fields',
             pipe(
               field.relationFromFields,
-              map((f) => v.useVar(`${tableVarName}.${camelCase(f)}`)),
+              map((f) => useVar(`${tableVarName}.${camelCase(f)}`)),
               v.array
             ),
           ],
@@ -282,7 +283,7 @@ function getRelationField(tableVarName: string) {
             'references',
             pipe(
               field.relationToFields,
-              map((f) => v.useVar(`${relationVarName}.${camelCase(f)}`)),
+              map((f) => useVar(`${relationVarName}.${camelCase(f)}`)),
               v.array
             ),
           ],

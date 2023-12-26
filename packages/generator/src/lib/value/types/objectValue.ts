@@ -1,10 +1,10 @@
 import { createValue, IValue } from '../createValue'
-import { UseVarValue } from './useVarValue'
+import { UseVar } from './useVar'
 
 export type Entry = [string, IValue]
 
 export function objectValue(
-  entries: Record<string, IValue> | (Entry | UseVarValue)[]
+  entries: Record<string, IValue> | (Entry | UseVar)[]
 ) {
   const _entries = Array.isArray(entries) ? entries : Object.entries(entries)
 

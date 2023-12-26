@@ -4,6 +4,7 @@ import { map } from 'fp-ts/Array'
 import { Entry } from '../value/types/objectValue'
 import { IValue } from '../value/createValue'
 import { args } from '../value/types/lambdaValue'
+import { useVar } from '../value/types/useVar'
 
 function createAdapter<TName extends string>(input: {
   name: TName
@@ -105,7 +106,7 @@ export const mysqlAdapter = createAdapter({
         return v.lambda(
           args('name', 'string'),
           v.func(mysqlFunctions.enum, [
-            v.useVar('name'),
+            useVar('name'),
             v.array(pipe(values, map(v.string))),
           ])
         )

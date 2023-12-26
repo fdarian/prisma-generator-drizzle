@@ -2,7 +2,7 @@ import { numberValue } from 'src/lib/value/types/numberValue'
 import { stringValue } from 'src/lib/value/types/stringValue'
 import { objectValue } from 'src/lib/value/types/objectValue'
 import { funcValue } from 'src/lib/value/types/funcValue'
-import { useVarValue } from './types/useVarValue'
+import { useVar } from './types/useVar'
 import { lambdaValue } from './types/lambdaValue'
 import { destructureValue } from './types/destructureValue'
 import { arrayValue } from './types/arrayValue'
@@ -14,7 +14,7 @@ export const v = {
   string: stringValue,
   object: objectValue,
   func: funcValue,
-  useVar: useVarValue,
+  useVar: useVar,
   defineVar: defineVar,
   lambda: lambdaValue,
   destructure: destructureValue,
