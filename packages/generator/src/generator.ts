@@ -4,7 +4,7 @@ import {
   generatorHandler,
   GeneratorOptions,
 } from '@prisma/generator-helper'
-import { logger } from '@prisma/sdk'
+import { logger } from './lib/logger'
 import path, { relative } from 'path'
 import { GENERATOR_NAME } from './constants'
 import { writeFileSafely } from './utils/writeFileSafely'
@@ -33,7 +33,7 @@ const { version } = require('../package.json')
 
 generatorHandler({
   onManifest() {
-    logger.info(`${GENERATOR_NAME} Generating drizzle schema...`)
+    logger.info('Generating drizzle schema...')
     return {
       version,
       defaultOutput: './drizzle',
@@ -53,7 +53,7 @@ generatorHandler({
 
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 
-    const enumStart = Date.now()
+    const enumCreation = logger.createTask()
     for await (const prismaEnum of options.dmmf.datamodel.enums) {
       const enumVar = defineEnumVar(adapter, prismaEnum)
 
@@ -63,13 +63,9 @@ generatorHandler({
         name: getEnumModuleName(prismaEnum),
       })
     }
-    logger.info(
-      `${options.dmmf.datamodel.enums.length} Enums generated in ${
-        Date.now() - enumStart
-      }ms`
-    )
+    enumCreation.end(`${options.dmmf.datamodel.enums.length} Enums generated`)
 
-    const modelStart = Date.now()
+    const modelCreation = logger.createTask()
     const models = []
     for await (const model of options.dmmf.datamodel.models) {
       const tableVar = defineTableVar(adapter, model)
@@ -91,11 +87,7 @@ generatorHandler({
         path: `${moduleName}`,
       })
     }
-    logger.info(
-      `${options.dmmf.datamodel.enums.length} Models generated in ${
-        Date.now() - modelStart
-      }ms`
-    )
+    modelCreation.end(`${options.dmmf.datamodel.enums.length} Models generated`)
 
     const schemaVar = createValue({
       imports: models.map((m) => v.wilcardImport(m.name, `./${m.path}`)),
