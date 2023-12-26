@@ -9,6 +9,7 @@
     "generate": "prisma generate"
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "5.7.0",
     "drizzle-orm": "^0.29.1",
     "mysql2": "^3.6.5",

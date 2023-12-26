@@ -19,16 +19,27 @@ model Team {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  name     String?
-  bigint   BigInt?
-  boolean  Boolean?
-  datetime DateTime?
-  decimal  Decimal?
-  enum     UserType
-  float    Float?
-  json     Json?
-  team     Team?     @relation(fields: [teamId], references: [id])
-  teamId   Int?
+  id                Int        @id @default(autoincrement())
+  email             String     @unique
+  name              String?
+  bigint            BigInt?
+  boolean           Boolean?
+  datetime          DateTime?
+  decimal           Decimal?
+  enum              UserType
+  float             Float?
+  json              Json?
+  team              Team?      @relation(fields: [teamId], references: [id])
+  teamId            Int?
+  receivedTransfers Transfer[] @relation("transfer_to")
+  sentTransfers     Transfer[] @relation("transfer_from")
+}
+
+model Transfer {
+  id        String   @id
+  from      User     @relation("transfer_from", fields: [fromId], references: [id])
+  fromId    Int
+  to        User     @relation("transfer_to", fields: [toId], references: [id])
+  toId      Int
+  createdAt DateTime @default(now())
 }
