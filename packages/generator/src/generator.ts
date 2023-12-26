@@ -34,7 +34,7 @@ import {
 } from './lib/value/types/import'
 import { constDeclaration } from './lib/value/types/constDeclaration'
 import { useVar } from './lib/value/types/useVar'
-import { defineTableVar } from './lib/adapter/vars/defineTableVar'
+import { defineTableVar as generateTableDeclaration } from './lib/adapter/vars/defineTableVar'
 
 const { version } = require('../package.json')
 
@@ -65,7 +65,7 @@ generatorHandler({
 
       const enumModule = createModule({
         name: getEnumModuleName(prismaEnum),
-        declarations: [defineEnumVar(adapter, prismaEnum)],
+        declarations: [generateEnumDeclaration(adapter, prismaEnum)],
       })
       await writeModule(basePath, enumModule)
 
@@ -105,7 +105,10 @@ function defineSchemaVar(models: ModelModule[]) {
   })
 }
 
-function defineEnumVar(adapter: Adapter, prismaEnum: DMMF.DatamodelEnum) {
+function generateEnumDeclaration(
+  adapter: Adapter,
+  prismaEnum: DMMF.DatamodelEnum
+) {
   const varName = getEnumVarName(prismaEnum)
 
   return createValue({
@@ -154,30 +157,28 @@ function reduceImports(imports: ImportValue[]) {
   ]
 }
 
-function defineTableRelationsVar(
+function generateTableRelationsDeclaration(
   tableVarName: string,
   fields: DMMFRelationField[]
 ) {
   const _fields = fields.map(getRelationField(tableVarName))
-
-  const relationVar = constDeclaration(
-    `${tableVarName}Relations`,
-    v.func('relations', [
-      useVar(tableVarName),
-      v.lambda(
-        useVar('helpers'),
-        v.object(_fields.map((field) => [field.name, field]))
-      ),
-    ]),
-    { export: true }
-  )
 
   return createValue({
     imports: [
       namedImport(['relations'], 'drizzle-orm'),
       ..._fields.flatMap((field) => field.imports),
     ],
-    render: relationVar.render,
+    render: constDeclaration(
+      `${tableVarName}Relations`,
+      v.func('relations', [
+        useVar(tableVarName),
+        v.lambda(
+          useVar('helpers'),
+          v.object(_fields.map((field) => [field.name, field]))
+        ),
+      ]),
+      { export: true }
+    ),
   })
 }
 
@@ -349,12 +350,12 @@ function createModule(input: {
 type Module = ReturnType<typeof createModule>
 
 function createModelModule(input: { model: DMMF.Model; adapter: Adapter }) {
-  const tableVar = defineTableVar(input.adapter, input.model)
+  const tableVar = generateTableDeclaration(input.adapter, input.model)
 
   const relationalFields = input.model.fields.filter(isRelationField)
   const relationsVar = isEmpty(relationalFields)
     ? null
-    : defineTableRelationsVar(tableVar.name, relationalFields)
+    : generateTableRelationsDeclaration(tableVar.name, relationalFields)
 
   return createModule({
     name: getModelModuleName(input.model),
