@@ -15,7 +15,6 @@ import { createValue, IValue } from './lib/value/createValue'
 import { pipe } from 'fp-ts/lib/function'
 import { render } from './lib/value/utils'
 import { Adapter, mysqlAdapter, pgAdapter } from './lib/adapter/adapter'
-import { or } from 'fp-ts/lib/Refinement'
 import { defineBigint } from './lib/adapter/columns/defineBigint'
 import { IColumnValue } from './lib/adapter/base/defineColumn'
 import { defineBoolean } from './lib/adapter/columns/defineBoolean'
@@ -35,6 +34,7 @@ import {
 } from './lib/value/types/import'
 import { defineVar } from './lib/value/types/defineVar'
 import { useVar } from './lib/value/types/useVar'
+import { defineTableVar } from './lib/adapter/vars/defineTableVar'
 
 const { version } = require('../package.json')
 
@@ -155,29 +155,6 @@ function reduceImports(imports: ImportValue[]) {
   ]
 }
 
-function defineTableVar(adapter: Adapter, model: DMMF.Model) {
-  const fields = model.fields
-    .filter(pipe(isKind('scalar'), or(isKind('enum'))))
-    .map(getField(adapter))
-  const name = getModelVarName(model)
-
-  return createValue({
-    name,
-    imports: [
-      namedImport([adapter.functions.table], adapter.module),
-      ...fields.flatMap((field) => field.imports),
-    ],
-    render: defineVar(
-      name,
-      adapter.table(
-        model.name,
-        fields.map((field) => [field.field, field])
-      ),
-      { export: true }
-    ).render,
-  })
-}
-
 function defineTableRelationsVar(
   tableVarName: string,
   fields: DMMFRelationField[]
@@ -226,7 +203,7 @@ function getAdapter(options: GeneratorOptions) {
   })()
 }
 
-function getField(adapter: Adapter) {
+export function getField(adapter: Adapter) {
   return function (field: DMMF.Field): IColumnValue {
     if (field.kind === 'enum') {
       return defineEnum(adapter, field)
@@ -313,11 +290,11 @@ function getEnumModuleName(prismaEnum: DMMF.DatamodelEnum) {
 }
 // #endregion
 
-function isKind(kind: DMMF.FieldKind) {
+export function isKind(kind: DMMF.FieldKind) {
   return (field: DMMF.Field): field is DMMF.Field => field.kind === kind
 }
 
-function getModelVarName(model: DMMF.Model | string) {
+export function getModelVarName(model: DMMF.Model | string) {
   return camelCase(pluralize(typeof model === 'string' ? model : model.name))
 }
 

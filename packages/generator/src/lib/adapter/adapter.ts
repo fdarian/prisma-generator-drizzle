@@ -43,9 +43,6 @@ function createAdapter<TName extends string>(input: {
     module: input.module,
     functions,
     definition: input.definition,
-    table(name: string, fields: Entry[]) {
-      return v.func(input.functions.table, [v.string(name), v.object(fields)])
-    },
   }
 }
 
