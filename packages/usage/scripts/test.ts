@@ -20,6 +20,10 @@ const promises = [
 
 await Promise.all(promises)
 
-execSync('bun test', { stdio: 'inherit' })
+try {
+  execSync('bun test', { stdio: 'inherit' })
+} catch (err) {
+  process.exit(1)
+}
 
 process.exit(0)
