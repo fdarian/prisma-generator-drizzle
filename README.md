@@ -79,9 +79,9 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
    Or with a relative import
 
    ```prisma
-   model Wallet {
+   model User {
      /// drizzle.type ../my-type::Email
-     address     String?
+     email     String?
      ...
    }
    ```
@@ -90,7 +90,7 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
    import { Email } from '../my-type'
    ...
 
-   export const wallets = pgTable('Wallet', {
+   export const users = pgTable('User', {
      email: text('email').$type<Email>(),
      ...
    })
