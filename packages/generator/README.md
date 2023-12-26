@@ -1,11 +1,10 @@
 # prisma-generator-drizzle
 
-**prisma-generator-drizzle** is a [Prisma](https://www.prisma.io/) custom generator that allows you to generate a [Drizzle](https://orm.drizzle.team/) schema. It is specifically designed for (existing) projects that are using Prisma and want to migrate to Drizzle, or for projects that want to use both Prisma and Drizzle together.
+**prisma-generator-drizzle** is a [Prisma](https://www.prisma.io/) generator that lets you generate a [Drizzle](https://orm.drizzle.team/) schema. It is specifically designed for (existing) projects that are using Prisma and want to migrate to Drizzle, or for projects that want to use both Prisma and Drizzle together.
 
-In this version, the focus is on the query and mutation capabilities of the generated Drizzle schema.
+In this version, the focus is still on the query and mutation capabilities of the generated Drizzle schema.
 
 ## Features
-
 
 https://github.com/farreldarian/prisma-generator-drizzle/assets/62016900/35b57135-614e-4e07-920b-9e9a487eb6cb
 
@@ -68,10 +67,10 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
    This will result to:
 
    ```ts
-   import { Address } from 'viem'
+   import { Wallet } from 'viem'
    ...
 
-   export const users = pgTable('User', {
+   export const wallets = pgTable('Wallet', {
      address: text('address').$type<Address>(),
      ...
    })
@@ -81,7 +80,7 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 
    ```prisma
    model Wallet {
-     /// drizzle.type viem::Address
+     /// drizzle.type ../my-type::Email
      address     String?
      ...
    }
@@ -91,7 +90,7 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
    import { Email } from '../my-type'
    ...
 
-   export const users = pgTable('User', {
+   export const wallets = pgTable('Wallet', {
      email: text('email').$type<Email>(),
      ...
    })
