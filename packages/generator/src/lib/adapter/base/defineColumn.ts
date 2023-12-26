@@ -4,7 +4,7 @@ import { DMMF } from '@prisma/generator-helper'
 import { createValue } from '../../value/createValue'
 import { IChainableValue } from '../../value/types/funcValue'
 import { Adapter } from '../adapter'
-import { ImportValue } from 'src/lib/value/types/import'
+import { ImportValue, namedImport } from 'src/lib/value/types/import'
 
 export type DefineImport = {
   module: string
@@ -93,7 +93,7 @@ class ChainableExtension extends Extension {
 
   getImports() {
     if (!this.enabled) return []
-    return [v.namedImport([this.type!], this.module!)]
+    return [namedImport([this.type!], this.module!)]
   }
 }
 // #endregion

@@ -8,7 +8,7 @@ import { destructureValue } from './types/destructureValue'
 import { arrayValue } from './types/arrayValue'
 import {
   defaultImportValue,
-  namedImportValue,
+  namedImport,
   wildcardImportValue,
 } from './types/import'
 import { defineVar } from './types/defineVar'
@@ -23,7 +23,7 @@ export const v = {
   lambda: lambdaValue,
   destructure: destructureValue,
   array: arrayValue,
-  namedImport: namedImportValue,
+  namedImport: namedImport,
   wilcardImport: wildcardImportValue,
   defaultImport: defaultImportValue,
 }

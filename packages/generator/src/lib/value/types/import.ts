@@ -1,6 +1,6 @@
-import { IValue, createValue } from '../createValue'
+import { createValue } from '../createValue'
 
-export function namedImportValue(names: string[], path: string) {
+export function namedImport(names: string[], path: string) {
   return createValue({
     type: 'namedImport' as const,
     names: names,
@@ -10,7 +10,7 @@ export function namedImportValue(names: string[], path: string) {
     },
   })
 }
-export type NamedImport = ReturnType<typeof namedImportValue>
+export type NamedImport = ReturnType<typeof namedImport>
 
 export function defaultImportValue(name: string, path: string) {
   return createValue({

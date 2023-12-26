@@ -4,6 +4,7 @@ import { defineColumn } from '../base/defineColumn'
 import { Adapter } from '../adapter'
 import { camelCase, kebabCase } from 'lodash'
 import { fieldFunc } from './fieldFunc'
+import { namedImport } from 'src/lib/value/types/import'
 
 export function defineEnum(adapter: Adapter, field: DMMF.Field) {
   const func = `${camelCase(field.type)}Enum`
@@ -11,7 +12,7 @@ export function defineEnum(adapter: Adapter, field: DMMF.Field) {
   return defineColumn({
     field,
     adapter,
-    imports: [v.namedImport([func], `./${kebabCase(field.type)}-enum`)],
+    imports: [namedImport([func], `./${kebabCase(field.type)}-enum`)],
     columnFunc: fieldFunc(func, field),
   })
 }

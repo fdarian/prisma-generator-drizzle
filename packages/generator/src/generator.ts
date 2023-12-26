@@ -27,7 +27,7 @@ import { defineJson } from './lib/adapter/columns/defineJson'
 import { defineString } from './lib/adapter/columns/defineString'
 import { defineEnum } from './lib/adapter/columns/defineEnum'
 import { flatMap, map, reduce } from 'fp-ts/lib/Array'
-import { ImportValue, NamedImport } from './lib/value/types/import'
+import { ImportValue, namedImport, NamedImport } from './lib/value/types/import'
 import { defineVar } from './lib/value/types/defineVar'
 
 const { version } = require('../package.json')
@@ -103,7 +103,7 @@ function defineEnumVar(adapter: Adapter, prismaEnum: DMMF.DatamodelEnum) {
   const varName = getEnumVarName(prismaEnum)
 
   const enumDef = createValue({
-    imports: [v.namedImport([adapter.functions.enum], adapter.module)],
+    imports: [namedImport([adapter.functions.enum], adapter.module)],
     render: defineVar(
       varName,
       adapter.definition.enum.declare(
@@ -144,7 +144,7 @@ function reduceImports(imports: ImportValue[]) {
         return accum.set(command.module, imports)
       }),
       (map) => Array.from(map),
-      map(([path, names]) => v.namedImport(Array.from(names), path))
+      map(([path, names]) => namedImport(Array.from(names), path))
     ),
   ]
 }
@@ -158,7 +158,7 @@ function defineTableVar(adapter: Adapter, model: DMMF.Model) {
   return createValue({
     name,
     imports: [
-      v.namedImport([adapter.functions.table], adapter.module),
+      namedImport([adapter.functions.table], adapter.module),
       ...fields.flatMap((field) => field.imports),
     ],
     render: defineVar(
@@ -192,7 +192,7 @@ function defineTableRelationsVar(
 
   return createValue({
     imports: [
-      v.namedImport(['relations'], 'drizzle-orm'),
+      namedImport(['relations'], 'drizzle-orm'),
       ..._fields.flatMap((field) => field.imports),
     ],
     render: relationVar.render,
@@ -290,7 +290,7 @@ function getRelationField(tableVarName: string) {
     return createValue({
       name: field.name,
       imports: [
-        v.namedImport([relationVarName], `./${getModelModuleName(field.type)}`),
+        namedImport([relationVarName], `./${getModelModuleName(field.type)}`),
       ],
       render: func.render,
     })
