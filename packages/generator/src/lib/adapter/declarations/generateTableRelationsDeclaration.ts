@@ -44,24 +44,18 @@ function getRelationField(tableVarName: string) {
     const args = [useVar(relationVarName)]
     if (hasReference(field)) {
       args.push(
-        object([
-          [
-            'fields',
-            pipe(
-              field.relationFromFields,
-              map((f) => useVar(`${tableVarName}.${camelCase(f)}`)),
-              array
-            ),
-          ],
-          [
-            'references',
-            pipe(
-              field.relationToFields,
-              map((f) => useVar(`${relationVarName}.${camelCase(f)}`)),
-              array
-            ),
-          ],
-        ])
+        object({
+          fields: pipe(
+            field.relationFromFields,
+            map((f) => useVar(`${tableVarName}.${camelCase(f)}`)),
+            array
+          ),
+          references: pipe(
+            field.relationToFields,
+            map((f) => useVar(`${relationVarName}.${camelCase(f)}`)),
+            array
+          ),
+        })
       )
     }
 
