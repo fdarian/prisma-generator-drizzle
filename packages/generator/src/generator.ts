@@ -69,7 +69,11 @@ generatorHandler({
     for await (const model of options.dmmf.datamodel.models) {
       const modelCreation = logger.createTask()
 
-      const modelModule = createModelModule({ adapter, model })
+      const modelModule = createModelModule({
+        adapter,
+        model,
+        datamodel: options.dmmf.datamodel,
+      })
       await writeModule(basePath, modelModule)
 
       models.push(modelModule)
@@ -166,13 +170,21 @@ function createModule(input: {
 }
 type Module = ReturnType<typeof createModule>
 
-function createModelModule(input: { model: DMMF.Model; adapter: Adapter }) {
+function createModelModule(input: {
+  model: DMMF.Model
+  datamodel: DMMF.Datamodel
+  adapter: Adapter
+}) {
   const tableVar = generateTableDeclaration(input.adapter, input.model)
 
   const relationalFields = input.model.fields.filter(isRelationField)
   const relationsVar = isEmpty(relationalFields)
     ? null
-    : generateTableRelationsDeclaration(tableVar.name, relationalFields)
+    : generateTableRelationsDeclaration({
+        tableVarName: tableVar.name,
+        fields: relationalFields,
+        datamodel: input.datamodel,
+      })
 
   return createModule({
     name: getModelModuleName(input.model),
