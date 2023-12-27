@@ -17,7 +17,7 @@ import {
   user_insert,
   user_result,
 } from './dummy'
-import { testImplicitRelation } from './shared/test-implicit-relation'
+import { testManyToMany } from './shared/test-implicit-relation'
 
 beforeEach(async () => {
   await db.delete(payments)
@@ -182,4 +182,4 @@ test('disambiguating relations optional unique', async () => {
 const _db = db as unknown as Db
 const _schema = schema as unknown as Schema
 
-testImplicitRelation(_db, _schema)
+testManyToMany(_db, _schema)

@@ -2,10 +2,9 @@ import { createId } from '@paralleldrive/cuid2'
 import { beforeEach, describe, expect, test } from 'bun:test'
 import { Db, Schema } from 'src/lib/types'
 
-export async function testImplicitRelation(db: Db, schema: Schema) {
-  describe('implicit relation', () => {
+export async function testManyToMany(db: Db, schema: Schema) {
+  describe('many-to-many', () => {
     beforeEach(async () => {
-      // @ts-expect-error
       await db.insert(schema.productDetailsToTransactionHeaders)
       await db.delete(schema.transactionHeaders)
       await db.delete(schema.productDetails)
@@ -13,7 +12,7 @@ export async function testImplicitRelation(db: Db, schema: Schema) {
 
     // https://www.prisma.io/docs/orm/prisma-schema/data-model/relations/many-to-many-relations#rules-for-defining-an-implicit-m-n-relation
     // https://orm.drizzle.team/docs/rqb#many-to-many
-    test('generated m-n or join table', async () => {
+    test('implicit m-n or join table', async () => {
       expect(schema).toHaveProperty('productDetailsToTransactionHeaders')
 
       const thead = { id: createId() }
@@ -22,7 +21,6 @@ export async function testImplicitRelation(db: Db, schema: Schema) {
       const product = { id: createId() }
       await db.insert(schema.productDetails).values(product)
 
-      // @ts-expect-error
       await db.insert(schema.productDetailsToTransactionHeaders).values({
         A: product.id,
         B: thead.id,
@@ -35,7 +33,7 @@ export async function testImplicitRelation(db: Db, schema: Schema) {
       })
       expect(thead_result).toStrictEqual({
         ...thead,
-        products: [product],
+        products: [{ A: product.id, B: thead.id }],
       })
 
       const product_result = await db.query.productDetails.findFirst({
@@ -44,7 +42,7 @@ export async function testImplicitRelation(db: Db, schema: Schema) {
       })
       expect(product_result).toStrictEqual({
         ...product,
-        transactions: [thead],
+        transactions: [{ A: product.id, B: thead.id }],
       })
     })
   })
