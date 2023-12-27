@@ -55,3 +55,28 @@ model Transfer {
   payment   Payment? @relation("Payment_paymentTransfer")
   tax       Payment? @relation("Payment_taxTransfer")
 }
+
+// #region Implicit relationship purposes
+
+model TransactionHeader {
+  id       String          @id
+  products ProductDetail[]
+}
+
+model ProductDetail {
+  id           String              @id
+  transactions TransactionHeader[]
+}
+
+// With custom table name
+model Post {
+  id         String     @id
+  categories Category[] @relation("CustomCategoryToPost")
+}
+
+model Category {
+  id    String @id
+  posts Post[] @relation("CustomCategoryToPost")
+}
+
+// #endregion
