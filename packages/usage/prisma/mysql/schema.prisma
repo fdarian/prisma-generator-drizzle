@@ -13,9 +13,9 @@ enum UserType {
 }
 
 model Team {
-  id    String @id
-  name  String
-  users User[]
+  id        String   @id
+  name      String
+  users     User[]
   createdAt DateTime @default(now())
 }
 
@@ -34,7 +34,15 @@ model User {
   teamId            String?
   receivedTransfers Transfer[] @relation("transfer_to")
   sentTransfers     Transfer[] @relation("transfer_from")
-  createdAt DateTime @default(now())
+  createdAt         DateTime   @default(now())
+}
+
+model Payment {
+  id                String    @id
+  paymentTransfer   Transfer? @relation("Payment_paymentTransfer", fields: [paymentTransferId], references: [id])
+  paymentTransferId String?   @unique
+  taxTransfer       Transfer? @relation("Payment_taxTransfer", fields: [taxTransferId], references: [id])
+  taxTransferId     String?   @unique
 }
 
 model Transfer {
@@ -44,4 +52,6 @@ model Transfer {
   to        User     @relation("transfer_to", fields: [toId], references: [id])
   toId      String
   createdAt DateTime @default(now())
+  payment   Payment? @relation("Payment_paymentTransfer")
+  tax       Payment? @relation("Payment_taxTransfer")
 }

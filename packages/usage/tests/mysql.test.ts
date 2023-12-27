@@ -1,3 +1,5 @@
+import { createId } from '@paralleldrive/cuid2'
+import { payments } from 'prisma/mysql/drizzle/payments'
 import { teams } from 'prisma/mysql/drizzle/teams'
 import { transfers } from 'prisma/mysql/drizzle/transfers'
 import { users } from 'prisma/mysql/drizzle/users'
@@ -15,6 +17,7 @@ import {
 } from './dummy'
 
 beforeEach(async () => {
+  await db.delete(payments)
   await db.delete(transfers)
   await db.delete(users)
   await db.delete(teams)
@@ -73,7 +76,7 @@ test('relations', async () => {
   })
 })
 
-test('disambiguating relations', async () => {
+test('disambiguating relations many', async () => {
   await db.insert(users).values(user_insert)
   await db.insert(users).values(user2_insert)
   await db.insert(users).values(user3_insert)
@@ -129,4 +132,46 @@ test('disambiguating relations', async () => {
   expect(user3.receivedTransfers).toStrictEqual([
     transfer_user1_to_user3_insert,
   ])
+})
+
+test('disambiguating relations optional unique', async () => {
+  const [t1, t2] = [
+    transfer_user1_to_user2_insert,
+    transfer_user2_to_user1_insert,
+  ]
+  await db.insert(users).values(user_insert)
+  await db.insert(users).values(user2_insert)
+  await db.insert(transfers).values(t1)
+  await db.insert(transfers).values(t2)
+
+  const payment = { id: createId(), paymentTransferId: t1.id }
+  await db.insert(payments).values(payment)
+
+  const tax = { id: createId(), taxTransferId: t2.id }
+  await db.insert(payments).values(tax)
+  // --
+
+  const t1_result = await db.query.transfers.findFirst({
+    where: (Transfer, { eq }) => eq(Transfer.id, t1.id),
+    with: { payment: true },
+  })
+  expect(t1_result).toStrictEqual({
+    ...t1,
+    payment: {
+      ...payment,
+      taxTransferId: null,
+    },
+  })
+
+  const t2_result = await db.query.transfers.findFirst({
+    where: (Transfer, { eq }) => eq(Transfer.id, t2.id),
+    with: { tax: true },
+  })
+  expect(t2_result).toStrictEqual({
+    ...t2,
+    tax: {
+      ...tax,
+      paymentTransferId: null,
+    },
+  })
 })

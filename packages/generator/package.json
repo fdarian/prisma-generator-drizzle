@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@prisma/client": "5.7.0",
-    "@prisma/generator-helper": "5.7.0",
+    "@prisma/generator-helper": "5.7.1",
     "@prisma/sdk": "4.0.0",
     "fp-ts": "^2.16.1",
     "lodash": "^4.17.21",
