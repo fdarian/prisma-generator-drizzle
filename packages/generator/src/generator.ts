@@ -65,6 +65,7 @@ generatorHandler({
       enumCreation.end(`◟ ${enumModule.name}.ts`)
     }
 
+    let additionalModels: DMMF.Model[] = []
     const models: ModelModule[] = []
     for await (const model of options.dmmf.datamodel.models) {
       const modelCreation = logger.createTask()
@@ -79,7 +80,33 @@ generatorHandler({
       models.push(modelModule)
 
       modelCreation.end(`◟ ${modelModule.name}.ts`)
+
+      if (modelModule.additional && modelModule.additional.length > 0) {
+        additionalModels = [...additionalModels, ...modelModule.additional]
+      }
     }
+
+    await Promise.all(
+      additionalModels
+        .reduce((accum, model) => {
+          if (accum.some(({ name }) => name === model.name)) return accum
+          return [...accum, model]
+        }, [] as DMMF.Model[])
+        .map(async (model) => {
+          const modelCreation = logger.createTask()
+
+          const modelModule = createModelModule({
+            adapter,
+            model,
+            datamodel: options.dmmf.datamodel,
+          })
+          await writeModule(basePath, modelModule)
+
+          models.push(modelModule)
+
+          modelCreation.end(`◟ ${modelModule.name}.ts`)
+        })
+    )
 
     const schemaModule = createModule({
       name: 'schema',
@@ -151,9 +178,11 @@ function ifExists<T>(value: T | null | undefined): T[] {
 function createModule(input: {
   declarations: ImportableDefinition[]
   name: string
+  additional?: DMMF.Model[]
 }) {
   return createDef({
     name: input.name,
+    additional: input.additional,
     render() {
       const imports = pipe(
         input.declarations,
@@ -181,6 +210,7 @@ function createModelModule(input: {
   const relationsVar = isEmpty(relationalFields)
     ? null
     : generateTableRelationsDeclaration({
+        model: input.model,
         tableVarName: tableVar.name,
         fields: relationalFields,
         datamodel: input.datamodel,
@@ -188,6 +218,7 @@ function createModelModule(input: {
 
   return createModule({
     name: getModelModuleName(input.model),
+    additional: relationsVar?.additional ?? [],
     declarations: [tableVar, ...ifExists(relationsVar)],
   })
 }

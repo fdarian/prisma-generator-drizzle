@@ -1,14 +1,16 @@
 import { DMMF } from '@prisma/generator-helper'
 import { map } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
-import { camelCase } from 'lodash'
+import { camelCase, kebabCase } from 'lodash'
+import pluralize from 'pluralize'
 import { array } from '~/lib/definitions/types/array'
 import { string } from '~/lib/definitions/types/string'
 import {
   PrismaRelationField,
   isRelationField,
 } from '~/lib/prisma-helpers/field'
-import { getModelModuleName, getModelVarName } from '~/lib/prisma-helpers/model'
+import { getDbName } from '~/lib/prisma-helpers/getDbName'
+import { getModelVarName } from '~/lib/prisma-helpers/model'
 import { Definition, createDef } from '../../definitions/createDef'
 import { constDeclaration } from '../../definitions/types/constDeclaration'
 import { funcCall } from '../../definitions/types/funcCall'
@@ -18,12 +20,13 @@ import { object } from '../../definitions/types/object'
 import { useVar } from '../../definitions/types/useVar'
 
 export function generateTableRelationsDeclaration(input: {
+  model: DMMF.Model
   tableVarName: string
   fields: PrismaRelationField[]
   datamodel: DMMF.Datamodel
 }) {
   const _fields = input.fields.map(
-    getRelationField(input.tableVarName, input.datamodel)
+    getRelationField(input.model, input.tableVarName, input.datamodel)
   )
 
   return createDef({
@@ -31,6 +34,7 @@ export function generateTableRelationsDeclaration(input: {
       namedImport(['relations'], 'drizzle-orm'),
       ..._fields.flatMap((field) => field.imports),
     ],
+    additional: _fields.flatMap((field) => field.additional),
     render: constDeclaration(
       `${input.tableVarName}Relations`,
       funcCall('relations', [
@@ -45,14 +49,118 @@ export function generateTableRelationsDeclaration(input: {
   })
 }
 
-function getRelationField(tableVarName: string, datamodel: DMMF.Datamodel) {
+function getRelationField(
+  model: DMMF.Model,
+  tableVarName: string,
+  datamodel: DMMF.Datamodel
+) {
   return function (field: PrismaRelationField) {
-    const relationToModel = getModelVarName(field.type)
+    let relationToModel: string
+    let additional: DMMF.Model[] = []
 
     const opts: Partial<
       Record<'relationName' | 'fields' | 'references', Definition>
-    > = {
-      relationName: string(field.relationName),
+    > = {}
+    if (field.relationName) {
+      opts.relationName = string(field.relationName)
+    }
+
+    // Check for implicit many-to-many relation
+    if (field.isList) {
+      const opposingModel = findOpposingRelationModel(field, datamodel)
+      const opposingField = findOpposingRelationField(field, opposingModel)
+
+      if (opposingField.isList && !hasReference(opposingField)) {
+        const sortedTables = [getDbName(model), getDbName(opposingModel)].sort()
+        const joinTableName = `_${sortedTables
+          .map((name) => pluralize(name))
+          .join('To')}`
+        const joinTableVarName = camelCase(
+          sortedTables.map((name) => pluralize(name)).join('To')
+        )
+
+        relationToModel = joinTableVarName
+
+        if (getDbName(model) === sortedTables[0]) {
+          opts.relationName = string(`${field.relationName}_A`)
+        } else {
+          opts.relationName = string(`${field.relationName}_B`)
+        }
+
+        const joinTableModel = {
+          name: joinTableName,
+          dbName: `_${sortedTables.join('To')}`,
+          fields: [
+            {
+              name: 'A',
+              kind: 'scalar',
+              isList: false,
+              isRequired: true,
+              isUnique: false,
+              isId: true,
+              isReadOnly: false,
+              hasDefaultValue: false,
+              type: 'String',
+              isGenerated: false,
+              isUpdatedAt: false,
+            },
+            {
+              name: camelCase(sortedTables[0]),
+              kind: 'object',
+              isList: false,
+              isRequired: true,
+              isUnique: false,
+              isId: false,
+              isReadOnly: false,
+              hasDefaultValue: false,
+              type: sortedTables[0],
+              relationName: `${field.relationName}_A`,
+              relationFromFields: ['A'],
+              relationToFields: ['id'],
+              isGenerated: false,
+              isUpdatedAt: false,
+            },
+            {
+              name: 'B',
+              kind: 'scalar',
+              isList: false,
+              isRequired: true,
+              isUnique: false,
+              isId: true,
+              isReadOnly: false,
+              hasDefaultValue: false,
+              type: 'String',
+              isGenerated: false,
+              isUpdatedAt: false,
+            },
+            {
+              name: camelCase(sortedTables[1]),
+              kind: 'object',
+              isList: false,
+              isRequired: true,
+              isUnique: false,
+              isId: false,
+              isReadOnly: false,
+              hasDefaultValue: false,
+              type: sortedTables[1],
+              relationName: `${field.relationName}_B`,
+              relationFromFields: ['B'],
+              relationToFields: ['id'],
+              isGenerated: false,
+              isUpdatedAt: false,
+            },
+          ],
+          primaryKey: null,
+          uniqueFields: [],
+          uniqueIndexes: [],
+          isGenerated: false,
+        } satisfies DMMF.Model
+        additional.push(joinTableModel)
+      } else {
+        relationToModel = getModelVarName(field.type)
+      }
+    } else {
+      relationToModel = getModelVarName(field.type)
     }
 
     const relation = (function () {
@@ -79,12 +187,12 @@ function getRelationField(tableVarName: string, datamodel: DMMF.Datamodel) {
     if (relation) {
       opts.fields = pipe(
         relation.from,
-        map((f) => useVar(`${tableVarName}.${camelCase(f)}`)),
+        map((f) => useVar(`${tableVarName}.${f}`)),
         array
       )
       opts.references = pipe(
         relation.to,
-        map((f) => useVar(`${relationToModel}.${camelCase(f)}`)),
+        map((f) => useVar(`${relationToModel}.${f}`)),
         array
       )
     }
@@ -96,8 +204,9 @@ function getRelationField(tableVarName: string, datamodel: DMMF.Datamodel) {
 
     return createDef({
       name: field.name,
+      additional,
       imports: [
-        namedImport([relationToModel], `./${getModelModuleName(field.type)}`),
+        namedImport([relationToModel], `./${kebabCase(relationToModel)}`),
       ],
       render: func.render,
     })
