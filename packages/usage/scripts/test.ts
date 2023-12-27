@@ -11,10 +11,12 @@ const env = parse(
 
 const promises = [
   execSync(
-    `DATABASE_URL=${env.PG_DATABASE_URL} bun prisma db push --schema prisma/schema.prisma --force-reset --accept-data-loss`
+    `DATABASE_URL=${env.PG_DATABASE_URL} bun prisma db push --schema prisma/schema.prisma --force-reset --accept-data-loss`,
+    { stdio: 'inherit' }
   ),
   execSync(
-    `DATABASE_URL=${env.MYSQL_DATABASE_URL} bun prisma db push --schema prisma/mysql/schema.prisma --force-reset --accept-data-loss`
+    `DATABASE_URL=${env.MYSQL_DATABASE_URL} bun prisma db push --schema prisma/mysql/schema.prisma --force-reset --accept-data-loss`,
+    { stdio: 'inherit' }
   ),
 ]
 
