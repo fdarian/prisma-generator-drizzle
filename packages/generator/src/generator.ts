@@ -83,7 +83,7 @@ generatorHandler({
       modelCreation.end(`◟ ${modelModule.name}.ts`)
     }
 
-    const extraModelModules = await Promise.all(
+    const implicitModelModules = await Promise.all(
       implicitModels
         .reduce(deduplicateModels, [] as DMMF.Model[])
         .map(async (model) => {
@@ -100,7 +100,7 @@ generatorHandler({
           return modelModule
         })
     )
-    models = models.concat(extraModelModules)
+    models = models.concat(implicitModelModules)
 
     const schemaModule = createModule({
       name: 'schema',
