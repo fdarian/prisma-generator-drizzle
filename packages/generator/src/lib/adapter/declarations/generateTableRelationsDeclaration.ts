@@ -19,15 +19,17 @@ import { lambda } from '../../definitions/types/lambda'
 import { object } from '../../definitions/types/object'
 import { useVar } from '../../definitions/types/useVar'
 
-export function generateTableRelationsDeclaration(input: {
+type GenerateTableRelationsInput = {
   model: DMMF.Model
   tableVarName: string
   fields: PrismaRelationField[]
   datamodel: DMMF.Datamodel
-}) {
-  const _fields = input.fields.map(
-    getRelationField(input.model, input.datamodel)
-  )
+}
+
+export function generateTableRelationsDeclaration(
+  input: GenerateTableRelationsInput
+) {
+  const _fields = input.fields.map(getRelationField(input))
 
   return createDef({
     imports: [
@@ -49,12 +51,12 @@ export function generateTableRelationsDeclaration(input: {
   })
 }
 
-function getRelationField(model: DMMF.Model, datamodel: DMMF.Datamodel) {
+function getRelationField(ctx: GenerateTableRelationsInput) {
   return function (field: PrismaRelationField) {
     const { additional, opts, referenceModelVarName } = !field.isList
-      ? getOneToOneOrManyRelation(field, model, datamodel)
-      : opposingIsList(field, datamodel)
-        ? getManyToManyRelation(field, datamodel, model)
+      ? getOneToOneOrManyRelation(field, ctx)
+      : opposingIsList(field, ctx)
+        ? getManyToManyRelation(field, ctx)
         : getManyToOneRelation(field)
 
     return createDef({
@@ -82,12 +84,11 @@ class DetermineRelationshipError extends Error {
 
 function getManyToManyRelation(
   field: PrismaRelationField,
-  datamodel: DMMF.Datamodel,
-  model: DMMF.Model
+  ctx: GenerateTableRelationsInput
 ) {
-  const opposingModel = findOpposingRelationModel(field, datamodel)
+  const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
   const joinTable = createImplicitJoinTable(field.relationName, [
-    model,
+    ctx.model,
     opposingModel,
   ])
 
@@ -111,14 +112,13 @@ function createRelation(input: {
 
 function getOneToOneOrManyRelation(
   field: PrismaRelationField,
-  model: DMMF.Model,
-  datamodel: DMMF.Datamodel
+  ctx: GenerateTableRelationsInput
 ) {
   if (hasReference(field)) {
     const opts = createRelationOpts({
       relationName: field.relationName,
       from: {
-        modelVarName: getModelVarName(model),
+        modelVarName: getModelVarName(ctx.model),
         fieldNames: field.relationFromFields,
       },
       to: {
@@ -134,12 +134,12 @@ function getOneToOneOrManyRelation(
 
   // For disambiguating relation
 
-  const opposingModel = findOpposingRelationModel(field, datamodel)
+  const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
   const opposingField = findOpposingRelationField(field, opposingModel)
   const opts = createRelationOpts({
     relationName: field.relationName,
     from: {
-      modelVarName: getModelVarName(model),
+      modelVarName: getModelVarName(ctx.model),
       fieldNames: opposingField.relationToFields,
     },
     to: {
@@ -313,7 +313,10 @@ function hasReference(field: PrismaRelationField) {
   )
 }
 
-function opposingIsList(field: PrismaRelationField, datamodel: DMMF.Datamodel) {
-  const opposingModel = findOpposingRelationModel(field, datamodel)
+function opposingIsList(
+  field: PrismaRelationField,
+  ctx: GenerateTableRelationsInput
+) {
+  const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
   return findOpposingRelationField(field, opposingModel).isList
 }
