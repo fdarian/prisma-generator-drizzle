@@ -65,8 +65,8 @@ generatorHandler({
       enumCreation.end(`◟ ${enumModule.name}.ts`)
     }
 
-    let additionalModels: DMMF.Model[] = []
-    const models: ModelModule[] = []
+    let extraModels: DMMF.Model[] = []
+    let models: ModelModule[] = []
     for await (const model of options.dmmf.datamodel.models) {
       const modelCreation = logger.createTask()
 
@@ -82,12 +82,12 @@ generatorHandler({
       modelCreation.end(`◟ ${modelModule.name}.ts`)
 
       if (modelModule.additional && modelModule.additional.length > 0) {
-        additionalModels = additionalModels.concat(modelModule.additional)
+        extraModels = extraModels.concat(modelModule.additional)
       }
     }
 
-    await Promise.all(
-      additionalModels
+    const extraModelModules = await Promise.all(
+      extraModels
         .reduce(deduplicateModels, [] as DMMF.Model[])
         .map(async (model) => {
           const modelCreation = logger.createTask()
@@ -99,11 +99,11 @@ generatorHandler({
           })
           await writeModule(basePath, modelModule)
 
-          models.push(modelModule)
-
           modelCreation.end(`◟ ${modelModule.name}.ts`)
+          return modelModule
         })
     )
+    models = models.concat(extraModelModules)
 
     const schemaModule = createModule({
       name: 'schema',
