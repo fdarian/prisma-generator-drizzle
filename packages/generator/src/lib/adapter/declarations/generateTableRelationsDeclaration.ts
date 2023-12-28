@@ -162,6 +162,10 @@ function getManyToOneRelation(field: PrismaRelationField) {
   })
 }
 
+/**
+ * Construct Drizzle's `relation()` syntax
+ * https://orm.drizzle.team/docs/rqb#declaring-relations
+ */
 function createRelationOpts(input: {
   relationName?: string
   to?: {
