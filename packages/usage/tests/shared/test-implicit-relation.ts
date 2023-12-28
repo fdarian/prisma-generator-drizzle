@@ -5,7 +5,7 @@ import { Db, Schema } from 'src/lib/types'
 export async function testManyToMany(db: Db, schema: Schema) {
   describe('many-to-many', () => {
     beforeEach(async () => {
-      await db.insert(schema.productDetailsToTransactionHeaders)
+      await db.delete(schema.productDetailsToTransactionHeaders)
       await db.delete(schema.transactionHeaders)
       await db.delete(schema.productDetails)
     })
