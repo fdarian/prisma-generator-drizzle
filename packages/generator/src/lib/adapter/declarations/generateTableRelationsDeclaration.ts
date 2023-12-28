@@ -173,21 +173,21 @@ function createRelationOpts(input: {
     fieldNames: string[]
   }
 }) {
-  const { relationName, from: fields, to: references } = input
+  const { relationName, from, to } = input
 
   return {
     relationName: relationName ? string(relationName) : undefined,
-    fields: fields
+    fields: from
       ? pipe(
-          fields.fieldNames,
-          map((fieldName) => useVar(`${fields.modelVarName}.${fieldName}`)),
+          from.fieldNames,
+          map((fieldName) => useVar(`${from.modelVarName}.${fieldName}`)),
           array
         )
       : undefined,
-    references: references
+    references: to
       ? pipe(
-          references.fieldNames,
-          map((fieldName) => useVar(`${references.modelVarName}.${fieldName}`)),
+          to.fieldNames,
+          map((fieldName) => useVar(`${to.modelVarName}.${fieldName}`)),
           array
         )
       : undefined,
