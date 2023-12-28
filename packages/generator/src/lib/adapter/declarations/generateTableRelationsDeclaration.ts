@@ -11,7 +11,7 @@ import {
 } from '~/lib/prisma-helpers/field'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
-import { Definition, createDef } from '../../definitions/createDef'
+import { createDef } from '../../definitions/createDef'
 import { constDeclaration } from '../../definitions/types/constDeclaration'
 import { funcCall } from '../../definitions/types/funcCall'
 import { namedImport } from '../../definitions/types/imports'
@@ -26,7 +26,7 @@ export function generateTableRelationsDeclaration(input: {
   datamodel: DMMF.Datamodel
 }) {
   const _fields = input.fields.map(
-    getRelationField(input.model, input.tableVarName, input.datamodel)
+    getRelationField(input.model, input.datamodel)
   )
 
   return createDef({
@@ -49,166 +49,27 @@ export function generateTableRelationsDeclaration(input: {
   })
 }
 
-function getRelationField(
-  model: DMMF.Model,
-  tableVarName: string,
-  datamodel: DMMF.Datamodel
-) {
+function getRelationField(model: DMMF.Model, datamodel: DMMF.Datamodel) {
   return function (field: PrismaRelationField) {
-    let relationToModel: string
-    let additional: DMMF.Model[] = []
-
-    const opts: Partial<
-      Record<'relationName' | 'fields' | 'references', Definition>
-    > = {}
-    if (field.relationName) {
-      opts.relationName = string(field.relationName)
-    }
-
-    // Check for implicit many-to-many relation
-    if (field.isList) {
-      const opposingModel = findOpposingRelationModel(field, datamodel)
-      const opposingField = findOpposingRelationField(field, opposingModel)
-
-      if (opposingField.isList && !hasReference(opposingField)) {
-        const sortedTables = [getDbName(model), getDbName(opposingModel)].sort()
-        const joinTableName = `_${sortedTables
-          .map((name) => pluralize(name))
-          .join('To')}`
-        const joinTableVarName = camelCase(
-          sortedTables.map((name) => pluralize(name)).join('To')
-        )
-
-        relationToModel = joinTableVarName
-
-        if (getDbName(model) === sortedTables[0]) {
-          opts.relationName = string(`${field.relationName}_A`)
-        } else {
-          opts.relationName = string(`${field.relationName}_B`)
-        }
-
-        const joinTableModel = {
-          name: joinTableName,
-          dbName: `_${sortedTables.join('To')}`,
-          fields: [
-            {
-              name: 'A',
-              kind: 'scalar',
-              isList: false,
-              isRequired: true,
-              isUnique: false,
-              isId: true,
-              isReadOnly: false,
-              hasDefaultValue: false,
-              type: 'String',
-              isGenerated: false,
-              isUpdatedAt: false,
-            },
-            {
-              name: camelCase(sortedTables[0]),
-              kind: 'object',
-              isList: false,
-              isRequired: true,
-              isUnique: false,
-              isId: false,
-              isReadOnly: false,
-              hasDefaultValue: false,
-              type: sortedTables[0],
-              relationName: `${field.relationName}_A`,
-              relationFromFields: ['A'],
-              relationToFields: ['id'],
-              isGenerated: false,
-              isUpdatedAt: false,
-            },
-            {
-              name: 'B',
-              kind: 'scalar',
-              isList: false,
-              isRequired: true,
-              isUnique: false,
-              isId: true,
-              isReadOnly: false,
-              hasDefaultValue: false,
-              type: 'String',
-              isGenerated: false,
-              isUpdatedAt: false,
-            },
-            {
-              name: camelCase(sortedTables[1]),
-              kind: 'object',
-              isList: false,
-              isRequired: true,
-              isUnique: false,
-              isId: false,
-              isReadOnly: false,
-              hasDefaultValue: false,
-              type: sortedTables[1],
-              relationName: `${field.relationName}_B`,
-              relationFromFields: ['B'],
-              relationToFields: ['id'],
-              isGenerated: false,
-              isUpdatedAt: false,
-            },
-          ],
-          primaryKey: null,
-          uniqueFields: [],
-          uniqueIndexes: [],
-          isGenerated: false,
-        } satisfies DMMF.Model
-        additional.push(joinTableModel)
-      } else {
-        relationToModel = getModelVarName(field.type)
-      }
-    } else {
-      relationToModel = getModelVarName(field.type)
-    }
-
-    const relation = (function () {
-      if (field.isList) return
-      if (hasReference(field)) {
-        return { from: field.relationFromFields, to: field.relationToFields }
-      }
-
-      const opposingModel = findOpposingRelationModel(field, datamodel)
-      const opposingField = findOpposingRelationField(field, opposingModel)
-      if (hasReference(opposingField)) {
-        return {
-          from: opposingField.relationToFields,
-          to: opposingField.relationFromFields,
-        }
-      }
-
-      throw new DetermineRelationshipError(
-        field,
-        `opposing field ${opposingField.name} does not have a reference`
-      )
-    })()
-
-    if (relation) {
-      opts.fields = pipe(
-        relation.from,
-        map((f) => useVar(`${tableVarName}.${f}`)),
-        array
-      )
-      opts.references = pipe(
-        relation.to,
-        map((f) => useVar(`${relationToModel}.${f}`)),
-        array
-      )
-    }
-
-    const func = funcCall(field.isList ? 'helpers.many' : 'helpers.one', [
-      useVar(relationToModel),
-      object(opts),
-    ])
+    const { additional, opts, referenceModelVarName } = !field.isList
+      ? getOneToOneOrManyRelation(field, model, datamodel)
+      : opposingIsList(field, datamodel)
+        ? getManyToManyRelation(field, datamodel, model)
+        : getManyToOneRelation(field)
 
     return createDef({
       name: field.name,
-      additional,
+      additional: additional,
       imports: [
-        namedImport([relationToModel], `./${kebabCase(relationToModel)}`),
+        namedImport(
+          [referenceModelVarName],
+          `./${kebabCase(referenceModelVarName)}`
+        ),
       ],
-      render: func.render,
+      render: funcCall(field.isList ? 'helpers.many' : 'helpers.one', [
+        useVar(referenceModelVarName),
+        ...(opts ? [object(opts)] : []),
+      ]),
     })
   }
 }
@@ -217,6 +78,206 @@ class DetermineRelationshipError extends Error {
   constructor(field: DMMF.Field, message: string) {
     super(`Cannot determine relationship ${field.relationName}, ${message}`)
   }
+}
+
+function getManyToManyRelation(
+  field: PrismaRelationField,
+  datamodel: DMMF.Datamodel,
+  model: DMMF.Model
+) {
+  const opposingModel = findOpposingRelationModel(field, datamodel)
+  const joinTable = createImplicitJoinTable(field.relationName, [
+    model,
+    opposingModel,
+  ])
+
+  return createRelation({
+    referenceModelVarName: getModelVarName(joinTable.varName),
+    additional: [joinTable.model],
+  })
+}
+
+function createRelation(input: {
+  referenceModelVarName: string
+  opts?: ReturnType<typeof createRelationOpts>
+  additional?: DMMF.Model[]
+}) {
+  return {
+    referenceModelVarName: input.referenceModelVarName,
+    opts: input.opts ?? null,
+    additional: input.additional ?? [],
+  }
+}
+
+function getOneToOneOrManyRelation(
+  field: PrismaRelationField,
+  model: DMMF.Model,
+  datamodel: DMMF.Datamodel
+) {
+  if (hasReference(field)) {
+    const opts = createRelationOpts({
+      relationName: field.relationName,
+      from: {
+        modelVarName: getModelVarName(model),
+        fieldNames: field.relationFromFields,
+      },
+      to: {
+        modelVarName: getModelVarName(field.type),
+        fieldNames: field.relationToFields,
+      },
+    })
+    return createRelation({
+      referenceModelVarName: getModelVarName(field.type),
+      opts,
+    })
+  }
+
+  // For disambiguating relation
+
+  const opposingModel = findOpposingRelationModel(field, datamodel)
+  const opposingField = findOpposingRelationField(field, opposingModel)
+  const opts = createRelationOpts({
+    relationName: field.relationName,
+    from: {
+      modelVarName: getModelVarName(model),
+      fieldNames: opposingField.relationToFields,
+    },
+    to: {
+      modelVarName: getModelVarName(field.type),
+      fieldNames: opposingField.relationFromFields,
+    },
+  })
+
+  return createRelation({
+    referenceModelVarName: getModelVarName(field.type),
+    opts,
+  })
+}
+
+function getManyToOneRelation(field: PrismaRelationField) {
+  const opts = createRelationOpts({ relationName: field.relationName })
+  return createRelation({
+    referenceModelVarName: getModelVarName(field.type),
+    opts,
+  })
+}
+
+function createRelationOpts(input: {
+  relationName?: string
+  to?: {
+    modelVarName: string
+    fieldNames: string[]
+  }
+  from?: {
+    modelVarName: string
+    fieldNames: string[]
+  }
+}) {
+  const { relationName, from: fields, to: references } = input
+
+  return {
+    relationName: relationName ? string(relationName) : undefined,
+    fields: fields
+      ? pipe(
+          fields.fieldNames,
+          map((fieldName) => useVar(`${fields.modelVarName}.${fieldName}`)),
+          array
+        )
+      : undefined,
+    references: references
+      ? pipe(
+          references.fieldNames,
+          map((fieldName) => useVar(`${references.modelVarName}.${fieldName}`)),
+          array
+        )
+      : undefined,
+  }
+}
+
+/**
+ * @param baseName The `field.relationName` referring to the generated join table
+ * @param models Two models having a many-to-many relationship
+ */
+function createImplicitJoinTable(
+  baseName: string,
+  models: [DMMF.Model, DMMF.Model]
+) {
+  const pair = models.map(getDbName).toSorted()
+
+  // Custom varName following drizzle's convention
+  const name = pipe(pair, map(pluralize), (names) => names.join('To'))
+  const varName = camelCase(name)
+
+  const model = {
+    name: name,
+    dbName: `_${pair.join('To')}`,
+    fields: [
+      {
+        name: 'A',
+        kind: 'scalar',
+        isList: false,
+        isRequired: true,
+        isUnique: false,
+        isId: true,
+        isReadOnly: false,
+        hasDefaultValue: false,
+        type: 'String',
+        isGenerated: false,
+        isUpdatedAt: false,
+      },
+      {
+        name: camelCase(pair[0]),
+        kind: 'object',
+        isList: false,
+        isRequired: true,
+        isUnique: false,
+        isId: false,
+        isReadOnly: false,
+        hasDefaultValue: false,
+        type: pair[0],
+        // relationName: `${baseName}_A`,
+        relationFromFields: ['A'],
+        relationToFields: ['id'],
+        isGenerated: false,
+        isUpdatedAt: false,
+      },
+      {
+        name: 'B',
+        kind: 'scalar',
+        isList: false,
+        isRequired: true,
+        isUnique: false,
+        isId: true,
+        isReadOnly: false,
+        hasDefaultValue: false,
+        type: 'String',
+        isGenerated: false,
+        isUpdatedAt: false,
+      },
+      {
+        name: camelCase(pair[1]),
+        kind: 'object',
+        isList: false,
+        isRequired: true,
+        isUnique: false,
+        isId: false,
+        isReadOnly: false,
+        hasDefaultValue: false,
+        type: pair[1],
+        // relationName: `${baseName}_B`,
+        relationFromFields: ['B'],
+        relationToFields: ['id'],
+        isGenerated: false,
+        isUpdatedAt: false,
+      },
+    ],
+    primaryKey: null,
+    uniqueFields: [],
+    uniqueIndexes: [],
+    isGenerated: false,
+  } satisfies DMMF.Model
+
+  return { varName, baseName, model, pair }
 }
 
 function findOpposingRelationModel(
@@ -243,10 +304,16 @@ function findOpposingRelationField(
 }
 
 /**
- * Not a derived relation in which the model holds the reference
+ * Not a derived relation in which the model holds the reference.
+ * Can be one-to-one or one-to-many
  */
 function hasReference(field: PrismaRelationField) {
   return (
     field.relationFromFields.length > 0 && field.relationToFields.length > 0
   )
+}
+
+function opposingIsList(field: PrismaRelationField, datamodel: DMMF.Datamodel) {
+  const opposingModel = findOpposingRelationModel(field, datamodel)
+  return findOpposingRelationField(field, opposingModel).isList
 }
