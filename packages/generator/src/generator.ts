@@ -65,7 +65,7 @@ generatorHandler({
       enumCreation.end(`◟ ${enumModule.name}.ts`)
     }
 
-    let extraModels: DMMF.Model[] = []
+    let implicitModels: DMMF.Model[] = []
     let models: ModelModule[] = []
     for await (const model of options.dmmf.datamodel.models) {
       const modelCreation = logger.createTask()
@@ -78,16 +78,13 @@ generatorHandler({
       await writeModule(basePath, modelModule)
 
       models.push(modelModule)
+      implicitModels = implicitModels.concat(modelModule.implicit ?? [])
 
       modelCreation.end(`◟ ${modelModule.name}.ts`)
-
-      if (modelModule.additional && modelModule.additional.length > 0) {
-        extraModels = extraModels.concat(modelModule.additional)
-      }
     }
 
     const extraModelModules = await Promise.all(
-      extraModels
+      implicitModels
         .reduce(deduplicateModels, [] as DMMF.Model[])
         .map(async (model) => {
           const modelCreation = logger.createTask()
@@ -175,11 +172,11 @@ function ifExists<T>(value: T | null | undefined): T[] {
 function createModule(input: {
   declarations: ImportableDefinition[]
   name: string
-  additional?: DMMF.Model[]
+  implicit?: DMMF.Model[]
 }) {
   return createDef({
     name: input.name,
-    additional: input.additional,
+    implicit: input.implicit,
     render() {
       const imports = pipe(
         input.declarations,
@@ -215,7 +212,7 @@ function createModelModule(input: {
 
   return createModule({
     name: getModelModuleName(input.model),
-    additional: relationsVar?.additional ?? [],
+    implicit: relationsVar?.implicit ?? [],
     declarations: [tableVar, ...ifExists(relationsVar)],
   })
 }

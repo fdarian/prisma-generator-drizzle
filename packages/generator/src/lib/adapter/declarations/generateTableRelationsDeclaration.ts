@@ -36,7 +36,7 @@ export function generateTableRelationsDeclaration(
       namedImport(['relations'], 'drizzle-orm'),
       ..._fields.flatMap((field) => field.imports),
     ],
-    additional: _fields.flatMap((field) => field.additional),
+    implicit: _fields.flatMap((field) => field.implicit),
     render: constDeclaration(
       `${input.tableVarName}Relations`,
       funcCall('relations', [
@@ -53,7 +53,7 @@ export function generateTableRelationsDeclaration(
 
 function getRelationField(ctx: GenerateTableRelationsInput) {
   return function (field: PrismaRelationField) {
-    const { additional, opts, referenceModelVarName } = !field.isList
+    const { implicit, opts, referenceModelVarName } = !field.isList
       ? getOneToOneOrManyRelation(field, ctx)
       : opposingIsList(field, ctx)
         ? getManyToManyRelation(field, ctx)
@@ -61,7 +61,7 @@ function getRelationField(ctx: GenerateTableRelationsInput) {
 
     return createDef({
       name: field.name,
-      additional: additional,
+      implicit: implicit,
       imports: [
         namedImport(
           [referenceModelVarName],
@@ -94,19 +94,19 @@ function getManyToManyRelation(
 
   return createRelation({
     referenceModelVarName: getModelVarName(joinTable.varName),
-    additional: [joinTable.model],
+    implicit: [joinTable.model],
   })
 }
 
 function createRelation(input: {
   referenceModelVarName: string
   opts?: ReturnType<typeof createRelationOpts>
-  additional?: DMMF.Model[]
+  implicit?: DMMF.Model[]
 }) {
   return {
     referenceModelVarName: input.referenceModelVarName,
     opts: input.opts ?? null,
-    additional: input.additional ?? [],
+    implicit: input.implicit ?? [],
   }
 }
 
