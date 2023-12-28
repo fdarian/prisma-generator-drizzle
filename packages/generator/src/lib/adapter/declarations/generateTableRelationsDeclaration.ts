@@ -206,7 +206,7 @@ function createImplicitJoinTable(
   baseName: string,
   models: [DMMF.Model, DMMF.Model]
 ) {
-  const pair = models.map(getDbName).toSorted()
+  const pair = models.map(getDbName).sort()
 
   // Custom varName following drizzle's convention
   const name = pipe(pair, map(pluralize), (names) => names.join('To'))
