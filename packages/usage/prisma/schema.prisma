@@ -69,14 +69,14 @@ model ProductDetail {
 }
 
 // With custom table name
-// model Post {
-//   id         String     @id
-//   categories Category[] @relation("CustomCategoryToPost")
-// }
+model Post {
+  id         String     @id
+  categories Category[] @relation("CustomCategoryToPost")
+}
 
-// model Category {
-//   id    String @id
-//   posts Post[] @relation("CustomCategoryToPost")
-// }
+model Category {
+  id    String @id
+  posts Post[] @relation("CustomCategoryToPost")
+}
 
 // #endregion
