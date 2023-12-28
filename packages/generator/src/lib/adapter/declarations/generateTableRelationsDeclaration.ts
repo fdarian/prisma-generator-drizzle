@@ -214,7 +214,7 @@ function createImplicitJoinTable(
 
   const model = {
     name: name,
-    dbName: `_${pair.join('To')}`,
+    dbName: `_${baseName}`,
     fields: [
       {
         name: 'A',
