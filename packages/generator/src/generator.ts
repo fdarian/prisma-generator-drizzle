@@ -88,10 +88,7 @@ generatorHandler({
 
     await Promise.all(
       additionalModels
-        .reduce((accum, model) => {
-          if (accum.some(({ name }) => name === model.name)) return accum
-          return [...accum, model]
-        }, [] as DMMF.Model[])
+        .reduce(deduplicateModels, [] as DMMF.Model[])
         .map(async (model) => {
           const modelCreation = logger.createTask()
 
@@ -223,3 +220,8 @@ function createModelModule(input: {
   })
 }
 export type ModelModule = ReturnType<typeof createModelModule>
+
+function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
+  if (accum.some(({ name }) => name === model.name)) return accum
+  return [...accum, model]
+}
