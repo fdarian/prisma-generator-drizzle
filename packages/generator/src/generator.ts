@@ -82,7 +82,7 @@ generatorHandler({
       modelCreation.end(`◟ ${modelModule.name}.ts`)
 
       if (modelModule.additional && modelModule.additional.length > 0) {
-        additionalModels = [...additionalModels, ...modelModule.additional]
+        additionalModels = additionalModels.concat(modelModule.additional)
       }
     }
 
