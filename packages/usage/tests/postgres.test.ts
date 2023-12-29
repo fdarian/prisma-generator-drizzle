@@ -1,5 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { payments } from 'prisma/drizzle/payments'
+import { schema } from 'prisma/drizzle/schema'
 import { teams } from 'prisma/drizzle/teams'
 import { transfers } from 'prisma/drizzle/transfers'
 import { users } from 'prisma/drizzle/users'
@@ -15,6 +16,7 @@ import {
   user_insert,
   user_result,
 } from './dummy'
+import { testManyToMany } from './shared/test-implicit-relation'
 
 beforeEach(async () => {
   await db.delete(payments)
@@ -175,3 +177,5 @@ test('disambiguating relations optional unique', async () => {
     },
   })
 })
+
+testManyToMany(db, schema)

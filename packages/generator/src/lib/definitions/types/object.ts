@@ -4,7 +4,7 @@ import { UseVar } from './useVar'
 export type Entry = [string, Definition]
 
 export function object(
-  entries: Record<string, Definition> | (Entry | UseVar)[]
+  entries: Record<string, Definition | undefined> | (Entry | UseVar)[]
 ) {
   const _entries = Array.isArray(entries) ? entries : Object.entries(entries)
 
@@ -12,11 +12,12 @@ export function object(
     render(): string {
       if (entries.length === 0) return `{}`
       return `{ ${_entries
-        .map((entryOrVar) =>
-          Array.isArray(entryOrVar)
-            ? `${entryOrVar[0]}: ${entryOrVar[1].render()}`
-            : `...${entryOrVar.render()}`
-        )
+        .flatMap((entryOrVar) => {
+          if (!Array.isArray(entryOrVar)) return [`...${entryOrVar.render()}`]
+          return entryOrVar[1] != null
+            ? [`${entryOrVar[0]}: ${entryOrVar[1].render()}`]
+            : []
+        })
         .join(', ')} }`
     },
   })

@@ -9,6 +9,10 @@ const env = parse(
   process.env
 )
 
+let schema = await Bun.file('./prisma/schema.prisma').text()
+schema = schema.replace('postgresql', 'mysql')
+Bun.write('./prisma/mysql/schema.prisma', schema)
+
 const promises = [
   execSync(
     `DATABASE_URL=${env.PG_DATABASE_URL} bun prisma db push --schema prisma/schema.prisma --force-reset --accept-data-loss`,

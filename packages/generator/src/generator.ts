@@ -65,7 +65,8 @@ generatorHandler({
       enumCreation.end(`◟ ${enumModule.name}.ts`)
     }
 
-    const models: ModelModule[] = []
+    let implicitModels: DMMF.Model[] = []
+    let models: ModelModule[] = []
     for await (const model of options.dmmf.datamodel.models) {
       const modelCreation = logger.createTask()
 
@@ -77,9 +78,29 @@ generatorHandler({
       await writeModule(basePath, modelModule)
 
       models.push(modelModule)
+      implicitModels = implicitModels.concat(modelModule.implicit ?? [])
 
       modelCreation.end(`◟ ${modelModule.name}.ts`)
     }
+
+    const implicitModelModules = await Promise.all(
+      implicitModels
+        .reduce(deduplicateModels, [] as DMMF.Model[])
+        .map(async (model) => {
+          const modelCreation = logger.createTask()
+
+          const modelModule = createModelModule({
+            adapter,
+            model,
+            datamodel: options.dmmf.datamodel,
+          })
+          await writeModule(basePath, modelModule)
+
+          modelCreation.end(`◟ ${modelModule.name}.ts`)
+          return modelModule
+        })
+    )
+    models = models.concat(implicitModelModules)
 
     const schemaModule = createModule({
       name: 'schema',
@@ -151,9 +172,11 @@ function ifExists<T>(value: T | null | undefined): T[] {
 function createModule(input: {
   declarations: ImportableDefinition[]
   name: string
+  implicit?: DMMF.Model[]
 }) {
   return createDef({
     name: input.name,
+    implicit: input.implicit,
     render() {
       const imports = pipe(
         input.declarations,
@@ -181,6 +204,7 @@ function createModelModule(input: {
   const relationsVar = isEmpty(relationalFields)
     ? null
     : generateTableRelationsDeclaration({
+        model: input.model,
         tableVarName: tableVar.name,
         fields: relationalFields,
         datamodel: input.datamodel,
@@ -188,7 +212,13 @@ function createModelModule(input: {
 
   return createModule({
     name: getModelModuleName(input.model),
+    implicit: relationsVar?.implicit ?? [],
     declarations: [tableVar, ...ifExists(relationsVar)],
   })
 }
 export type ModelModule = ReturnType<typeof createModelModule>
+
+function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
+  if (accum.some(({ name }) => name === model.name)) return accum
+  return [...accum, model]
+}
