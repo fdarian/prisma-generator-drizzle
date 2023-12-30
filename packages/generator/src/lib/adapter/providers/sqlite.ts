@@ -11,7 +11,7 @@ const customDecimalModule = createModule({
   declarations: [
     {
       imports: [namedImport(['customType'], coreModule)],
-      code: `export const customDecimal = customType<{ data: string }>(
+      code: `export const customDecimal = customType<{ data: number }>(
   {
     dataType() {
       return 'DECIMAL';
