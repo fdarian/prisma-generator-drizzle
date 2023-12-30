@@ -40,13 +40,14 @@ export const sqliteAdapter = createAdapter({
   fields: {
     // Prisma: https://arc.net/l/quote/omrfeqos
     // Drizzle: https://orm.drizzle.team/docs/column-types/sqlite#bigint
-    BigInt(field) {
-      return createField({
-        field,
-        imports: [namedImport(['blob'], coreModule)],
-        func: `blob('${getDbName(field)}', { mode: 'bigint' })`,
-      })
-    },
+    // Integer mode BigInt is not supported by Drizzle
+    // BigInt(field) {
+    //   return createField({
+    //     field,
+    //     imports: [namedImport(['integer'], coreModule)],
+    //     func: `integer('${getDbName(field)}', { mode: 'bigint' })`,
+    //   })
+    // },
     // Prisma: https://arc.net/l/quote/jurqgcxd
     // Drizzle: https://arc.net/l/quote/pxcgbjxz
     Boolean(field) {

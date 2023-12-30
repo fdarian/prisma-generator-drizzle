@@ -18,6 +18,7 @@ Bun.write(
     .replace('postgresql', 'sqlite')
     .replace('env("DATABASE_URL")', '"file:./test.db"')
     .replace('  json              Json?', '')
+    .replace('  bigint            BigInt?', '')
     .replace('  enum              UserType', '')
     .replace(/enum UserType \{\s*TypeOne\s*TypeTwo\s*\}/g, '')
 )
