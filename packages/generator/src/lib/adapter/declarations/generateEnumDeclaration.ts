@@ -1,7 +1,5 @@
 import { DMMF } from '@prisma/generator-helper'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
-import { createDef } from '../../definitions/createDef'
-import { constDeclaration } from '../../definitions/types/constDeclaration'
 import { getEnumVarName } from '../../prisma-helpers/enums'
 import { Adapter } from '../types'
 
@@ -16,8 +14,8 @@ export function generateEnumDeclaration(
     prismaEnum.values.map(getDbName)
   )
 
-  return createDef({
+  return {
     imports: enumFuncCall.imports,
-    render: constDeclaration(varName, enumFuncCall, { export: true }),
-  })
+    code: `export const ${varName} = ${enumFuncCall.func};`,
+  }
 }

@@ -4,8 +4,6 @@ import { pipe } from 'fp-ts/lib/function'
 import { isKind } from '~/lib/prisma-helpers/field'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
-import { createDef } from '../../definitions/createDef'
-import { constDeclaration } from '../../definitions/types/constDeclaration'
 import { Adapter } from '../types'
 
 export function generateTableDeclaration(adapter: Adapter, model: DMMF.Model) {
@@ -19,12 +17,12 @@ export function generateTableDeclaration(adapter: Adapter, model: DMMF.Model) {
     fields
   )
 
-  return createDef({
+  return {
     name,
     imports: [
       ...tableDeclaration.imports,
       ...fields.flatMap((field) => field.imports),
     ],
-    render: constDeclaration(name, tableDeclaration, { export: true }),
-  })
+    code: `export const ${name} = ${tableDeclaration.func};`,
+  }
 }

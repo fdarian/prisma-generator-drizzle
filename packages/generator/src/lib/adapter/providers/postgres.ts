@@ -1,38 +1,26 @@
-import { map } from 'fp-ts/lib/Array'
-import { pipe } from 'fp-ts/lib/function'
 import { camelCase, kebabCase } from 'lodash'
-import { createDef } from '~/lib/definitions/createDef'
-import { array } from '~/lib/definitions/types/array'
-import { funcCall } from '~/lib/definitions/types/funcCall'
-import { namedImport } from '~/lib/definitions/types/imports'
-import { object } from '~/lib/definitions/types/object'
-import { number } from '../../definitions/types/number'
-import { string } from '../../definitions/types/string'
+import { getDbName } from '~/lib/prisma-helpers/getDbName'
+import { namedImport } from '~/lib/syntaxes/imports'
 import { createAdapter } from '../adapter'
 import { createField } from '../fields/createField'
-import { fieldFuncCall } from '../fields/fieldFuncCall'
 
 const coreModule = 'drizzle-orm/pg-core'
 export const postgresAdapter = createAdapter({
   name: 'postgres',
   getDeclarationFunc: {
     enum(name, values) {
-      return createDef({
+      return {
         imports: [namedImport(['pgEnum'], coreModule)],
-        render: funcCall('pgEnum', [
-          string(name),
-          array(pipe(values, map(string))),
-        ]),
-      })
+        func: `pgEnum('${name}', [${values.map((v) => `'${v}'`).join(', ')}])`,
+      }
     },
     table(name, fields) {
-      return createDef({
+      return {
         imports: [namedImport(['pgTable'], coreModule)],
-        render: funcCall('pgTable', [
-          string(name),
-          object(fields.map((field) => [field.name, field])),
-        ]),
-      })
+        func: `pgTable('${name}', { ${fields
+          .map(({ field, func }) => `${field.name}: ${func}`)
+          .join(', ')} })`,
+      }
     },
   },
   fields: {
@@ -41,7 +29,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport([func], `./${kebabCase(field.type)}-enum`)],
-        func: fieldFuncCall(func, field),
+        func: `${func}('${getDbName(field)}')`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#bigint
@@ -49,9 +37,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['bigint'], coreModule)],
-        func: fieldFuncCall('bigint', field, {
-          mode: string('bigint'),
-        }),
+        func: `bigint('${getDbName(field)}', { mode: 'bigint' })`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#boolean
@@ -59,7 +45,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['boolean'], coreModule)],
-        func: fieldFuncCall('boolean', field),
+        func: `boolean('${getDbName(field)}')`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#timestamp
@@ -67,10 +53,9 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['timestamp'], coreModule)],
-        func: fieldFuncCall('timestamp', field, {
-          mode: string('date'),
-          precision: number(3),
-        }),
+        func: `timestamp('${getDbName(
+          field
+        )}', { mode: 'date', precision: 3 })`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#decimal
@@ -78,10 +63,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['decimal'], coreModule)],
-        func: fieldFuncCall('decimal', field, {
-          precision: number(65),
-          scale: number(30),
-        }),
+        func: `decimal('${getDbName(field)}', { precision: 65, scale: 30 })`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#double-precision
@@ -89,7 +71,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['doublePrecision'], coreModule)],
-        func: fieldFuncCall('doublePrecision', field),
+        func: `doublePrecision('${getDbName(field)}')`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#integer
@@ -97,7 +79,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['integer'], coreModule)],
-        func: fieldFuncCall('integer', field),
+        func: `integer('${getDbName(field)}')`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#jsonb
@@ -105,7 +87,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['jsonb'], coreModule)],
-        func: fieldFuncCall('jsonb', field),
+        func: `jsonb('${getDbName(field)}')`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#text
@@ -113,7 +95,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['text'], coreModule)],
-        func: fieldFuncCall('text', field),
+        func: `text('${getDbName(field)}')`,
       })
     },
   },

@@ -16,17 +16,11 @@ import { generateTableRelationsDeclaration } from './lib/adapter/declarations/ge
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
 import { Adapter } from './lib/adapter/types'
-import { createDef, ImportableDefinition } from './lib/definitions/createDef'
-import {
-  ImportValue,
-  namedImport,
-  NamedImport,
-} from './lib/definitions/types/imports'
-import { render } from './lib/definitions/utils'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import { getModelModuleName } from './lib/prisma-helpers/model'
+import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
 import { writeFileSafely } from './utils/writeFileSafely'
 
 const { version } = require('../package.json')
@@ -145,7 +139,7 @@ function reduceImports(imports: ImportValue[]) {
 
 async function writeModule(basePath: string, module: Module) {
   const writeLocation = path.join(basePath, `${module.name}.ts`)
-  await writeFileSafely(writeLocation, module.render())
+  await writeFileSafely(writeLocation, module.code)
 }
 
 function getAdapter(options: GeneratorOptions) {
@@ -170,26 +164,26 @@ function ifExists<T>(value: T | null | undefined): T[] {
 }
 
 function createModule(input: {
-  declarations: ImportableDefinition[]
+  declarations: { imports: ImportValue[]; code: string }[]
   name: string
   implicit?: DMMF.Model[]
 }) {
-  return createDef({
+  const imports = pipe(
+    input.declarations,
+    flatMap((d) => d.imports),
+    reduceImports
+  )
+
+  const code = [
+    imports.map((i) => i.render()).join('\n'),
+    ...input.declarations.map((d) => d.code),
+  ].join('\n\n')
+
+  return {
     name: input.name,
     implicit: input.implicit,
-    render() {
-      const imports = pipe(
-        input.declarations,
-        flatMap((d) => d.imports),
-        reduceImports
-      )
-
-      return [
-        imports.map(render).join('\n'),
-        ...input.declarations.map(render),
-      ].join('\n\n')
-    },
-  })
+    code,
+  }
 }
 type Module = ReturnType<typeof createModule>
 

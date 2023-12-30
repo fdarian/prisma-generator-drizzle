@@ -1,19 +1,21 @@
-import { ImportableDefinition } from '../definitions/createDef'
 import { PrismaEnumField, PrismaScalarField } from '../prisma-helpers/field'
-import { FieldDefinition } from './fields/createField'
+import { ImportValue } from '../syntaxes/imports'
+import { FieldFunc } from './fields/createField'
 
 type ParsableField = PrismaScalarField | PrismaEnumField
+
+type DeclarationFunc = { imports: ImportValue[]; func: string }
 
 export function createAdapter<TName extends string>(impl: {
   name: TName
   getDeclarationFunc: {
-    enum: (name: string, values: string[]) => ImportableDefinition
-    table: (name: string, fields: FieldDefinition[]) => ImportableDefinition
+    enum: (name: string, values: string[]) => DeclarationFunc
+    table: (name: string, fields: FieldFunc[]) => DeclarationFunc
   }
   fields: Partial<
     Record<
       PrismaScalarField['type'] | 'enum',
-      (field: ParsableField) => FieldDefinition
+      (field: ParsableField) => FieldFunc
     >
   >
 }) {
