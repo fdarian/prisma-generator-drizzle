@@ -16,7 +16,6 @@ import { generateTableRelationsDeclaration } from './lib/adapter/declarations/ge
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
 import { Adapter } from './lib/adapter/types'
-import { ImportableDefinition } from './lib/definitions/createDef'
 import {
   ImportValue,
   namedImport,
@@ -170,7 +169,7 @@ function ifExists<T>(value: T | null | undefined): T[] {
 }
 
 function createModule(input: {
-  declarations: ImportableDefinition[]
+  declarations: { imports: ImportValue[]; code: string }[]
   name: string
   implicit?: DMMF.Model[]
 }) {
@@ -182,7 +181,7 @@ function createModule(input: {
 
   const code = [
     imports.map(render).join('\n'),
-    ...input.declarations.map(render),
+    ...input.declarations.map((d) => d.code),
   ].join('\n\n')
 
   return {

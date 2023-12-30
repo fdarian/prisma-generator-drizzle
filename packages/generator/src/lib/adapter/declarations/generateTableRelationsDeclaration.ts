@@ -12,10 +12,8 @@ import {
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
 import { createDef } from '../../definitions/createDef'
-import { constDeclaration } from '../../definitions/types/constDeclaration'
 import { funcCall } from '../../definitions/types/funcCall'
 import { namedImport } from '../../definitions/types/imports'
-import { lambda } from '../../definitions/types/lambda'
 import { object } from '../../definitions/types/object'
 import { useVar } from '../../definitions/types/useVar'
 
@@ -31,24 +29,18 @@ export function generateTableRelationsDeclaration(
 ) {
   const _fields = input.fields.map(getRelationField(input))
 
-  return createDef({
+  const func = `relations(${input.tableVarName}, (helpers) => ({ ${_fields
+    .map((f) => `${f.name}: ${f.render()}`)
+    .join(', ')} }))`
+
+  return {
     imports: [
       namedImport(['relations'], 'drizzle-orm'),
       ..._fields.flatMap((field) => field.imports),
     ],
     implicit: _fields.flatMap((field) => field.implicit),
-    render: constDeclaration(
-      `${input.tableVarName}Relations`,
-      funcCall('relations', [
-        useVar(input.tableVarName),
-        lambda(
-          useVar('helpers'),
-          object(_fields.map((field) => [field.name, field]))
-        ),
-      ]),
-      { export: true }
-    ),
-  })
+    code: `export const ${input.tableVarName}Relations = ${func};`,
+  }
 }
 
 function getRelationField(ctx: GenerateTableRelationsInput) {
