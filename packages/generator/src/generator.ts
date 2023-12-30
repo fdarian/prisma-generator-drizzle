@@ -3,7 +3,7 @@ import {
   generatorHandler,
   GeneratorOptions,
 } from '@prisma/generator-helper'
-import { flatMap, map, reduce } from 'fp-ts/lib/Array'
+import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import fs from 'fs'
 import { isEmpty } from 'lodash'
@@ -22,6 +22,7 @@ import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import { getModelModuleName } from './lib/prisma-helpers/model'
 import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
+import { createModule, Module } from './lib/syntaxes/module'
 import { writeFileSafely } from './utils/writeFileSafely'
 
 const { version } = require('../package.json')
@@ -105,7 +106,7 @@ generatorHandler({
   },
 })
 
-function reduceImports(imports: ImportValue[]) {
+export function reduceImports(imports: ImportValue[]) {
   type Plan = { toReduce: NamedImport[]; skipped: ImportValue[] }
 
   const plan = pipe(
@@ -165,30 +166,6 @@ function ifExists<T>(value: T | null | undefined): T[] {
   if (value == null) return []
   return [value]
 }
-
-function createModule(input: {
-  declarations: { imports: ImportValue[]; code: string }[]
-  name: string
-  implicit?: DMMF.Model[]
-}) {
-  const imports = pipe(
-    input.declarations,
-    flatMap((d) => d.imports),
-    reduceImports
-  )
-
-  const code = [
-    imports.map((i) => i.render()).join('\n'),
-    ...input.declarations.map((d) => d.code),
-  ].join('\n\n')
-
-  return {
-    name: input.name,
-    implicit: input.implicit,
-    code,
-  }
-}
-type Module = ReturnType<typeof createModule>
 
 function createModelModule(input: {
   model: DMMF.Model
