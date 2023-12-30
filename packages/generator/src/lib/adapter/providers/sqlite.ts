@@ -1,9 +1,27 @@
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
+import { createModule } from '~/lib/syntaxes/module'
 import { createAdapter } from '../adapter'
 import { createField } from '../fields/createField'
 
 const coreModule = 'drizzle-orm/sqlite-core'
+
+const customDecimalModule = createModule({
+  name: 'custom-decimal',
+  declarations: [
+    {
+      imports: [namedImport(['customType'], coreModule)],
+      code: `export const customDecimal = customType<{ data: string }>(
+  {
+    dataType() {
+      return 'DECIMAL';
+    },
+  },
+);`,
+    },
+  ],
+})
+
 export const sqliteAdapter = createAdapter({
   name: 'sqlite',
   getDeclarationFunc: {
@@ -47,15 +65,17 @@ export const sqliteAdapter = createAdapter({
         func: `integer('${getDbName(field)}', { mode: 'timestamp' })`,
       })
     },
-    // TODO
-    // https://arc.net/l/quote/sgkjrpxh
-    // Decimal(field) {
-    //   return createField({
-    //     field,
-    //     imports: [namedImport(['decimal'], coreModule)],
-    //     func: `decimal('${getDbName(field)}', { precision: 65, scale: 30 })`,
-    //   })
-    // },
+    // Prisma: https://arc.net/l/quote/sgkjrpxh
+    // Drizzle: ..customized below using drizzle's `customType`..
+    Decimal(field) {
+      return createField({
+        field,
+        imports: [
+          namedImport(['customDecimal'], `./${customDecimalModule.name}`),
+        ],
+        func: `customDecimal('${getDbName(field)}')`,
+      })
+    },
     // Prisma: https://arc.net/l/quote/ozmbgwfq
     // Drizzle: https://orm.drizzle.team/docs/column-types/sqlite#real
     Float(field) {
@@ -84,4 +104,5 @@ export const sqliteAdapter = createAdapter({
       })
     },
   },
+  extraModules: [customDecimalModule],
 })

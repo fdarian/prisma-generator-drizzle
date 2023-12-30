@@ -49,6 +49,16 @@ generatorHandler({
 
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 
+    if (adapter.extraModules) {
+      await Promise.all(
+        adapter.extraModules.map(async (module) => {
+          const moduleCreation = logger.createTask()
+          await writeModule(basePath, module)
+          moduleCreation.end(`◟ ${module.name}.ts`)
+        })
+      )
+    }
+
     for await (const prismaEnum of options.dmmf.datamodel.enums) {
       const enumCreation = logger.createTask()
 
