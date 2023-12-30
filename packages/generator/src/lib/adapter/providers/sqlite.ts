@@ -22,6 +22,28 @@ const customDecimalModule = createModule({
   ],
 })
 
+const customBigIntModule = createModule({
+  name: 'custom-bigint',
+  declarations: [
+    {
+      imports: [namedImport(['customType'], coreModule)],
+      code: `export const customBigInt = customType<{ data: bigint }>(
+  {
+    dataType() {
+      return 'INTEGER';
+    },
+    fromDriver(value: unknown): bigint {
+      return BigInt(value);
+    },
+    toDriver(value: bigint): number {
+      return Number(value);
+    }
+  },
+);`,
+    },
+  ],
+})
+
 export const sqliteAdapter = createAdapter({
   name: 'sqlite',
   getDeclarationFunc: {
@@ -40,14 +62,15 @@ export const sqliteAdapter = createAdapter({
   fields: {
     // Prisma: https://arc.net/l/quote/omrfeqos
     // Drizzle: https://orm.drizzle.team/docs/column-types/sqlite#bigint
-    // Integer mode BigInt is not supported by Drizzle
-    // BigInt(field) {
-    //   return createField({
-    //     field,
-    //     imports: [namedImport(['integer'], coreModule)],
-    //     func: `integer('${getDbName(field)}', { mode: 'bigint' })`,
-    //   })
-    // },
+    BigInt(field) {
+      return createField({
+        field,
+        imports: [
+          namedImport(['customBigInt'], `./${customBigIntModule.name}`),
+        ],
+        func: `customBigInt('${getDbName(field)}')`,
+      })
+    },
     // Prisma: https://arc.net/l/quote/jurqgcxd
     // Drizzle: https://arc.net/l/quote/pxcgbjxz
     Boolean(field) {
@@ -105,5 +128,5 @@ export const sqliteAdapter = createAdapter({
       })
     },
   },
-  extraModules: [customDecimalModule],
+  extraModules: [customDecimalModule, customBigIntModule],
 })
