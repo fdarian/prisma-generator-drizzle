@@ -41,7 +41,7 @@ const promises = [
 await Promise.all(promises)
 
 try {
-  execSync('bun test', { stdio: 'inherit' })
+  execSync('vitest run', { stdio: 'inherit' })
 } catch (err) {
   process.exit(1)
 }

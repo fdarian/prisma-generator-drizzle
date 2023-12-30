@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
     "test": "bun run scripts/test.ts",
@@ -16,7 +17,8 @@
     "mysql2": "^3.6.5",
     "pg": "^8.11.3",
     "postgres": "^3.4.3",
-    "valibot": "^0.24.1"
+    "valibot": "^0.24.1",
+    "vitest": "^1.1.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.8",
