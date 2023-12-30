@@ -9,7 +9,7 @@ import {
 } from '~/lib/prisma-helpers/field'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
-import { namedImport } from '../../definitions/types/imports'
+import { namedImport } from '../../definitions/imports'
 
 type GenerateTableRelationsInput = {
   model: DMMF.Model

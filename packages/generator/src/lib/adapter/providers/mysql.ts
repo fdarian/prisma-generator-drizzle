@@ -1,5 +1,5 @@
 import { camelCase, kebabCase } from 'lodash'
-import { namedImport } from '~/lib/definitions/types/imports'
+import { namedImport } from '~/lib/definitions/imports'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { createAdapter } from '../adapter'
 import { createField } from '../fields/createField'

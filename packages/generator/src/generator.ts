@@ -20,7 +20,7 @@ import {
   ImportValue,
   namedImport,
   NamedImport,
-} from './lib/definitions/types/imports'
+} from './lib/definitions/imports'
 import { render } from './lib/definitions/utils'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'

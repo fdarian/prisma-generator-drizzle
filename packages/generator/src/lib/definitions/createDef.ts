@@ -1,4 +1,4 @@
-import { ImportValue } from './types/imports'
+import { ImportValue } from './imports'
 
 type IRenderable = {
   render: () => string

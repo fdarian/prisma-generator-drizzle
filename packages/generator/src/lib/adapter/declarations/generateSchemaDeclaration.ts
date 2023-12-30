@@ -1,6 +1,6 @@
 import { camelCase } from 'lodash'
 import { ModelModule } from '../../../generator'
-import { wildcardImport } from '../../definitions/types/imports'
+import { wildcardImport } from '../../definitions/imports'
 
 export function generateSchemaDeclaration(models: ModelModule[]) {
   const aliasFor = (m: ModelModule) => camelCase(m.name)

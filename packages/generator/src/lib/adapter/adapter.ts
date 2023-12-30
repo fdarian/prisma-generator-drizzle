@@ -1,4 +1,4 @@
-import { ImportValue } from '../definitions/types/imports'
+import { ImportValue } from '../definitions/imports'
 import { PrismaEnumField, PrismaScalarField } from '../prisma-helpers/field'
 import { FieldFunc } from './fields/createField'
 

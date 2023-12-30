@@ -1,4 +1,4 @@
-import { createDef } from '../createDef'
+import { createDef } from './createDef'
 
 export function namedImport(names: string[], path: string) {
   return createDef({
