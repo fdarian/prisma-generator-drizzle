@@ -16,16 +16,11 @@ import { generateTableRelationsDeclaration } from './lib/adapter/declarations/ge
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
 import { Adapter } from './lib/adapter/types'
-import {
-  ImportValue,
-  namedImport,
-  NamedImport,
-} from './lib/definitions/imports'
-import { render } from './lib/definitions/utils'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import { getModelModuleName } from './lib/prisma-helpers/model'
+import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
 import { writeFileSafely } from './utils/writeFileSafely'
 
 const { version } = require('../package.json')
@@ -180,7 +175,7 @@ function createModule(input: {
   )
 
   const code = [
-    imports.map(render).join('\n'),
+    imports.map((i) => i.render()).join('\n'),
     ...input.declarations.map((d) => d.code),
   ].join('\n\n')
 

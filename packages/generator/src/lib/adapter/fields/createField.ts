@@ -1,5 +1,5 @@
 import { DMMF } from '@prisma/generator-helper'
-import { ImportValue, namedImport } from '~/lib/definitions/imports'
+import { ImportValue, namedImport } from '~/lib/syntaxes/imports'
 
 export type DefineImport = {
   module: string

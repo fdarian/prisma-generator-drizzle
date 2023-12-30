@@ -1,5 +1,5 @@
-import { ImportValue } from '../definitions/imports'
 import { PrismaEnumField, PrismaScalarField } from '../prisma-helpers/field'
+import { ImportValue } from '../syntaxes/imports'
 import { FieldFunc } from './fields/createField'
 
 type ParsableField = PrismaScalarField | PrismaEnumField
