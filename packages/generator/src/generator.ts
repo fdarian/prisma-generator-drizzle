@@ -16,7 +16,7 @@ import { generateTableRelationsDeclaration } from './lib/adapter/declarations/ge
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
 import { Adapter } from './lib/adapter/types'
-import { createDef, ImportableDefinition } from './lib/definitions/createDef'
+import { ImportableDefinition } from './lib/definitions/createDef'
 import {
   ImportValue,
   namedImport,
@@ -145,7 +145,7 @@ function reduceImports(imports: ImportValue[]) {
 
 async function writeModule(basePath: string, module: Module) {
   const writeLocation = path.join(basePath, `${module.name}.ts`)
-  await writeFileSafely(writeLocation, module.render())
+  await writeFileSafely(writeLocation, module.code)
 }
 
 function getAdapter(options: GeneratorOptions) {
@@ -174,22 +174,22 @@ function createModule(input: {
   name: string
   implicit?: DMMF.Model[]
 }) {
-  return createDef({
+  const imports = pipe(
+    input.declarations,
+    flatMap((d) => d.imports),
+    reduceImports
+  )
+
+  const code = [
+    imports.map(render).join('\n'),
+    ...input.declarations.map(render),
+  ].join('\n\n')
+
+  return {
     name: input.name,
     implicit: input.implicit,
-    render() {
-      const imports = pipe(
-        input.declarations,
-        flatMap((d) => d.imports),
-        reduceImports
-      )
-
-      return [
-        imports.map(render).join('\n'),
-        ...input.declarations.map(render),
-      ].join('\n\n')
-    },
-  })
+    code,
+  }
 }
 type Module = ReturnType<typeof createModule>
 
