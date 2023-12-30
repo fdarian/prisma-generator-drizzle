@@ -24,7 +24,7 @@ export function generateTableRelationsDeclaration(
   const _fields = input.fields.map(getRelationField(input))
 
   const func = `relations(${input.tableVarName}, (helpers) => ({ ${_fields
-    .map((f) => `${f.name}: ${f.code}`)
+    .map((f) => `${f.name}: ${f.func}`)
     .join(', ')} }))`
 
   return {
@@ -56,7 +56,7 @@ function getRelationField(ctx: GenerateTableRelationsInput) {
           `./${kebabCase(referenceModelVarName)}`
         ),
       ],
-      code: `${relFunc}(${referenceModelVarName}${opts ? `, ${opts}` : ''})`,
+      func: `${relFunc}(${referenceModelVarName}${opts ? `, ${opts}` : ''})`,
     }
   }
 }
