@@ -33,6 +33,9 @@ const customBigIntModule = createModule({
       return 'INTEGER';
     },
     fromDriver(value: unknown): bigint {
+      if (typeof value !== 'number') {
+        throw new Error('Expected number type for INTEGER')
+      }
       return BigInt(value);
     },
     toDriver(value: bigint): number {
