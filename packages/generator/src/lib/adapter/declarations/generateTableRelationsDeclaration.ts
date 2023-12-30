@@ -3,19 +3,13 @@ import { map } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import { camelCase, kebabCase } from 'lodash'
 import pluralize from 'pluralize'
-import { array } from '~/lib/definitions/types/array'
-import { string } from '~/lib/definitions/types/string'
 import {
   PrismaRelationField,
   isRelationField,
 } from '~/lib/prisma-helpers/field'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
-import { createDef } from '../../definitions/createDef'
-import { funcCall } from '../../definitions/types/funcCall'
 import { namedImport } from '../../definitions/types/imports'
-import { object } from '../../definitions/types/object'
-import { useVar } from '../../definitions/types/useVar'
 
 type GenerateTableRelationsInput = {
   model: DMMF.Model
@@ -30,7 +24,7 @@ export function generateTableRelationsDeclaration(
   const _fields = input.fields.map(getRelationField(input))
 
   const func = `relations(${input.tableVarName}, (helpers) => ({ ${_fields
-    .map((f) => `${f.name}: ${f.render()}`)
+    .map((f) => `${f.name}: ${f.code}`)
     .join(', ')} }))`
 
   return {
@@ -51,7 +45,9 @@ function getRelationField(ctx: GenerateTableRelationsInput) {
         ? getManyToManyRelation(field, ctx)
         : getManyToOneRelation(field)
 
-    return createDef({
+    const relFunc = field.isList ? 'helpers.many' : 'helpers.one'
+
+    return {
       name: field.name,
       implicit: implicit,
       imports: [
@@ -60,11 +56,8 @@ function getRelationField(ctx: GenerateTableRelationsInput) {
           `./${kebabCase(referenceModelVarName)}`
         ),
       ],
-      render: funcCall(field.isList ? 'helpers.many' : 'helpers.one', [
-        useVar(referenceModelVarName),
-        ...(opts ? [object(opts)] : []),
-      ]),
-    })
+      code: `${relFunc}(${referenceModelVarName}${opts ? `, ${opts}` : ''})`,
+    }
   }
 }
 
@@ -171,23 +164,22 @@ function createRelationOpts(input: {
 }) {
   const { relationName, from, to } = input
 
-  return {
-    relationName: relationName ? string(relationName) : undefined,
+  const entries = Object.entries({
+    relationName: relationName ? `'${relationName}'` : null,
     fields: from
-      ? pipe(
-          from.fieldNames,
-          map((fieldName) => useVar(`${from.modelVarName}.${fieldName}`)),
-          array
-        )
-      : undefined,
+      ? `[ ${from.fieldNames
+          .map((fieldName) => `${from.modelVarName}.${fieldName}`)
+          .join(', ')} ]`
+      : null,
     references: to
-      ? pipe(
-          to.fieldNames,
-          map((fieldName) => useVar(`${to.modelVarName}.${fieldName}`)),
-          array
-        )
-      : undefined,
-  }
+      ? `[ ${to.fieldNames
+          .map((fieldName) => `${to.modelVarName}.${fieldName}`)
+          .join(', ')} ]`
+      : null,
+  }).flatMap(([key, value]) => (value == null ? [] : `${key}: ${value}`))
+
+  if (entries.length === 0) return
+  return `{ ${entries.join(', ')} }`
 }
 
 /**

@@ -23,6 +23,6 @@ export function generateTableDeclaration(adapter: Adapter, model: DMMF.Model) {
       ...tableDeclaration.imports,
       ...fields.flatMap((field) => field.imports),
     ],
-    code: `export const ${name} = ${tableDeclaration.render()};`,
+    code: `export const ${name} = ${tableDeclaration.func};`,
   }
 }

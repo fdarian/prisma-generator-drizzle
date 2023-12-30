@@ -16,6 +16,6 @@ export function generateEnumDeclaration(
 
   return {
     imports: enumFuncCall.imports,
-    code: `export const ${varName} = ${enumFuncCall.render()};`,
+    code: `export const ${varName} = ${enumFuncCall.func};`,
   }
 }
