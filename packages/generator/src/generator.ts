@@ -15,6 +15,7 @@ import { generateTableDeclaration } from './lib/adapter/declarations/generateTab
 import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
+import { sqliteAdapter } from './lib/adapter/providers/sqlite'
 import { Adapter } from './lib/adapter/types'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
@@ -150,6 +151,8 @@ function getAdapter(options: GeneratorOptions) {
         return postgresAdapter
       case 'mysql':
         return mysqlAdapter
+      case 'sqlite':
+        return sqliteAdapter
       default:
         throw new Error(
           `Connector ${options.datasources[0].provider} is not supported`
