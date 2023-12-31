@@ -33,6 +33,9 @@ generator drizzle {
   provider = "prisma-generator-drizzle"
   // Optional: specify the output directory
   // output = "../models"
+
+  // Optional: run prettier
+  // prettier = "prettier"
 }
 ```
 

@@ -3,6 +3,7 @@ import {
   generatorHandler,
   GeneratorOptions,
 } from '@prisma/generator-helper'
+import { execSync } from 'child_process'
 import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import fs from 'fs'
@@ -23,7 +24,6 @@ import { isRelationField } from './lib/prisma-helpers/field'
 import { getModelModuleName } from './lib/prisma-helpers/model'
 import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
 import { createModule, Module } from './lib/syntaxes/module'
-import { writeFileSafely } from './utils/writeFileSafely'
 
 const { version } = require('../package.json')
 
@@ -48,32 +48,28 @@ generatorHandler({
     if (!basePath) throw new Error('No output path specified')
 
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
+    fs.mkdirSync(basePath, { recursive: true })
 
-    if (adapter.extraModules) {
-      await Promise.all(
-        adapter.extraModules.map(async (module) => {
-          const moduleCreation = logger.createTask()
-          await writeModule(basePath, module)
-          moduleCreation.end(`◟ ${module.name}.ts`)
-        })
-      )
-    }
+    adapter.extraModules?.forEach((module) => {
+      const moduleCreation = logger.createTask()
+      writeModule(basePath, module)
+      moduleCreation.end(`◟ ${module.name}.ts`)
+    })
 
-    for await (const prismaEnum of options.dmmf.datamodel.enums) {
+    options.dmmf.datamodel.enums.forEach((prismaEnum) => {
       const enumCreation = logger.createTask()
 
       const enumModule = createModule({
         name: getEnumModuleName(prismaEnum),
         declarations: [generateEnumDeclaration(adapter, prismaEnum)],
       })
-      await writeModule(basePath, enumModule)
+      writeModule(basePath, enumModule)
 
       enumCreation.end(`◟ ${enumModule.name}.ts`)
-    }
+      return enumModule
+    })
 
-    let implicitModels: DMMF.Model[] = []
-    let models: ModelModule[] = []
-    for await (const model of options.dmmf.datamodel.models) {
+    let modelModules = options.dmmf.datamodel.models.map((model) => {
       const modelCreation = logger.createTask()
 
       const modelModule = createModelModule({
@@ -81,38 +77,41 @@ generatorHandler({
         model,
         datamodel: options.dmmf.datamodel,
       })
-      await writeModule(basePath, modelModule)
-
-      models.push(modelModule)
-      implicitModels = implicitModels.concat(modelModule.implicit ?? [])
+      writeModule(basePath, modelModule)
 
       modelCreation.end(`◟ ${modelModule.name}.ts`)
-    }
 
-    const implicitModelModules = await Promise.all(
-      implicitModels
-        .reduce(deduplicateModels, [] as DMMF.Model[])
-        .map(async (model) => {
-          const modelCreation = logger.createTask()
+      return modelModule
+    })
 
-          const modelModule = createModelModule({
-            adapter,
-            model,
-            datamodel: options.dmmf.datamodel,
-          })
-          await writeModule(basePath, modelModule)
+    const implicitModelModules = modelModules
+      .flatMap((module) => module.implicit)
+      .reduce(deduplicateModels, [] as DMMF.Model[])
+      .map((model) => {
+        const modelCreation = logger.createTask()
 
-          modelCreation.end(`◟ ${modelModule.name}.ts`)
-          return modelModule
+        const modelModule = createModelModule({
+          adapter,
+          model,
+          datamodel: options.dmmf.datamodel,
         })
-    )
-    models = models.concat(implicitModelModules)
+        writeModule(basePath, modelModule)
+
+        modelCreation.end(`◟ ${modelModule.name}.ts`)
+        return modelModule
+      })
+    modelModules = modelModules.concat(implicitModelModules)
 
     const schemaModule = createModule({
       name: 'schema',
-      declarations: [generateSchemaDeclaration(models)],
+      declarations: [generateSchemaDeclaration(modelModules)],
     })
-    await writeModule(basePath, schemaModule)
+    writeModule(basePath, schemaModule)
+
+    const formatter = options.generator.config['formatter']
+    if (formatter === 'prettier') {
+      execSync(`prettier --write ${basePath}`, { stdio: 'inherit' })
+    }
   },
 })
 
@@ -149,9 +148,9 @@ export function reduceImports(imports: ImportValue[]) {
   ]
 }
 
-async function writeModule(basePath: string, module: Module) {
+function writeModule(basePath: string, module: Module) {
   const writeLocation = path.join(basePath, `${module.name}.ts`)
-  await writeFileSafely(writeLocation, module.code)
+  fs.writeFileSync(writeLocation, module.code)
 }
 
 function getAdapter(options: GeneratorOptions) {
