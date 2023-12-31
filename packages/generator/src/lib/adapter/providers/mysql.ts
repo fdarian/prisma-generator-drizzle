@@ -79,7 +79,7 @@ export const mysqlAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['int'], coreModule)],
-        func: `int(${getDbName(field)})`,
+        func: `int('${getDbName(field)}')`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/mysql#json
