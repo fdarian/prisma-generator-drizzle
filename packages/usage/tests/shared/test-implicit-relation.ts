@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
-import { describe, expect, test } from 'bun:test'
 import { Db, Schema } from 'src/lib/types'
+import { describe, expect, test } from 'vitest'
 
 export async function testManyToMany(db: Db, schema: Schema) {
   describe('many-to-many', () => {

@@ -1,5 +1,6 @@
 import { PrismaEnumField, PrismaScalarField } from '../prisma-helpers/field'
 import { ImportValue } from '../syntaxes/imports'
+import { Module } from '../syntaxes/module'
 import { FieldFunc } from './fields/createField'
 
 type ParsableField = PrismaScalarField | PrismaEnumField
@@ -18,6 +19,7 @@ export function createAdapter<TName extends string>(impl: {
       (field: ParsableField) => FieldFunc
     >
   >
+  extraModules?: Module[]
 }) {
   return {
     ...impl,

@@ -9,9 +9,18 @@ const env = parse(
   process.env
 )
 
-let schema = await Bun.file('./prisma/schema.prisma').text()
-schema = schema.replace('postgresql', 'mysql')
-Bun.write('./prisma/mysql/schema.prisma', schema)
+const schema = await Bun.file('./prisma/schema.prisma').text()
+Bun.write('./prisma/mysql/schema.prisma', schema.replace('postgresql', 'mysql'))
+
+Bun.write(
+  './prisma/sqlite/schema.prisma',
+  schema
+    .replace('postgresql', 'sqlite')
+    .replace('env("DATABASE_URL")', '"file:./test.db"')
+    .replace('  json              Json?', '')
+    .replace('  enum              UserType', '')
+    .replace(/enum UserType \{\s*TypeOne\s*TypeTwo\s*\}/g, '')
+)
 
 const promises = [
   execSync(
@@ -22,12 +31,16 @@ const promises = [
     `DATABASE_URL=${env.MYSQL_DATABASE_URL} bun prisma db push --schema prisma/mysql/schema.prisma --force-reset --accept-data-loss`,
     { stdio: 'inherit' }
   ),
+  execSync(
+    `bun prisma db push --schema prisma/sqlite/schema.prisma --force-reset --accept-data-loss`,
+    { stdio: 'inherit' }
+  ),
 ]
 
 await Promise.all(promises)
 
 try {
-  execSync('bun test', { stdio: 'inherit' })
+  execSync('vitest run', { stdio: 'inherit' })
 } catch (err) {
   process.exit(1)
 }

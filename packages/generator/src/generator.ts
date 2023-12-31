@@ -3,7 +3,7 @@ import {
   generatorHandler,
   GeneratorOptions,
 } from '@prisma/generator-helper'
-import { flatMap, map, reduce } from 'fp-ts/lib/Array'
+import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import fs from 'fs'
 import { isEmpty } from 'lodash'
@@ -15,12 +15,14 @@ import { generateTableDeclaration } from './lib/adapter/declarations/generateTab
 import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
+import { sqliteAdapter } from './lib/adapter/providers/sqlite'
 import { Adapter } from './lib/adapter/types'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import { getModelModuleName } from './lib/prisma-helpers/model'
 import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
+import { createModule, Module } from './lib/syntaxes/module'
 import { writeFileSafely } from './utils/writeFileSafely'
 
 const { version } = require('../package.json')
@@ -46,6 +48,16 @@ generatorHandler({
     if (!basePath) throw new Error('No output path specified')
 
     fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
+
+    if (adapter.extraModules) {
+      await Promise.all(
+        adapter.extraModules.map(async (module) => {
+          const moduleCreation = logger.createTask()
+          await writeModule(basePath, module)
+          moduleCreation.end(`◟ ${module.name}.ts`)
+        })
+      )
+    }
 
     for await (const prismaEnum of options.dmmf.datamodel.enums) {
       const enumCreation = logger.createTask()
@@ -104,7 +116,7 @@ generatorHandler({
   },
 })
 
-function reduceImports(imports: ImportValue[]) {
+export function reduceImports(imports: ImportValue[]) {
   type Plan = { toReduce: NamedImport[]; skipped: ImportValue[] }
 
   const plan = pipe(
@@ -150,6 +162,8 @@ function getAdapter(options: GeneratorOptions) {
         return postgresAdapter
       case 'mysql':
         return mysqlAdapter
+      case 'sqlite':
+        return sqliteAdapter
       default:
         throw new Error(
           `Connector ${options.datasources[0].provider} is not supported`
@@ -162,30 +176,6 @@ function ifExists<T>(value: T | null | undefined): T[] {
   if (value == null) return []
   return [value]
 }
-
-function createModule(input: {
-  declarations: { imports: ImportValue[]; code: string }[]
-  name: string
-  implicit?: DMMF.Model[]
-}) {
-  const imports = pipe(
-    input.declarations,
-    flatMap((d) => d.imports),
-    reduceImports
-  )
-
-  const code = [
-    imports.map((i) => i.render()).join('\n'),
-    ...input.declarations.map((d) => d.code),
-  ].join('\n\n')
-
-  return {
-    name: input.name,
-    implicit: input.implicit,
-    code,
-  }
-}
-type Module = ReturnType<typeof createModule>
 
 function createModelModule(input: {
   model: DMMF.Model

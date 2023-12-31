@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
     "test": "bun run scripts/test.ts",
@@ -11,13 +12,16 @@
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "5.7.0",
+    "better-sqlite3": "^9.2.2",
     "drizzle-orm": "^0.29.1",
     "mysql2": "^3.6.5",
     "pg": "^8.11.3",
     "postgres": "^3.4.3",
-    "valibot": "^0.24.1"
+    "valibot": "^0.24.1",
+    "vitest": "^1.1.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
     "@types/node": "20.10.4",
     "@types/pg": "^8.10.9",
     "bun-types": "^1.0.19",
