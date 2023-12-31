@@ -59,38 +59,40 @@ generatorHandler({
       )
     }
 
-    for await (const prismaEnum of options.dmmf.datamodel.enums) {
-      const enumCreation = logger.createTask()
+    await Promise.all(
+      options.dmmf.datamodel.enums.map(async (prismaEnum) => {
+        const enumCreation = logger.createTask()
 
-      const enumModule = createModule({
-        name: getEnumModuleName(prismaEnum),
-        declarations: [generateEnumDeclaration(adapter, prismaEnum)],
+        const enumModule = createModule({
+          name: getEnumModuleName(prismaEnum),
+          declarations: [generateEnumDeclaration(adapter, prismaEnum)],
+        })
+        await writeModule(basePath, enumModule)
+
+        enumCreation.end(`◟ ${enumModule.name}.ts`)
       })
-      await writeModule(basePath, enumModule)
+    )
 
-      enumCreation.end(`◟ ${enumModule.name}.ts`)
-    }
+    let modelModules = await Promise.all(
+      options.dmmf.datamodel.models.map(async (model) => {
+        const modelCreation = logger.createTask()
 
-    let implicitModels: DMMF.Model[] = []
-    let models: ModelModule[] = []
-    for await (const model of options.dmmf.datamodel.models) {
-      const modelCreation = logger.createTask()
+        const modelModule = createModelModule({
+          adapter,
+          model,
+          datamodel: options.dmmf.datamodel,
+        })
+        await writeModule(basePath, modelModule)
 
-      const modelModule = createModelModule({
-        adapter,
-        model,
-        datamodel: options.dmmf.datamodel,
+        modelCreation.end(`◟ ${modelModule.name}.ts`)
+
+        return modelModule
       })
-      await writeModule(basePath, modelModule)
-
-      models.push(modelModule)
-      implicitModels = implicitModels.concat(modelModule.implicit ?? [])
-
-      modelCreation.end(`◟ ${modelModule.name}.ts`)
-    }
+    )
 
     const implicitModelModules = await Promise.all(
-      implicitModels
+      modelModules
+        .flatMap((module) => module.implicit)
         .reduce(deduplicateModels, [] as DMMF.Model[])
         .map(async (model) => {
           const modelCreation = logger.createTask()
@@ -106,11 +108,11 @@ generatorHandler({
           return modelModule
         })
     )
-    models = models.concat(implicitModelModules)
+    modelModules = modelModules.concat(implicitModelModules)
 
     const schemaModule = createModule({
       name: 'schema',
-      declarations: [generateSchemaDeclaration(models)],
+      declarations: [generateSchemaDeclaration(modelModules)],
     })
     await writeModule(basePath, schemaModule)
   },
