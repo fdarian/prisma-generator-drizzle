@@ -1,7 +1,7 @@
 {
   "name": "prisma-generator-drizzle",
   "description": "A Prisma generator for generating Drizzle schema with ease",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "main": "dist/generator.js",
   "license": "MIT",
   "bin": {
