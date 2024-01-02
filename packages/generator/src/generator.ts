@@ -179,15 +179,19 @@ function ifExists<T>(value: T | null | undefined): T[] {
 function createModelModule(input: { model: DMMF.Model; ctx: Context }) {
   const tableVar = generateTableDeclaration(input.ctx.adapter, input.model)
 
-  const relationalFields = input.model.fields.filter(isRelationField)
-  const relationsVar = isEmpty(relationalFields)
-    ? null
-    : generateTableRelationsDeclaration({
-        model: input.model,
-        tableVarName: tableVar.name,
-        fields: relationalFields,
-        datamodel: input.ctx.datamodel,
-      })
+  const relationsVar = (() => {
+    if (!isRelationalQueryEnabled(input.ctx.config)) return null
+
+    const relationalFields = input.model.fields.filter(isRelationField)
+    if (isEmpty(relationalFields)) return null
+
+    return generateTableRelationsDeclaration({
+      model: input.model,
+      tableVarName: tableVar.name,
+      fields: relationalFields,
+      datamodel: input.ctx.datamodel,
+    })
+  })()
 
   return createModule({
     name: getModelModuleName(input.model),
