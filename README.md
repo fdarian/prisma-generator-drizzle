@@ -31,11 +31,17 @@ npm install drizzle-orm
 ```prisma
 generator drizzle {
   provider = "prisma-generator-drizzle"
-  // Optional: specify the output directory
+
+  // # Optionals:
+
+  // - Specify the output directory
   // output = "../models"
 
-  // Optional: run prettier
+  // - Run prettier
   // prettier = "prettier"
+
+  // - Disable relational query
+  // relationalQuery = false
 }
 ```
 
