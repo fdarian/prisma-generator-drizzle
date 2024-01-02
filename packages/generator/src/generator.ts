@@ -17,7 +17,8 @@ import { generateTableRelationsDeclaration } from './lib/adapter/declarations/ge
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
 import { sqliteAdapter } from './lib/adapter/providers/sqlite'
-import { Adapter } from './lib/adapter/types'
+import { isRelationalQueryEnabled } from './lib/config'
+import { Context } from './lib/context'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
@@ -43,6 +44,11 @@ generatorHandler({
       throw new Error('Only one datasource is supported')
 
     const adapter = getAdapter(options)
+    const ctx: Context = {
+      adapter,
+      config: options.generator.config,
+      datamodel: options.dmmf.datamodel,
+    }
 
     const basePath = options.generator.output?.value
     if (!basePath) throw new Error('No output path specified')
@@ -72,11 +78,7 @@ generatorHandler({
     let modelModules = options.dmmf.datamodel.models.map((model) => {
       const modelCreation = logger.createTask()
 
-      const modelModule = createModelModule({
-        adapter,
-        model,
-        datamodel: options.dmmf.datamodel,
-      })
+      const modelModule = createModelModule({ model, ctx })
       writeModule(basePath, modelModule)
 
       modelCreation.end(`◟ ${modelModule.name}.ts`)
@@ -90,11 +92,7 @@ generatorHandler({
       .map((model) => {
         const modelCreation = logger.createTask()
 
-        const modelModule = createModelModule({
-          adapter,
-          model,
-          datamodel: options.dmmf.datamodel,
-        })
+        const modelModule = createModelModule({ model, ctx })
         writeModule(basePath, modelModule)
 
         modelCreation.end(`◟ ${modelModule.name}.ts`)
@@ -102,11 +100,13 @@ generatorHandler({
       })
     modelModules = modelModules.concat(implicitModelModules)
 
-    const schemaModule = createModule({
-      name: 'schema',
-      declarations: [generateSchemaDeclaration(modelModules)],
-    })
-    writeModule(basePath, schemaModule)
+    if (isRelationalQueryEnabled(options.generator.config)) {
+      const schemaModule = createModule({
+        name: 'schema',
+        declarations: [generateSchemaDeclaration(modelModules)],
+      })
+      writeModule(basePath, schemaModule)
+    }
 
     const formatter = options.generator.config['formatter']
     if (formatter === 'prettier') {
@@ -176,22 +176,22 @@ function ifExists<T>(value: T | null | undefined): T[] {
   return [value]
 }
 
-function createModelModule(input: {
-  model: DMMF.Model
-  datamodel: DMMF.Datamodel
-  adapter: Adapter
-}) {
-  const tableVar = generateTableDeclaration(input.adapter, input.model)
+function createModelModule(input: { model: DMMF.Model; ctx: Context }) {
+  const tableVar = generateTableDeclaration(input.ctx.adapter, input.model)
 
-  const relationalFields = input.model.fields.filter(isRelationField)
-  const relationsVar = isEmpty(relationalFields)
-    ? null
-    : generateTableRelationsDeclaration({
-        model: input.model,
-        tableVarName: tableVar.name,
-        fields: relationalFields,
-        datamodel: input.datamodel,
-      })
+  const relationsVar = (() => {
+    if (!isRelationalQueryEnabled(input.ctx.config)) return null
+
+    const relationalFields = input.model.fields.filter(isRelationField)
+    if (isEmpty(relationalFields)) return null
+
+    return generateTableRelationsDeclaration({
+      model: input.model,
+      tableVarName: tableVar.name,
+      fields: relationalFields,
+      datamodel: input.ctx.datamodel,
+    })
+  })()
 
   return createModule({
     name: getModelModuleName(input.model),
