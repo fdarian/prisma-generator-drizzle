@@ -1,5 +1,5 @@
 import { camelCase } from 'lodash'
-import { Module } from '~/lib/syntaxes/modules/module'
+import { Module } from '~/lib/syntaxes/module'
 import { wildcardImport } from '../../syntaxes/imports'
 
 export function generateSchemaDeclaration(models: Module[]) {
