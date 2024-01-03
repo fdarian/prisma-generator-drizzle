@@ -156,6 +156,7 @@ function writeModule(basePath: string, module: Module) {
 function getAdapter(options: GeneratorOptions) {
   return (() => {
     switch (options.datasources[0].provider) {
+      case 'cockroachdb': // CockroahDB should be postgres compatible
       case 'postgres':
       case 'postgresql':
         return postgresAdapter
