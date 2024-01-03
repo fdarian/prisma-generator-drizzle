@@ -1,6 +1,6 @@
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
-import { createModule } from '~/lib/syntaxes/modules/module'
+import { createModule } from '~/lib/syntaxes/module'
 import { createAdapter } from '../adapter'
 import { createField } from '../fields/createField'
 

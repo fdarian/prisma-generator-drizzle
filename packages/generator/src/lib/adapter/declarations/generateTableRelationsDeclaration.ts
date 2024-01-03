@@ -3,13 +3,13 @@ import { map } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import { camelCase, kebabCase } from 'lodash'
 import pluralize from 'pluralize'
+import { ModelModule } from '~/lib/adapter/model-module'
 import {
   PrismaRelationField,
   isRelationField,
 } from '~/lib/prisma-helpers/field'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
-import { ModelModule } from '~/lib/syntaxes/modules/model-module'
 import { namedImport } from '../../syntaxes/imports'
 
 type GenerateTableRelationsInput = {

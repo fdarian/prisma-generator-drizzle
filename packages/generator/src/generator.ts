@@ -13,6 +13,10 @@ import { GENERATOR_NAME } from './constants'
 import { generateEnumDeclaration } from './lib/adapter/declarations/generateEnumDeclaration'
 import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
 import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
+import {
+  createModelModule,
+  ModelModule,
+} from './lib/adapter/modules/createModelModule'
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
 import { sqliteAdapter } from './lib/adapter/providers/sqlite'
@@ -22,11 +26,7 @@ import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
-import {
-  createModelModule,
-  ModelModule,
-} from './lib/syntaxes/modules/model-module'
-import { createModule, Module } from './lib/syntaxes/modules/module'
+import { createModule, Module } from './lib/syntaxes/module'
 
 const { version } = require('../package.json')
 
