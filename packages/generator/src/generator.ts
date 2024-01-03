@@ -26,7 +26,11 @@ import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
-import { createModule, Module } from './lib/syntaxes/module'
+import {
+  createModelModule,
+  ModelModule,
+} from './lib/syntaxes/modules/model-module'
+import { createModule, Module } from './lib/syntaxes/modules/module'
 
 const { version } = require('../package.json')
 
