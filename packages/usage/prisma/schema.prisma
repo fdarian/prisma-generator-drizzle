@@ -92,3 +92,16 @@ model Category {
 }
 
 // #endregion
+
+// #region Ignore
+
+model IgnoredModel {
+  id String @id @default(uuid())
+
+  @@ignore
+}
+
+model ModelWithIgnoredField {
+  id              String @id @default(uuid())
+  shouldBeIgnored String @ignore
+}
