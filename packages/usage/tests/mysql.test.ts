@@ -18,6 +18,7 @@ import {
   user_result,
 } from './dummy'
 import { testManyToMany } from './shared/test-implicit-relation'
+import { testSelfReferring } from './shared/testSelfReferring'
 
 beforeEach(async () => {
   await db.delete(payments)
@@ -183,3 +184,4 @@ const _db = db as unknown as Db
 const _schema = schema as unknown as Schema
 
 testManyToMany(_db, _schema)
+testSelfReferring(_db, _schema)

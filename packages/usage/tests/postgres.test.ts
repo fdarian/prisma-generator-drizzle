@@ -17,6 +17,7 @@ import {
   user_result,
 } from './dummy'
 import { testManyToMany } from './shared/test-implicit-relation'
+import { testSelfReferring } from './shared/testSelfReferring'
 
 beforeEach(async () => {
   await db.delete(payments)
@@ -179,3 +180,4 @@ test('disambiguating relations optional unique', async () => {
 })
 
 testManyToMany(db, schema)
+testSelfReferring(db, schema)
