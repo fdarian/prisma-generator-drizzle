@@ -3,7 +3,7 @@ import { Db, Schema } from 'src/lib/types'
 import { describe, test } from 'vitest'
 
 export function testSelfReferring(db: Db, schema: Schema) {
-  describe.only('When the model has references to itself', () => {
+  describe('When the model has references to itself', () => {
     test('one to one', async () => {
       const referred = {
         id: createId(),
