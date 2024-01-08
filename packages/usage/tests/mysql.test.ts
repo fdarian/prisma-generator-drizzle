@@ -17,6 +17,7 @@ import {
   user_insert,
   user_result,
 } from './dummy'
+import { testIgnoreDecorator } from './shared/test-ignore-decorator'
 import { testManyToMany } from './shared/test-implicit-relation'
 import { testSelfReferring } from './shared/testSelfReferring'
 
@@ -185,3 +186,4 @@ const _schema = schema as unknown as Schema
 
 testManyToMany(_db, _schema)
 testSelfReferring(_db, _schema)
+testIgnoreDecorator(_db, _schema)

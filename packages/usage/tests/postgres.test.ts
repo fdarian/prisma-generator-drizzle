@@ -16,6 +16,7 @@ import {
   user_insert,
   user_result,
 } from './dummy'
+import { testIgnoreDecorator } from './shared/test-ignore-decorator'
 import { testManyToMany } from './shared/test-implicit-relation'
 import { testSelfReferring } from './shared/testSelfReferring'
 
@@ -181,3 +182,4 @@ test('disambiguating relations optional unique', async () => {
 
 testManyToMany(db, schema)
 testSelfReferring(db, schema)
+testIgnoreDecorator(db, schema)
