@@ -32,7 +32,6 @@ const { version } = require('../package.json')
 
 generatorHandler({
   onManifest() {
-    logger.log('Generating drizzle schema...')
     return {
       version,
       defaultOutput: './drizzle',
@@ -40,6 +39,10 @@ generatorHandler({
     }
   },
   onGenerate: async (options: GeneratorOptions) => {
+    logger.applyConfig(options)
+
+    logger.log('Generating drizzle schema...')
+
     if (options.datasources.length === 0)
       throw new Error('No datasource specified')
     if (options.datasources.length > 1)
