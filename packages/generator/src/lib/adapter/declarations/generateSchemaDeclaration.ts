@@ -1,9 +1,9 @@
 import { camelCase } from 'lodash'
-import { ModelModule } from '../../../generator'
+import { Module } from '~/lib/syntaxes/module'
 import { wildcardImport } from '../../syntaxes/imports'
 
-export function generateSchemaDeclaration(models: ModelModule[]) {
-  const aliasFor = (m: ModelModule) => camelCase(m.name)
+export function generateSchemaDeclaration(models: Module[]) {
+  const aliasFor = (m: Module) => camelCase(m.name)
 
   return {
     imports: models.map((m) => wildcardImport(aliasFor(m), `./${m.name}`)),

@@ -56,6 +56,18 @@ model Transfer {
   tax       Payment? @relation("Payment_taxTransfer")
 }
 
+model SelfReference {
+  id String @id
+
+  referringManyId String?
+  referringMany   SelfReference?  @relation("SelfReference_referringMany", fields: [referringManyId], references: [id])
+  referredMany    SelfReference[] @relation("SelfReference_referringMany")
+
+  referringUniqueId String?        @unique
+  referringUnique   SelfReference? @relation("SelfReference_referringUnique", fields: [referringUniqueId], references: [id])
+  referredUnique    SelfReference? @relation("SelfReference_referringUnique")
+}
+
 // #region Implicit relationship purposes
 
 model TransactionHeader {

@@ -3,6 +3,7 @@ import { map } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import { camelCase, kebabCase } from 'lodash'
 import pluralize from 'pluralize'
+import { ModelModule } from '~/lib/adapter/model-module'
 import {
   PrismaRelationField,
   isRelationField,
@@ -12,28 +13,29 @@ import { getModelVarName } from '~/lib/prisma-helpers/model'
 import { namedImport } from '../../syntaxes/imports'
 
 type GenerateTableRelationsInput = {
-  model: DMMF.Model
-  tableVarName: string
   fields: PrismaRelationField[]
+  modelModule: ModelModule
   datamodel: DMMF.Datamodel
 }
 
 export function generateTableRelationsDeclaration(
   input: GenerateTableRelationsInput
 ) {
+  const { tableVar } = input.modelModule
   const _fields = input.fields.map(getRelationField(input))
 
-  const func = `relations(${input.tableVarName}, (helpers) => ({ ${_fields
+  const func = `relations(${tableVar.name}, (helpers) => ({ ${_fields
     .map((f) => `${f.name}: ${f.func}`)
     .join(', ')} }))`
 
   return {
     imports: [
       namedImport(['relations'], 'drizzle-orm'),
+      namedImport([tableVar.name], `./${input.modelModule.name}`),
       ..._fields.flatMap((field) => field.imports),
     ],
     implicit: _fields.flatMap((field) => field.implicit),
-    code: `export const ${input.tableVarName}Relations = ${func};`,
+    code: `export const ${tableVar.name}Relations = ${func};`,
   }
 }
 
@@ -73,7 +75,7 @@ function getManyToManyRelation(
 ) {
   const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
   const joinTable = createImplicitJoinTable(field.relationName, [
-    ctx.model,
+    ctx.modelModule.model,
     opposingModel,
   ])
 
@@ -103,7 +105,7 @@ function getOneToOneOrManyRelation(
     const opts = createRelationOpts({
       relationName: field.relationName,
       from: {
-        modelVarName: getModelVarName(ctx.model),
+        modelVarName: getModelVarName(ctx.modelModule.model),
         fieldNames: field.relationFromFields,
       },
       to: {
@@ -124,7 +126,7 @@ function getOneToOneOrManyRelation(
   const opts = createRelationOpts({
     relationName: field.relationName,
     from: {
-      modelVarName: getModelVarName(ctx.model),
+      modelVarName: getModelVarName(ctx.modelModule.model),
       fieldNames: opposingField.relationToFields,
     },
     to: {

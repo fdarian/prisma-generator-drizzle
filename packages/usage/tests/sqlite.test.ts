@@ -18,6 +18,7 @@ import {
   user3_insert,
 } from './dummy'
 import { testManyToMany } from './shared/test-implicit-relation'
+import { testSelfReferring } from './shared/testSelfReferring'
 
 const { enum: _, json: _1, decimal: _8, ..._user_insert } = baseUserInsert
 const user_insert = { ..._user_insert, decimal: Number(_8) }
@@ -190,3 +191,4 @@ const _db = db as unknown as Db
 const _schema = schema as unknown as Schema
 
 testManyToMany(_db, _schema)
+testSelfReferring(_db, _schema)

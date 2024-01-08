@@ -12,8 +12,11 @@ import path from 'path'
 import { GENERATOR_NAME } from './constants'
 import { generateEnumDeclaration } from './lib/adapter/declarations/generateEnumDeclaration'
 import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
-import { generateTableDeclaration } from './lib/adapter/declarations/generateTableDeclaration'
 import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
+import {
+  createModelModule,
+  ModelModule,
+} from './lib/adapter/modules/createModelModule'
 import { mysqlAdapter } from './lib/adapter/providers/mysql'
 import { postgresAdapter } from './lib/adapter/providers/postgres'
 import { sqliteAdapter } from './lib/adapter/providers/sqlite'
@@ -22,7 +25,6 @@ import { Context } from './lib/context'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
-import { getModelModuleName } from './lib/prisma-helpers/model'
 import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
 import { createModule, Module } from './lib/syntaxes/module'
 
@@ -75,7 +77,7 @@ generatorHandler({
       return enumModule
     })
 
-    let modelModules = options.dmmf.datamodel.models.map((model) => {
+    const modelModules = options.dmmf.datamodel.models.map((model) => {
       const modelCreation = logger.createTask()
 
       const modelModule = createModelModule({ model, ctx })
@@ -86,24 +88,55 @@ generatorHandler({
       return modelModule
     })
 
-    const implicitModelModules = modelModules
-      .flatMap((module) => module.implicit)
-      .reduce(deduplicateModels, [] as DMMF.Model[])
-      .map((model) => {
-        const modelCreation = logger.createTask()
-
-        const modelModule = createModelModule({ model, ctx })
-        writeModule(basePath, modelModule)
-
-        modelCreation.end(`◟ ${modelModule.name}.ts`)
-        return modelModule
-      })
-    modelModules = modelModules.concat(implicitModelModules)
-
     if (isRelationalQueryEnabled(options.generator.config)) {
+      const relationalModules = modelModules.flatMap((modelModule) => {
+        const creation = logger.createTask()
+
+        const relationalModule = createRelationalModule({ ctx, modelModule })
+        if (relationalModule == null) return []
+
+        writeModule(basePath, relationalModule)
+
+        creation.end(`◟ ${relationalModule.name}.ts`)
+        return relationalModule
+      })
+
+      const implicitModelModules = relationalModules
+        .flatMap((module) => module.implicit)
+        .reduce(deduplicateModels, [] as DMMF.Model[])
+        .map((model) => {
+          const modelCreation = logger.createTask()
+
+          const modelModule = createModelModule({ model, ctx })
+          writeModule(basePath, modelModule)
+
+          modelCreation.end(`◟ ${modelModule.name}.ts`)
+          return modelModule
+        })
+      const implicitRelationalModules = implicitModelModules.flatMap(
+        (modelModule) => {
+          const creation = logger.createTask()
+
+          const relationalModule = createRelationalModule({ ctx, modelModule })
+          if (relationalModule == null) return []
+
+          writeModule(basePath, relationalModule)
+
+          creation.end(`◟ ${relationalModule.name}.ts`)
+          return relationalModule
+        }
+      )
+
       const schemaModule = createModule({
         name: 'schema',
-        declarations: [generateSchemaDeclaration(modelModules)],
+        declarations: [
+          generateSchemaDeclaration([
+            ...modelModules,
+            ...relationalModules,
+            ...implicitModelModules,
+            ...implicitRelationalModules,
+          ]),
+        ],
       })
       writeModule(basePath, schemaModule)
     }
@@ -172,37 +205,28 @@ function getAdapter(options: GeneratorOptions) {
   })()
 }
 
-function ifExists<T>(value: T | null | undefined): T[] {
-  if (value == null) return []
-  return [value]
-}
-
-function createModelModule(input: { model: DMMF.Model; ctx: Context }) {
-  const tableVar = generateTableDeclaration(input.ctx.adapter, input.model)
-
-  const relationsVar = (() => {
-    if (!isRelationalQueryEnabled(input.ctx.config)) return null
-
-    const relationalFields = input.model.fields.filter(isRelationField)
-    if (isEmpty(relationalFields)) return null
-
-    return generateTableRelationsDeclaration({
-      model: input.model,
-      tableVarName: tableVar.name,
-      fields: relationalFields,
-      datamodel: input.ctx.datamodel,
-    })
-  })()
-
-  return createModule({
-    name: getModelModuleName(input.model),
-    implicit: relationsVar?.implicit ?? [],
-    declarations: [tableVar, ...ifExists(relationsVar)],
-  })
-}
-export type ModelModule = ReturnType<typeof createModelModule>
-
 function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
   if (accum.some(({ name }) => name === model.name)) return accum
   return [...accum, model]
+}
+
+function createRelationalModule(input: {
+  modelModule: ModelModule
+  ctx: Context
+}) {
+  const { model } = input.modelModule
+
+  const relationalFields = model.fields.filter(isRelationField)
+  if (isEmpty(relationalFields)) return undefined
+
+  const declaration = generateTableRelationsDeclaration({
+    fields: relationalFields,
+    modelModule: input.modelModule,
+    datamodel: input.ctx.datamodel,
+  })
+  return createModule({
+    name: `${input.modelModule.name}-relations`,
+    declarations: [declaration],
+    implicit: declaration.implicit,
+  })
 }
