@@ -32,18 +32,12 @@ npm install drizzle-orm
 generator drizzle {
   provider = "prisma-generator-drizzle"
 
-  // # Optionals:
-
-  // - Specify the output directory
+  // Specify the output directory
   // output = "../models"
-
-  // - Run prettier
-  // prettier = "prettier"
-
-  // - Disable relational query
-  // relationalQuery = false
 }
 ```
+
+> See [configuration](#configuration) for more options.
 
 ### 3. Run the generator
 
@@ -59,48 +53,59 @@ prisma generate
 
 In addition to the Prisma features, you can also generate Drizzle-specific features:
 
-1. [`.$type<..>()`](https://orm.drizzle.team/docs/column-types/mysql#customizing-column-data-type)
+1. [Generate `.$type<..>()`](#generate-type-type-customization)
 
-   > The syntax is still experimental, feel free to suggest a better approach.
+### Configuration
 
-   Add `/// drizzle.type <module>::<named-import>` directive above the field definition.
+| Key             | Description                       | Default     | Example     |
+| --------------- | --------------------------------- | ----------- | ----------- |
+| output          | Change the output                 | "./drizzle" | "../models" |
+| formatter       | Run prettier after generation     | -           | "prettier"  |
+| relationalQuery | Flag to generate relational query | true        | false       |
+| verbose         | Flag to enable verbose logging    | -           | true        |
 
-   ```prisma
-   model Wallet {
-     /// drizzle.type viem::Address
-     address     String?
-     ...
-   }
-   ```
+### Generate [`.$type<..>()`](https://orm.drizzle.team/docs/column-types/mysql#customizing-column-data-type) Type Customization
 
-   This will result to:
+> The syntax is still experimental, feel free to suggest a better approach.
 
-   ```ts
-   import { Wallet } from 'viem'
-   ...
+Add `/// drizzle.type <module>::<named-import>` directive above the field definition.
 
-   export const wallets = pgTable('Wallet', {
-     address: text('address').$type<Address>(),
-     ...
-   })
-   ```
+```prisma
+model Wallet {
+  /// drizzle.type viem::Address
+  address     String?
+  ...
+}
+```
 
-   Or with a relative import
+This will result to:
 
-   ```prisma
-   model User {
-     /// drizzle.type ../my-type::Email
-     email     String?
-     ...
-   }
-   ```
+```ts
+import { Wallet } from 'viem'
+...
 
-   ```ts
-   import { Email } from '../my-type'
-   ...
+export const wallets = pgTable('Wallet', {
+  address: text('address').$type<Address>(),
+  ...
+})
+```
 
-   export const users = pgTable('User', {
-     email: text('email').$type<Email>(),
-     ...
-   })
-   ```
+Or with a relative import
+
+```prisma
+model User {
+  /// drizzle.type ../my-type::Email
+  email     String?
+  ...
+}
+```
+
+```ts
+import { Email } from '../my-type'
+...
+
+export const users = pgTable('User', {
+  email: text('email').$type<Email>(),
+  ...
+})
+```
