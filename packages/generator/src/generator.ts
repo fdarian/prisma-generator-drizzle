@@ -39,6 +39,8 @@ generatorHandler({
     }
   },
   onGenerate: async (options: GeneratorOptions) => {
+    logger.applyConfig(options)
+
     logger.log('Generating drizzle schema...')
 
     if (options.datasources.length === 0)
