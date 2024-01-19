@@ -33,7 +33,7 @@ export function testDefault(db: Db, schema: Schema) {
       await db.delete(schema.defaults).where(eq(schema.defaults.id, data.id))
     })
 
-    test.only('custom drizzle.default', async () => {
+    test('custom drizzle.default', async () => {
       const data = { id: createId() }
       await db.insert(schema.defaults).values(data)
       // --
