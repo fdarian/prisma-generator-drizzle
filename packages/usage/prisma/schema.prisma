@@ -107,3 +107,11 @@ model ModelWithIgnoredField {
 }
 
 // #endregion
+
+// #region Default
+model Default {
+  id        String    @id
+  createdAt DateTime? @default(now())
+}
+
+// #endregion
