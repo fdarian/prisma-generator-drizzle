@@ -1,5 +1,6 @@
 import { createId, isCuid } from '@paralleldrive/cuid2'
 import { isAfter } from 'date-fns'
+import Decimal from 'decimal.js'
 import { eq, inArray } from 'drizzle-orm'
 import { Db, Schema } from 'src/lib/types'
 import { describe, expect, test } from 'vitest'
@@ -35,8 +36,8 @@ export function testDefault(
         ])
       }
       expect(result!.bigint, 'Invalid bigint').toBe(1n)
-      expect(result!.decimal, 'Invalid decimal').toBe(
-        '1.123000000000000000000000000000'
+      expect(new Decimal(result!.decimal).toString(), 'Invalid decimal').toBe(
+        '1.123'
       )
       expect(result!.float, 'Invalid float').toBe(1.123)
 
