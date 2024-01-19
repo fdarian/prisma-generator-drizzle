@@ -111,6 +111,10 @@ model ModelWithIgnoredField {
 // #region Default
 model Default {
   id        String    @id
+  /// drizzle.default @paralleldrive/cuid2::createId
+  alsoId    String?
+  /// drizzle.default crypto::randomBytes `() => randomBytes(16).toString('hex')`
+  salt      String?
   int       Int?      @default(1)
   boolean   Boolean?  @default(true)
   createdAt DateTime? @default(now())

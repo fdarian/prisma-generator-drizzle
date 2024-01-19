@@ -22,8 +22,6 @@ export function createField(input: CreateFieldInput) {
   let imports = input.imports ?? []
 
   let func = `${input.func}`
-  if (field.isId) func += '.primaryKey()'
-  else if (field.isRequired || field.hasDefaultValue) func += '.notNull()'
 
   // .type<...>()
   const customType = getCustomType(field)
@@ -32,10 +30,18 @@ export function createField(input: CreateFieldInput) {
     func += customType.code
   }
 
-  if (field.hasDefaultValue) {
+  const customDefault = getCustomDefault(field)
+  if (customDefault) {
+    imports = imports.concat(customDefault.imports)
+    func += customDefault.code
+  } else if (field.hasDefaultValue) {
     const _onDefault = input.onDefault ?? onDefault
     func += _onDefault(field as FieldWithDefault)
   }
+
+  if (field.isId) func += '.primaryKey()'
+  else if (field.isRequired || field.hasDefaultValue || !!customDefault)
+    func += '.notNull()'
 
   return {
     imports,
@@ -64,6 +70,40 @@ function getCustomType(field: DMMF.Field) {
   return {
     imports: namedImport([type], module),
     code: `.type<${type}>()`,
+  }
+}
+
+function getCustomDefault(field: DMMF.Field) {
+  if (
+    field.documentation == null ||
+    !field.documentation.startsWith('drizzle.default ')
+  )
+    return
+
+  const splits = field.documentation
+    .replaceAll('drizzle.default', '')
+    .trim()
+    .split('::')
+
+  if (splits.length !== 2)
+    throw new Error(`Invalid default definition: ${field.documentation}`)
+
+  const [module, _secondFragment] = splits
+
+  const splits2 = _secondFragment.split('`').map((s) => s.trim())
+  if (splits2.length === 1) {
+    const [type] = splits2
+    return {
+      imports: namedImport([type], module),
+      code: `.$defaultFn(() => ${type}())`,
+    }
+  } else if (splits2.length !== 3)
+    throw new Error(`Invalid default definition: ${field.documentation}`)
+
+  const [type, code] = splits2
+  return {
+    imports: namedImport([type], module),
+    code: `.$defaultFn(${code})`,
   }
 }
 
