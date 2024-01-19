@@ -12,7 +12,7 @@ export const user_insert = {
   // precision 3
   datetime: new Date('2020-01-23T12:01:30Z'),
   // 65, 30 precision
-  decimal: '0.123',
+  decimal: '0.567890123456789',
   enum: 'TypeOne',
   float: 0.123,
   json: { key: 'value' },
