@@ -71,6 +71,8 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 
 Add `/// drizzle.default <module>::<named-function-import>` directive above the field definition to generate a custom default initializer.
 
+> NOTE: This will override any `@default(...)` attribute from the schema.
+
 ```prisma
 model User {
   /// drizzle.default @paralleldrive/cuid2::createId
