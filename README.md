@@ -55,7 +55,7 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 
 > Directive syntax is still experimental, feel free to suggest a better approach.
 
-1. [Generate `.$default<..>()`](#generate-custom-default-initializer)
+1. [Generate `.$defaultFn<..>()`](#generate-defaultfn-custom-default-initializer)
 2. [Generate `.$type<..>()`](#generate-type-type-customization)
 
 ### Configuration
