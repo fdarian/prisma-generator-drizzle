@@ -3,6 +3,7 @@ import { isAfter } from 'date-fns'
 import Decimal from 'decimal.js'
 import { eq, inArray } from 'drizzle-orm'
 import { Db, Schema } from 'src/lib/types'
+import { setTimeout } from 'timers/promises'
 import { describe, expect, test } from 'vitest'
 
 export function testDefault(
@@ -13,7 +14,10 @@ export function testDefault(
   describe('@default syntax', () => {
     test('@default', async () => {
       const data = { id: createId() }
+
       const now = new Date()
+      await setTimeout(1_000) // wait for 1s so `now` will be less than `createdAt`
+
       await db.insert(schema.defaults).values(data)
 
       const result = await db.query.defaults.findFirst({
