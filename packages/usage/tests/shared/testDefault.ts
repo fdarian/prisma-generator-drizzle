@@ -22,7 +22,10 @@ export function testDefault(
       // --
 
       expect(result).toBeDefined()
-      expect(isAfter(result!.createdAt, now), 'Invalid now()').toBe(true)
+      expect(
+        isAfter(result!.createdAt, now),
+        `Invalid now(), expected: ${result!.createdAt.toISOString()} to be greater than ${now.toISOString()}`
+      ).toBe(true)
       expect(result!.date.toISOString(), 'Invalid date').toBe(
         '2024-01-23T00:00:00.000Z'
       )
