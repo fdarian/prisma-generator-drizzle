@@ -111,7 +111,15 @@ model ModelWithIgnoredField {
 // #region Default
 model Default {
   id        String    @id
+  int       Int?      @default(1)
+  boolean   Boolean?  @default(true)
   createdAt DateTime? @default(now())
+  string    String?   @default("John")
+  bigint    BigInt?   @default(1)
+  decimal   Decimal?  @default(1.123)
+  enum      UserType  @default(TypeTwo)
+  float     Float?    @default(1.123)
+  json      Json?     @default("{\"foo\": \"bar\"}")
 }
 
 // #endregion

@@ -93,6 +93,7 @@ export const mysqlAdapter = createAdapter({
         field,
         imports: [namedImport(['json'], coreModule)],
         func: `json('${getDbName(field)}')`,
+        onDefault: (field) => `.$defaultFn(() => (${field.default}))`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/mysql/#text

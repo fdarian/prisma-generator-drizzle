@@ -20,6 +20,9 @@ Bun.write(
     .replace('  json              Json?', '')
     .replace('  enum              UserType', '')
     .replace(/enum UserType \{\s*TypeOne\s*TypeTwo\s*\}/g, '')
+    // Default
+    .replace('  enum      UserType  @default(TypeTwo)', '')
+    .replace('  json      Json?     @default("{\\"foo\\": \\"bar\\"}")', '')
 )
 
 const promises = [

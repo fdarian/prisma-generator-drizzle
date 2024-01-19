@@ -1,5 +1,6 @@
 import { DMMF } from '@prisma/generator-helper'
 import { ImportValue, namedImport } from '~/lib/syntaxes/imports'
+import { MakeRequired, ModifyType, Prettify } from '~/lib/types/utils'
 
 export type DefineImport = {
   module: string
@@ -10,7 +11,7 @@ interface CreateFieldInput {
   field: DMMF.Field
   imports?: ImportValue[]
   func: string
-  onDefault?: (field: NonNullable<DMMF.Field['default']>) => string
+  onDefault?: (field: FieldWithDefault) => string
 }
 
 export type FieldFunc = ReturnType<typeof createField>
@@ -20,11 +21,9 @@ export function createField(input: CreateFieldInput) {
 
   let imports = input.imports ?? []
 
-  const hasDefaultHandler = field.hasDefaultValue && input.onDefault
-
   let func = `${input.func}`
   if (field.isId) func += '.primaryKey()'
-  else if (field.isRequired || hasDefaultHandler) func += '.notNull()'
+  else if (field.isRequired || field.hasDefaultValue) func += '.notNull()'
 
   // .type<...>()
   const customType = getCustomType(field)
@@ -33,8 +32,9 @@ export function createField(input: CreateFieldInput) {
     func += customType.code
   }
 
-  if (hasDefaultHandler) {
-    func += input.onDefault!(field.default!)
+  if (field.hasDefaultValue) {
+    const _onDefault = input.onDefault ?? onDefault
+    func += _onDefault(field as FieldWithDefault)
   }
 
   return {
@@ -66,3 +66,73 @@ function getCustomType(field: DMMF.Field) {
     code: `.type<${type}>()`,
   }
 }
+
+// #region onDefault
+type FieldWithDefault = Prettify<MakeRequired<DMMF.Field, 'default'>>
+
+function isDefaultScalar(
+  field: FieldWithDefault
+): field is Prettify<
+  ModifyType<FieldWithDefault, 'default', DMMF.FieldDefaultScalar>
+> {
+  return typeof field.default !== 'object'
+}
+
+function isDefaultFunc(
+  field: FieldWithDefault
+): field is Prettify<
+  ModifyType<FieldWithDefault, 'default', DMMF.FieldDefault>
+> {
+  return typeof field.default === 'object' && !Array.isArray(field.default)
+}
+
+function isDefaultScalarList(
+  field: FieldWithDefault
+): field is Prettify<
+  ModifyType<FieldWithDefault, 'default', DMMF.FieldDefaultScalar[]>
+> {
+  return Array.isArray(field.default)
+}
+
+function onDefault(field: FieldWithDefault) {
+  if (isDefaultScalar(field)) {
+    let def = ''
+
+    if (field.kind === 'enum') {
+      def = `'${field.default}'`
+    } else {
+      switch (field.type) {
+        case 'BigInt':
+          def = `BigInt(${field.default})`
+          break
+        case 'Int':
+        case 'Float':
+        case 'Boolean':
+        case 'Json':
+          def = `${field.default}`
+          break
+        case 'Decimal':
+        case 'String':
+          def = `'${field.default}'`
+          break
+        default:
+          console.warn(
+            `Unsupported default value: ${JSON.stringify(
+              field.default
+            )} on field ${field.name}`
+          )
+          return ''
+      }
+    }
+
+    return `.default(${def})`
+  }
+
+  console.warn(
+    `Unsupported default value: ${JSON.stringify(field.default)} on field ${
+      field.name
+    }`
+  )
+  return ''
+}
+// #endregion
