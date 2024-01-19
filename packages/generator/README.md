@@ -33,7 +33,7 @@ generator drizzle {
   provider = "prisma-generator-drizzle"
 
   // Specify the output directory
-  // output = "../models"
+  // output = "./lib/drizzle/models"
 }
 ```
 
@@ -49,7 +49,10 @@ prisma generate
 
 > **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
 
-**prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for Prisma client.
+**prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for the Prisma client. 
+
+- [Setup drizzle-kit](#setting-up-drizzle-kit)
+- [Setup relational query](#setting-up-relational-query)
 
 In addition to the Prisma features, you can also generate Drizzle-specific features:
 
@@ -66,6 +69,30 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 | formatter       | Run prettier after generation     | -           | "prettier"  |
 | relationalQuery | Flag to generate relational query | true        | false       |
 | verbose         | Flag to enable verbose logging    | -           | true        |
+
+### Setting up [relational query](https://orm.drizzle.team/docs/rqb)
+
+```ts
+import { drizzle } from 'drizzle-orm/node-postgres'
+
+// `schema` contains all table and relation definitions
+import { schema } from 'prisma/drizzle/schema'
+
+const client = ... // database client
+const db = drizzle(client, { schema })
+```
+
+### Setting up [drizzle-kit](https://orm.drizzle.team/kit-docs/overview)
+
+Use the glob pattern (see [example 3](https://orm.drizzle.team/kit-docs/conf#schema-files-paths)) to reference the generated table definitions.
+
+```ts
+import { defineConfig } from 'drizzle-kit'
+export default defineConfig({
+  // Using the default output path
+  schema: './prisma/drizzle/*',
+})
+```
 
 ### Generate [`.$defaultFn()`](https://arc.net/l/quote/cmywscsv) Custom Default Initializer
 
