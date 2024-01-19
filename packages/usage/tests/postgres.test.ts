@@ -191,4 +191,4 @@ test('disambiguating relations optional unique', async () => {
 testManyToMany(db, schema)
 testSelfReferring(db, schema)
 testIgnoreDecorator(db, schema)
-testDefault(db, schema)
+testDefault(db, schema, 'postgres')

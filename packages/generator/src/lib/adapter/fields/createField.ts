@@ -149,39 +149,19 @@ function onDefault(field: FieldWithDefault) {
   }
 
   if (isDefaultScalar(field)) {
-    let def = ''
+    const defaultDef = getDefaultScalarDefinition(field, field.default)
 
-    if (field.kind === 'enum') {
-      def = `'${field.default}'`
-    } else {
-      switch (field.type) {
-        case 'BigInt':
-          def = `BigInt(${field.default})`
-          break
-        case 'Int':
-        case 'Float':
-        case 'Boolean':
-        case 'Json':
-          def = `${field.default}`
-          break
-        case 'Decimal':
-        case 'String':
-          def = `'${field.default}'`
-          break
-        case 'DateTime':
-          def = `new Date('${field.default}')`
-          break
-        default:
-          console.warn(
-            `Unsupported default value: ${JSON.stringify(
-              field.default
-            )} on field ${field.name}`
-          )
-          return ''
-      }
-    }
+    if (defaultDef == null) return ''
+    return `.default(${defaultDef})`
+  }
 
-    return `.default(${def})`
+  if (isDefaultScalarList(field)) {
+    const defaultDefs = field.default.map((value) =>
+      getDefaultScalarDefinition(field, value)
+    )
+
+    if (defaultDefs.some((val) => val == null)) return ''
+    return `.default([${defaultDefs.join(', ')}])`
   }
 
   console.warn(
@@ -190,5 +170,35 @@ function onDefault(field: FieldWithDefault) {
     }`
   )
   return ''
+}
+
+function getDefaultScalarDefinition(
+  field: FieldWithDefault,
+  value: DMMF.FieldDefaultScalar
+) {
+  if (field.kind === 'enum') {
+    return `'${value}'`
+  }
+
+  switch (field.type) {
+    case 'BigInt':
+      return `BigInt(${value})`
+    case 'Int':
+    case 'Float':
+    case 'Boolean':
+    case 'Json':
+      return `${value}`
+    case 'Decimal':
+    case 'String':
+      return `'${value}'`
+    case 'DateTime':
+      return `new Date('${value}')`
+    default:
+      console.warn(
+        `Unsupported default value: ${JSON.stringify(
+          value
+        )} on field ${field.name}`
+      )
+  }
 }
 // #endregion

@@ -4,7 +4,11 @@ import { eq, inArray } from 'drizzle-orm'
 import { Db, Schema } from 'src/lib/types'
 import { describe, expect, test } from 'vitest'
 
-export function testDefault(db: Db, schema: Schema) {
+export function testDefault(
+  db: Db,
+  schema: Schema,
+  type: 'sqlite' | 'postgres' | 'mysql'
+) {
   describe('@default syntax', () => {
     test('@default', async () => {
       const data = { id: createId() }
@@ -24,13 +28,22 @@ export function testDefault(db: Db, schema: Schema) {
       expect(result!.int, 'Invalid int').toBe(1)
       expect(result!.boolean, 'Invalid boolean').toBe(true)
       expect(result!.string, 'Invalid string').toBe('John')
+      if (type === 'postgres') {
+        expect(result!.stringList, 'Invalid string list').toStrictEqual([
+          'John',
+          'Doe',
+        ])
+      }
       expect(result!.bigint, 'Invalid bigint').toBe(1n)
       expect(result!.decimal, 'Invalid decimal').toBe(
         '1.123000000000000000000000000000'
       )
-      expect(result!.enum, 'Invalid enum').toBe('TypeTwo')
       expect(result!.float, 'Invalid float').toBe(1.123)
-      expect(result!.json, 'Invalid json').toStrictEqual({ foo: 'bar' })
+
+      if (type !== 'sqlite') {
+        expect(result!.enum, 'Invalid enum').toBe('TypeTwo')
+        expect(result!.json, 'Invalid json').toStrictEqual({ foo: 'bar' })
+      }
 
       // --
       await db.delete(schema.defaults).where(eq(schema.defaults.id, data.id))

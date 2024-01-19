@@ -195,4 +195,4 @@ const _schema = schema as unknown as Schema
 testManyToMany(_db, _schema)
 testSelfReferring(_db, _schema)
 testIgnoreDecorator(_db, _schema)
-testDefault(_db, _schema)
+testDefault(_db, _schema, 'mysql')

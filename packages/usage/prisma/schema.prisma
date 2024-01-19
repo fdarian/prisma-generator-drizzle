@@ -122,9 +122,12 @@ model Default {
   string    String?   @default("John")
   bigint    BigInt?   @default(1)
   decimal   Decimal?  @default(1.123)
-  enum      UserType  @default(TypeTwo)
   float     Float?    @default(1.123)
-  json      Json?     @default("{\"foo\": \"bar\"}")
+
+  enum UserType @default(TypeTwo)
+  json Json?    @default("{\"foo\": \"bar\"}")
+
+  stringList String[] @default(["John", "Doe"])
 }
 
 model AutoIncrement {

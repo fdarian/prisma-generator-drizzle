@@ -10,7 +10,13 @@ const env = parse(
 )
 
 const schema = await Bun.file('./prisma/schema.prisma').text()
-Bun.write('./prisma/mysql/schema.prisma', schema.replace('postgresql', 'mysql'))
+Bun.write(
+  './prisma/mysql/schema.prisma',
+  schema
+    .replace('postgresql', 'mysql')
+    // Model Default
+    .replace('  stringList String[] @default(["John", "Doe"])', '')
+)
 
 Bun.write(
   './prisma/sqlite/schema.prisma',
@@ -20,9 +26,10 @@ Bun.write(
     .replace('  json              Json?', '')
     .replace('  enum              UserType', '')
     .replace(/enum UserType \{\s*TypeOne\s*TypeTwo\s*\}/g, '')
-    // Default
-    .replace('  enum      UserType  @default(TypeTwo)', '')
-    .replace('  json      Json?     @default("{\\"foo\\": \\"bar\\"}")', '')
+    // Model Default
+    .replace('  enum UserType @default(TypeTwo)', '')
+    .replace('  json Json?    @default("{\\"foo\\": \\"bar\\"}")', '')
+    .replace('  stringList String[] @default(["John", "Doe"])', '')
 )
 
 const promises = [
