@@ -20,9 +20,11 @@ export function createField(input: CreateFieldInput) {
 
   let imports = input.imports ?? []
 
+  const hasDefaultHandler = field.hasDefaultValue && input.onDefault
+
   let func = `${input.func}`
   if (field.isId) func += '.primaryKey()'
-  else if (field.isRequired) func += '.notNull()'
+  else if (field.isRequired || hasDefaultHandler) func += '.notNull()'
 
   // .type<...>()
   const customType = getCustomType(field)
@@ -31,8 +33,8 @@ export function createField(input: CreateFieldInput) {
     func += customType.code
   }
 
-  if (field.hasDefaultValue && input.onDefault) {
-    func += input.onDefault(field.default!)
+  if (hasDefaultHandler) {
+    func += input.onDefault!(field.default!)
   }
 
   return {
