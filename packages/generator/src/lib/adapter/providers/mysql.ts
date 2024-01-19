@@ -2,7 +2,7 @@ import { camelCase, kebabCase } from 'lodash'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createAdapter } from '../adapter'
-import { createField } from '../fields/createField'
+import { createField, isDefaultFunc } from '../fields/createField'
 
 const coreModule = 'drizzle-orm/mysql-core'
 export const mysqlAdapter = createAdapter({
@@ -85,6 +85,15 @@ export const mysqlAdapter = createAdapter({
         field,
         imports: [namedImport(['int'], coreModule)],
         func: `int('${getDbName(field)}')`,
+        onDefault(field) {
+          if (
+            field.isId &&
+            isDefaultFunc(field) &&
+            field.default.name === 'autoincrement'
+          ) {
+            return `.autoincrement()`
+          }
+        },
       })
     },
     // https://orm.drizzle.team/docs/column-types/mysql#json

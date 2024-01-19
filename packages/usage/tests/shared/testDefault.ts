@@ -1,6 +1,6 @@
 import { createId, isCuid } from '@paralleldrive/cuid2'
 import { isAfter } from 'date-fns'
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { Db, Schema } from 'src/lib/types'
 import { describe, expect, test } from 'vitest'
 
@@ -20,7 +20,7 @@ export function testDefault(db: Db, schema: Schema) {
       expect(isAfter(result!.createdAt, now), 'Invalid now()').toBe(true)
       expect(result!.int, 'Invalid int').toBe(1)
       expect(result!.boolean, 'Invalid boolean').toBe(true)
-      expect(result!.boolean, 'Invalid string').toBe('John')
+      expect(result!.string, 'Invalid string').toBe('John')
       expect(result!.bigint, 'Invalid bigint').toBe(1n)
       expect(result!.decimal, 'Invalid decimal').toBe(
         '1.123000000000000000000000000000'
@@ -53,6 +53,33 @@ export function testDefault(db: Db, schema: Schema) {
 
       // --
       await db.delete(schema.defaults).where(eq(schema.defaults.id, data.id))
+    })
+
+    test('incremental', async () => {
+      const refs = [createId(), createId()]
+      await db.transaction(async (tx) => {
+        await tx.insert(schema.autoIncrements).values({ ref: refs[0] })
+        await tx.insert(schema.autoIncrements).values({ ref: refs[1] })
+      })
+      // --
+
+      const result1 = await db.query.autoIncrements.findFirst({
+        where: (autoIncrements, { eq }) => eq(autoIncrements.ref, refs[0]),
+        columns: { id: true },
+      })
+      expect(result1).toBeDefined()
+
+      const result2 = await db.query.autoIncrements.findFirst({
+        where: (autoIncrements, { eq }) => eq(autoIncrements.ref, refs[1]),
+        columns: { id: true },
+      })
+      expect(result2).toBeDefined()
+      expect(result2!.id).toBe(result1!.id + 1)
+
+      // --
+      await db
+        .delete(schema.autoIncrements)
+        .where(inArray(schema.autoIncrements.ref, refs))
     })
   })
 }

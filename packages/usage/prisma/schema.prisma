@@ -126,4 +126,9 @@ model Default {
   json      Json?     @default("{\"foo\": \"bar\"}")
 }
 
+model AutoIncrement {
+  id  Int    @id @default(autoincrement())
+  ref String @unique
+}
+
 // #endregion

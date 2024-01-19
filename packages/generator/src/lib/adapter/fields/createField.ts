@@ -12,6 +12,7 @@ interface CreateFieldInput {
   imports?: ImportValue[]
   func: string
   onDefault?: (field: FieldWithDefault) => string | undefined
+  onPrimaryKey?: (field: DMMF.Field) => string | undefined
 }
 
 export type FieldFunc = ReturnType<typeof createField>
@@ -39,7 +40,7 @@ export function createField(input: CreateFieldInput) {
     func += input.onDefault?.(_field) ?? onDefault(_field)
   }
 
-  if (field.isId) func += '.primaryKey()'
+  if (field.isId) func += input.onPrimaryKey?.(field) ?? '.primaryKey()'
   else if (field.isRequired || field.hasDefaultValue || !!customDefault)
     func += '.notNull()'
 
@@ -108,7 +109,11 @@ function getCustomDefault(field: DMMF.Field) {
 }
 
 // #region onDefault
-type FieldWithDefault = Prettify<MakeRequired<DMMF.Field, 'default'>>
+export type FieldWithDefault = Prettify<MakeRequired<DMMF.Field, 'default'>>
+
+export function hasDefault(field: DMMF.Field): field is FieldWithDefault {
+  return field.hasDefaultValue
+}
 
 function isDefaultScalar(
   field: FieldWithDefault
@@ -118,7 +123,7 @@ function isDefaultScalar(
   return typeof field.default !== 'object'
 }
 
-function isDefaultFunc(
+export function isDefaultFunc(
   field: FieldWithDefault
 ): field is Prettify<
   ModifyType<FieldWithDefault, 'default', DMMF.FieldDefault>
