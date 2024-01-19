@@ -10,6 +10,7 @@ interface CreateFieldInput {
   field: DMMF.Field
   imports?: ImportValue[]
   func: string
+  onDefault?: (field: NonNullable<DMMF.Field['default']>) => string
 }
 
 export type FieldFunc = ReturnType<typeof createField>
@@ -28,6 +29,10 @@ export function createField(input: CreateFieldInput) {
   if (customType) {
     imports = imports.concat(customType.imports)
     func += customType.code
+  }
+
+  if (field.hasDefaultValue && input.onDefault) {
+    func += input.onDefault(field.default!)
   }
 
   return {
