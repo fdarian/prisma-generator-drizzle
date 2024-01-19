@@ -11,10 +11,16 @@ const customDecimalModule = createModule({
   declarations: [
     {
       imports: [namedImport(['customType'], coreModule)],
-      code: `export const customDecimal = customType<{ data: number }>(
+      code: `export const customDecimal = customType<{ data: string }>(
   {
     dataType() {
       return 'DECIMAL';
+    },
+    fromDriver(value: unknown) {
+      return String(value)
+    },
+    toDriver(value: string) {
+      return Number(value)
     },
   },
 );`,
