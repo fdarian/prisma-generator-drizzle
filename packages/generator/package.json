@@ -18,20 +18,19 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@prisma/client": "5.7.0",
-    "@prisma/generator-helper": "5.7.1",
+    "@prisma/client": "5.8.1",
+    "@prisma/generator-helper": "5.8.1",
     "@prisma/sdk": "4.0.0",
-    "fp-ts": "^2.16.1",
+    "fp-ts": "^2.16.2",
     "lodash": "^4.17.21",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.202",
-    "@types/node": "^20.10.4",
+    "@types/node": "^20.11.5",
     "@types/pluralize": "^0.0.33",
     "@types/prettier": "3.0.0",
-    "prisma": "5.7.0",
-    "ts-jest": "27.1.4",
+    "prisma": "5.8.1",
     "tsup": "^8.0.1",
     "typescript": "5.3.3"
   },
