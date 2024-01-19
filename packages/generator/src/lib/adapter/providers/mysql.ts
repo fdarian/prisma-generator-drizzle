@@ -54,8 +54,13 @@ export const mysqlAdapter = createAdapter({
     DateTime(field) {
       return createField({
         field,
-        imports: [namedImport(['datetime'], coreModule)],
+        imports: [
+          namedImport(['datetime'], coreModule),
+          namedImport(['sql'], 'drizzle-orm'),
+        ],
         func: `datetime('${getDbName(field)}', { mode: 'date', fsp: 3 })`,
+        // https://github.com/drizzle-team/drizzle-orm/issues/921
+        onDefault: () => `.default(sql\`CURRENT_TIMESTAMP(3)\`)`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/mysql/#decimal
