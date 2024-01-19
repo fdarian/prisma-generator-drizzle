@@ -119,8 +119,6 @@ export const users = pgTable('User', {
 
 ### Generate [`.$type<..>()`](https://orm.drizzle.team/docs/column-types/mysql#customizing-column-data-type) Type Customization
 
-> The syntax is still experimental, feel free to suggest a better approach.
-
 Add `/// drizzle.type <module>::<named-import>` directive above the field definition.
 
 ```prisma
