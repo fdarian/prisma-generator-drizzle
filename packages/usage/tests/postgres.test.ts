@@ -19,6 +19,7 @@ import {
 } from './dummy'
 import { testIgnoreDecorator } from './shared/test-ignore-decorator'
 import { testManyToMany } from './shared/test-implicit-relation'
+import { testDefault } from './shared/testDefault'
 import { testSelfReferring } from './shared/testSelfReferring'
 
 beforeEach(async () => {
@@ -190,3 +191,4 @@ test('disambiguating relations optional unique', async () => {
 testManyToMany(db, schema)
 testSelfReferring(db, schema)
 testIgnoreDecorator(db, schema)
+testDefault(db, schema, 'postgres')

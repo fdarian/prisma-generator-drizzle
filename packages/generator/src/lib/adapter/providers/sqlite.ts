@@ -2,7 +2,7 @@ import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
 import { createAdapter } from '../adapter'
-import { createField } from '../fields/createField'
+import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
 
 const coreModule = 'drizzle-orm/sqlite-core'
 
@@ -125,6 +125,14 @@ export const sqliteAdapter = createAdapter({
         field,
         imports: [namedImport(['integer'], coreModule)],
         func: `integer('${getDbName(field)}', { mode: 'number' })`,
+        onPrimaryKey(field) {
+          if (
+            hasDefault(field) &&
+            isDefaultFunc(field) &&
+            field.default.name === 'autoincrement'
+          )
+            return '.primaryKey({ autoIncrement: true })'
+        },
       })
     },
     // Prisma: https://arc.net/l/quote/bddbqrja

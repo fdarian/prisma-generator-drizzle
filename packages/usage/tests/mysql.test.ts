@@ -20,6 +20,7 @@ import {
 } from './dummy'
 import { testIgnoreDecorator } from './shared/test-ignore-decorator'
 import { testManyToMany } from './shared/test-implicit-relation'
+import { testDefault } from './shared/testDefault'
 import { testSelfReferring } from './shared/testSelfReferring'
 
 beforeEach(async () => {
@@ -194,3 +195,4 @@ const _schema = schema as unknown as Schema
 testManyToMany(_db, _schema)
 testSelfReferring(_db, _schema)
 testIgnoreDecorator(_db, _schema)
+testDefault(_db, _schema, 'mysql')

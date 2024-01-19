@@ -53,7 +53,10 @@ prisma generate
 
 In addition to the Prisma features, you can also generate Drizzle-specific features:
 
-1. [Generate `.$type<..>()`](#generate-type-type-customization)
+> Directive syntax is still experimental, feel free to suggest a better approach.
+
+1. [Generate `.$default<..>()`](#generate-custom-default-initializer)
+2. [Generate `.$type<..>()`](#generate-type-type-customization)
 
 ### Configuration
 
@@ -63,6 +66,56 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 | formatter       | Run prettier after generation     | -           | "prettier"  |
 | relationalQuery | Flag to generate relational query | true        | false       |
 | verbose         | Flag to enable verbose logging    | -           | true        |
+
+### Generate [`.$defaultFn()`](https://arc.net/l/quote/cmywscsv) Custom Default Initializer
+
+Add `/// drizzle.default <module>::<named-function-import>` directive above the field definition to generate a custom default initializer.
+
+> NOTE: This will override any `@default(...)` attribute from the schema.
+
+```prisma
+model User {
+  /// drizzle.default @paralleldrive/cuid2::createId
+  id     String @id
+  ...
+}
+```
+
+This will result to:
+
+```ts
+import { createId } from '@paralleldrive/cuid2'
+...
+
+export const users = pgTable('User', {
+  id: text('id')
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  ...
+})
+```
+
+Or with a custom code
+
+```prisma
+model User {
+  /// drizzle.default crypto::randomBytes `() => randomBytes(16).toString('hex')`
+  salt      String?
+  ...
+}
+```
+
+```ts
+import { randomBytes } from 'crypto'
+...
+
+export const users = pgTable('User', {
+  salt: text('salt')
+    .$defaultFn(() => randomBytes(16).toString('hex'))
+    .notNull(),
+  ...
+})
+```
 
 ### Generate [`.$type<..>()`](https://orm.drizzle.team/docs/column-types/mysql#customizing-column-data-type) Type Customization
 
