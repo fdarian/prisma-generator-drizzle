@@ -11,7 +11,7 @@ interface CreateFieldInput {
   field: DMMF.Field
   imports?: ImportValue[]
   func: string
-  onDefault?: (field: FieldWithDefault) => string
+  onDefault?: (field: FieldWithDefault) => string | undefined
 }
 
 export type FieldFunc = ReturnType<typeof createField>
@@ -35,8 +35,8 @@ export function createField(input: CreateFieldInput) {
     imports = imports.concat(customDefault.imports)
     func += customDefault.code
   } else if (field.hasDefaultValue) {
-    const _onDefault = input.onDefault ?? onDefault
-    func += _onDefault(field as FieldWithDefault)
+    const _field = field as FieldWithDefault
+    func += input.onDefault?.(_field) ?? onDefault(_field)
   }
 
   if (field.isId) func += '.primaryKey()'
