@@ -21,10 +21,10 @@ import { testIgnoreDecorator } from './shared/test-ignore-decorator'
 import { testManyToMany } from './shared/test-implicit-relation'
 import { testSelfReferring } from './shared/testSelfReferring'
 
-const { enum: _, json: _1, decimal: _8, ..._user_insert } = baseUserInsert
-const user_insert = { ..._user_insert, decimal: Number(_8) }
-const { enum: _2, json: _3, decimal: _9, ..._user_result } = baseUserResult
-const user_result = { ..._user_result, decimal: Number(_9) }
+const { enum: _, json: _1, ..._user_insert } = baseUserInsert
+const user_insert = { ..._user_insert }
+const { enum: _2, json: _3, ..._user_result } = baseUserResult
+const user_result = { ..._user_result }
 const { enum: _4, ...user2_insert } = _user2_insert
 const { enum: _6, json: _7, ...user2_result } = _user2_result
 

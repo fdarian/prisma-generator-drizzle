@@ -1,4 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
+import Decimal from 'decimal.js'
 import { payments } from 'prisma/drizzle/payments'
 import { schema } from 'prisma/drizzle/schema'
 import { teams } from 'prisma/drizzle/teams'
@@ -33,7 +34,10 @@ test('insert + select', async () => {
   const result = await db.query.users.findFirst({
     where: (User, { eq }) => eq(User.id, user_insert.id),
   })
-  expect(result).toStrictEqual(user_result)
+  expect({
+    ...result,
+    decimal: new Decimal(result!.decimal!).toString(),
+  }).toStrictEqual(user_result)
 })
 
 test('insert + select (variant 2)', async () => {
@@ -73,7 +77,10 @@ test('relations', async () => {
     where: (Team, { eq }) => eq(Team.id, user_result.id),
     with: { team: true },
   })
-  expect(userWithTeam).toStrictEqual({
+  expect({
+    ...userWithTeam,
+    decimal: new Decimal(userWithTeam!.decimal!).toString(),
+  }).toStrictEqual({
     ...user_result,
     teamId: team.id,
     team: team,
