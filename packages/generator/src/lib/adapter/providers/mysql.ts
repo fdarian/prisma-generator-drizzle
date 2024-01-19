@@ -2,7 +2,7 @@ import { camelCase, kebabCase } from 'lodash'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createAdapter } from '../adapter'
-import { createField, isDefaultFunc } from '../fields/createField'
+import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
 
 const coreModule = 'drizzle-orm/mysql-core'
 export const mysqlAdapter = createAdapter({
@@ -52,15 +52,30 @@ export const mysqlAdapter = createAdapter({
     },
     // https://orm.drizzle.team/docs/column-types/mysql#datetime
     DateTime(field) {
+      const hasDefaultNow =
+        hasDefault(field) &&
+        isDefaultFunc(field) &&
+        field.default.name === 'now'
+
       return createField({
         field,
         imports: [
           namedImport(['datetime'], coreModule),
-          namedImport(['sql'], 'drizzle-orm'),
+          ...(hasDefaultNow ? [namedImport(['sql'], 'drizzle-orm')] : []),
         ],
         func: `datetime('${getDbName(field)}', { mode: 'date', fsp: 3 })`,
         // https://github.com/drizzle-team/drizzle-orm/issues/921
-        onDefault: () => `.default(sql\`CURRENT_TIMESTAMP(3)\`)`,
+        onDefault: (field) => {
+          if (hasDefaultNow) {
+            return `.default(sql\`CURRENT_TIMESTAMP(3)\`)`
+          }
+
+          // Drizzle doesn't respect the timezone, different on postgres
+          // Might be caused by https://github.com/drizzle-team/drizzle-orm/issues/1442
+          if (field.type === 'DateTime') {
+            return `.$defaultFn(() => new Date('${field.default}'))`
+          }
+        },
       })
     },
     // https://orm.drizzle.team/docs/column-types/mysql/#decimal

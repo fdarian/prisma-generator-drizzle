@@ -18,6 +18,9 @@ export function testDefault(db: Db, schema: Schema) {
 
       expect(result).toBeDefined()
       expect(isAfter(result!.createdAt, now), 'Invalid now()').toBe(true)
+      expect(result!.date.toISOString(), 'Invalid date').toBe(
+        '2024-01-23T00:00:00.000Z'
+      )
       expect(result!.int, 'Invalid int').toBe(1)
       expect(result!.boolean, 'Invalid boolean').toBe(true)
       expect(result!.string, 'Invalid string').toBe('John')

@@ -53,10 +53,7 @@ export const postgresAdapter = createAdapter({
       return createField({
         field,
         imports: [namedImport(['timestamp'], coreModule)],
-        func: `timestamp('${getDbName(
-          field
-        )}', { mode: 'date', precision: 3 })`,
-        onDefault: () => `.defaultNow()`,
+        func: `timestamp('${getDbName(field)}', { mode: 'date', precision: 3 })`,
       })
     },
     // https://orm.drizzle.team/docs/column-types/pg/#decimal

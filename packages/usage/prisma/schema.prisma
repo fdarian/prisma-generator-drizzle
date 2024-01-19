@@ -115,6 +115,7 @@ model Default {
   alsoId    String?
   /// drizzle.default crypto::randomBytes `() => randomBytes(16).toString('hex')`
   salt      String?
+  date      DateTime? @default("2024-01-23T00:00:00Z")
   int       Int?      @default(1)
   boolean   Boolean?  @default(true)
   createdAt DateTime? @default(now())

@@ -140,6 +140,14 @@ function isDefaultScalarList(
 }
 
 function onDefault(field: FieldWithDefault) {
+  if (
+    isDefaultFunc(field) &&
+    field.type === 'DateTime' &&
+    field.default.name === 'now'
+  ) {
+    return `.defaultNow()`
+  }
+
   if (isDefaultScalar(field)) {
     let def = ''
 
@@ -159,6 +167,9 @@ function onDefault(field: FieldWithDefault) {
         case 'Decimal':
         case 'String':
           def = `'${field.default}'`
+          break
+        case 'DateTime':
+          def = `new Date('${field.default}')`
           break
         default:
           console.warn(
