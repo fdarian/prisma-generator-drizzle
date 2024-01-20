@@ -21,6 +21,8 @@ import { testIgnoreDecorator } from './shared/test-ignore-decorator'
 import { testManyToMany } from './shared/test-implicit-relation'
 import { testDefault } from './shared/testDefault'
 import { testSelfReferring } from './shared/testSelfReferring'
+import { TestContext } from './utils/types'
+import { testFields } from './shared/testFields'
 
 const { enum: _, json: _1, ..._user_insert } = baseUserInsert
 const user_insert = { ..._user_insert }
@@ -34,24 +36,6 @@ beforeEach(async () => {
 	await db.delete(transfers)
 	await db.delete(users)
 	await db.delete(teams)
-})
-
-test('insert + select', async () => {
-	await db.insert(users).values(user_insert)
-
-	const result = await db.query.users.findFirst({
-		where: (User, { eq }) => eq(User.id, user_insert.id),
-	})
-	expect(result).toStrictEqual(user_result)
-})
-
-test('insert + select (variant 2)', async () => {
-	await db.insert(users).values(user2_insert)
-
-	const result = await db.query.users.findFirst({
-		where: (User, { eq }) => eq(User.id, user2_insert.id),
-	})
-	expect(result).toStrictEqual(user2_result)
 })
 
 test('relations', async () => {
@@ -191,7 +175,9 @@ test('disambiguating relations optional unique', async () => {
 
 const _db = db as unknown as Db
 const _schema = schema as unknown as Schema
+const ctx: TestContext = { db: _db, schema: _schema, provider: 'sqlite' }
 
+testFields(ctx)
 testManyToMany(_db, _schema)
 testSelfReferring(_db, _schema)
 testIgnoreDecorator(_db, _schema)
