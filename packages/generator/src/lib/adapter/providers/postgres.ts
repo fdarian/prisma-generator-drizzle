@@ -3,8 +3,31 @@ import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createAdapter } from '../adapter'
 import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
+import { createModule } from '~/lib/syntaxes/module'
 
 const coreModule = 'drizzle-orm/pg-core'
+
+const customBytesModule = createModule({
+	name: 'custom-bytes',
+	declarations: [
+		{
+			imports: [namedImport(['customType'], coreModule)],
+			code: `export const customBytes = customType<{ data: Buffer }>({
+	dataType() {
+		return 'bytea';
+	},
+	fromDriver(value: unknown) {
+		if (Buffer.isBuffer(value)) return value
+		throw new Error('Expected Buffer')
+	},
+	toDriver(value: Buffer) {
+		return value
+	}
+});`,
+		},
+	],
+})
+
 export const postgresAdapter = createAdapter({
 	name: 'postgres',
 	getDeclarationFunc: {
@@ -46,6 +69,14 @@ export const postgresAdapter = createAdapter({
 				field,
 				imports: [namedImport(['boolean'], coreModule)],
 				func: `boolean('${getDbName(field)}')`,
+			})
+		},
+		// Prisma: https://www.prisma.io/docs/orm/reference/prisma-schema-reference#bytes:~:text=Default%20mapping-,PostgreSQL,-bytea
+		Bytes(field) {
+			return createField({
+				field,
+				imports: [namedImport(['customBytes'], `./${customBytesModule.name}`)],
+				func: `customBytes('${getDbName(field)}')`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#timestamp
@@ -107,4 +138,5 @@ export const postgresAdapter = createAdapter({
 			})
 		},
 	},
+	extraModules: [customBytesModule],
 })
