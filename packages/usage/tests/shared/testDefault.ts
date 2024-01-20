@@ -1,10 +1,9 @@
 import { createId, isCuid } from '@paralleldrive/cuid2'
-import { isAfter } from 'date-fns'
+import { isAfter, subSeconds } from 'date-fns'
 import Decimal from 'decimal.js'
 import { eq, inArray } from 'drizzle-orm'
 import { throwIfnull } from 'tests/utils/query'
 import { TestContext } from 'tests/utils/types'
-import { setTimeout } from 'timers/promises'
 import { describe, expect, test } from 'vitest'
 
 export function testDefault({ db, schema, provider }: TestContext) {
@@ -12,9 +11,7 @@ export function testDefault({ db, schema, provider }: TestContext) {
 		test('@default', async () => {
 			const data = { id: createId() }
 
-			const now = new Date()
-			await setTimeout(1_000) // wait for 1s so `now` will be less than `createdAt`
-
+			const now = subSeconds(new Date(), 1)
 			await db.insert(schema.defaults).values(data)
 
 			const result = await db.query.defaults
