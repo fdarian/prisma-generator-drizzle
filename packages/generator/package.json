@@ -14,7 +14,7 @@
 		"start": "node dist/bin.js",
 		"dev": "tsup src/generator.ts src/bin.ts --watch",
 		"build": "tsup src/generator.ts src/bin.ts",
-		"prepack": "yarn build",
+		"prepack": "bun run build",
 		"test": "bun test"
 	},
 	"dependencies": {
