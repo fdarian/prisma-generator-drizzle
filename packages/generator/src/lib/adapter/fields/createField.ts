@@ -155,13 +155,16 @@ function isDefaultScalarList(
 function onDefault(
 	field: FieldWithDefault
 ): { imports?: ImportValue[]; code: string } | undefined {
-	if (
-		isDefaultFunc(field) &&
-		field.type === 'DateTime' &&
-		field.default.name === 'now'
-	) {
-		return {
-			code: '.defaultNow()',
+	if (isDefaultFunc(field)) {
+		if (field.default.name === 'dbgenerated') {
+			return {
+				imports: [namedImport(['sql'], 'drizzle-orm')],
+				code: `.default(sql\`${field.default.args[0]}\`)`,
+			}
+		}
+
+		if (field.type === 'DateTime' && field.default.name === 'now') {
+			return { code: '.defaultNow()' }
 		}
 	}
 
