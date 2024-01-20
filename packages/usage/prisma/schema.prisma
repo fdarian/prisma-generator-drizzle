@@ -7,56 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserType {
-  TypeOne
-  TypeTwo
-}
-
-model Team {
-  id        String   @id
-  name      String
-  users     User[]
-  createdAt DateTime @default(now())
-}
-
-model User {
-  id                String     @id
-  email             String     @unique
-  name              String?
-  bigint            BigInt?
-  boolean           Boolean?
-  datetime          DateTime?
-  decimal           Decimal?
-  enum              UserType
-  float             Float?
-  json              Json?
-  bytes             Bytes?
-  team              Team?      @relation(fields: [teamId], references: [id])
-  teamId            String?
-  receivedTransfers Transfer[] @relation("transfer_to")
-  sentTransfers     Transfer[] @relation("transfer_from")
-  createdAt         DateTime   @default(now())
-}
-
-model Payment {
-  id                String    @id
-  paymentTransfer   Transfer? @relation("Payment_paymentTransfer", fields: [paymentTransferId], references: [id])
-  paymentTransferId String?   @unique
-  taxTransfer       Transfer? @relation("Payment_taxTransfer", fields: [taxTransferId], references: [id])
-  taxTransferId     String?   @unique
-}
-
-model Transfer {
-  id        String   @id
-  from      User     @relation("transfer_from", fields: [fromId], references: [id])
-  fromId    String
-  to        User     @relation("transfer_to", fields: [toId], references: [id])
-  toId      String
-  createdAt DateTime @default(now())
-  payment   Payment? @relation("Payment_paymentTransfer")
-  tax       Payment? @relation("Payment_taxTransfer")
-}
-
 model SelfReference {
   id String @id
 
@@ -110,6 +60,14 @@ model ModelWithIgnoredField {
 // #endregion
 
 // #region Default
+// start -sqlite
+enum EnumForDefault {
+  TypeOne
+  TypeTwo
+}
+
+// end -sqlite
+
 model Default {
   id        String    @id
   /// drizzle.default @paralleldrive/cuid2::createId
@@ -126,15 +84,98 @@ model Default {
   float     Float?    @default(1.123)
   bytes     Bytes?    @default("aGVsbG8gd29ybGQ=")
 
-  enum UserType @default(TypeTwo)
-  json Json?    @default("{\"foo\": \"bar\"}")
+  enum EnumForDefault @default(TypeTwo) // -sqlite
+  json Json?          @default("{\"foo\": \"bar\"}") // -sqlite
 
-  stringList String[] @default(["John", "Doe"])
+  stringList String[] @default(["John", "Doe"]) // -sqlite -mysql
 }
 
 model AutoIncrement {
   id  Int    @id @default(autoincrement())
   ref String @unique
+}
+
+// #endregion
+
+// #region Field
+
+// start -sqlite
+enum Enum {
+  A
+  B
+}
+
+// end -sqlite
+
+model Field {
+  id       String    @id
+  string   String?
+  boolean  Boolean?
+  int      Int?
+  bigint   BigInt?
+  float    Float?
+  decimal  Decimal?
+  datetime DateTime?
+  bytes    Bytes?
+  json     Json? // -sqlite
+  enum     Enum? // -sqlite
+}
+
+// #endregion
+
+// #region one to many
+model OneToMany_One {
+  id     String         @id
+  manyId String
+  many   OneToMany_Many @relation(fields: [manyId], references: [id])
+}
+
+model OneToMany_Many {
+  id   String          @id
+  ones OneToMany_One[]
+}
+
+// #endregion
+
+// #region one to one
+model OneToOne_A {
+  id  String      @id
+  b   OneToOne_B? @relation(fields: [bId], references: [id])
+  bId String?     @unique
+}
+
+model OneToOne_B {
+  id String      @id
+  a  OneToOne_A?
+}
+
+// #endregion
+
+// #region Disambiguating
+model Disambiguating_Transfer {
+  id          String               @id
+  from        Disambiguating_User  @relation("Disambiguating_Transfer_from", fields: [fromId], references: [id])
+  fromId      String
+  to          Disambiguating_User  @relation("Disambiguating_Transfer_to", fields: [toId], references: [id])
+  toId        String
+  salePayment Disambiguating_Sale? @relation("Disambiguating_Sale_payment")
+  saleTax     Disambiguating_Sale? @relation("Disambiguating_Sale_tax")
+  createdAt   DateTime             @default(now())
+}
+
+model Disambiguating_User {
+  id String @id
+
+  receivedTransfers Disambiguating_Transfer[] @relation("Disambiguating_Transfer_to")
+  sentTransfers     Disambiguating_Transfer[] @relation("Disambiguating_Transfer_from")
+}
+
+model Disambiguating_Sale {
+  id        String                  @id
+  payment   Disambiguating_Transfer @relation("Disambiguating_Sale_payment", fields: [paymentId], references: [id])
+  paymentId String                  @unique
+  tax       Disambiguating_Transfer @relation("Disambiguating_Sale_tax", fields: [taxId], references: [id])
+  taxId     String                  @unique
 }
 
 // #endregion

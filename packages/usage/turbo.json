@@ -1,0 +1,35 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"extends": ["//"],
+	"pipeline": {
+		"pushreset:postgres": {
+			"cache": false
+		},
+		"pushreset:mysql": {
+			"cache": false,
+			"dependsOn": ["clone:mysql"]
+		},
+		"pushreset:sqlite": {
+			"cache": false,
+			"dependsOn": ["clone:sqlite"]
+		},
+		"test": {
+			"cache": false,
+			"dependsOn": [
+				"^build",
+				"pushreset:postgres",
+				"pushreset:mysql",
+				"pushreset:sqlite"
+			]
+		},
+		"clone:sqlite": {
+			"inputs": ["prisma/schema.prisma"]
+		},
+		"clone:mysql": {
+			"inputs": ["prisma/schema.prisma"]
+		},
+		"clone": {
+			"dependsOn": ["clone:sqlite", "clone:mysql"]
+		}
+	}
+}

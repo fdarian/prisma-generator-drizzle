@@ -1,8 +1,9 @@
 import { createId } from '@paralleldrive/cuid2'
 import { Db, Schema } from 'src/lib/types'
+import { TestContext } from 'tests/utils/types'
 import { describe, expect, test } from 'vitest'
 
-export async function testManyToMany(db: Db, schema: Schema) {
+export async function testManyToMany({ db, schema }: TestContext) {
 	describe('many-to-many', () => {
 		// https://www.prisma.io/docs/orm/prisma-schema/data-model/relations/many-to-many-relations#rules-for-defining-an-implicit-m-n-relation
 		// https://orm.drizzle.team/docs/rqb#many-to-many

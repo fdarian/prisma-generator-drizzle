@@ -1,8 +1,9 @@
 import { createId } from '@paralleldrive/cuid2'
 import { Db, Schema } from 'src/lib/types'
+import { TestContext } from 'tests/utils/types'
 import { describe, test } from 'vitest'
 
-export function testSelfReferring(db: Db, schema: Schema) {
+export function testSelfReferring({ db, schema }: TestContext) {
 	describe('When the model has references to itself', () => {
 		test('one to one', async () => {
 			const referred = {
