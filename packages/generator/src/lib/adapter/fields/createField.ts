@@ -11,7 +11,9 @@ interface CreateFieldInput {
 	field: DMMF.Field
 	imports?: ImportValue[]
 	func: string
-	onDefault?: (field: FieldWithDefault) => string | undefined
+	onDefault?: (
+		field: FieldWithDefault
+	) => { code: string; imports?: ImportValue[] } | undefined
 	onPrimaryKey?: (field: DMMF.Field) => string | undefined
 }
 
@@ -37,7 +39,11 @@ export function createField(input: CreateFieldInput) {
 		func += customDefault.code
 	} else if (field.hasDefaultValue) {
 		const _field = field as FieldWithDefault
-		func += input.onDefault?.(_field) ?? onDefault(_field)
+		const def = input.onDefault?.(_field) ?? onDefault(_field)
+		if (def) {
+			imports = imports.concat(def.imports ?? [])
+			func += def.code
+		}
 	}
 
 	if (field.isId) func += input.onPrimaryKey?.(field) ?? '.primaryKey()'
@@ -146,39 +152,54 @@ function isDefaultScalarList(
 	return Array.isArray(field.default)
 }
 
-function onDefault(field: FieldWithDefault) {
-	if (
-		isDefaultFunc(field) &&
-		field.type === 'DateTime' &&
-		field.default.name === 'now'
-	) {
-		return `.defaultNow()`
+function onDefault(
+	field: FieldWithDefault
+): { imports?: ImportValue[]; code: string } | undefined {
+	if (isDefaultFunc(field)) {
+		if (field.default.name === 'dbgenerated') {
+			return {
+				imports: [namedImport(['sql'], 'drizzle-orm')],
+				code: `.default(sql\`${field.default.args[0]}\`)`,
+			}
+		}
+
+		if (field.type === 'DateTime' && field.default.name === 'now') {
+			return { code: '.defaultNow()' }
+		}
 	}
 
 	if (isDefaultScalar(field)) {
 		if (field.type === 'Bytes') {
-			return `.$defaultFn(() => Buffer.from('${field.default}', 'base64'))`
+			return {
+				code: `.$defaultFn(() => Buffer.from('${field.default}', 'base64'))`,
+			}
 		}
 
 		const defaultDef = getDefaultScalarDefinition(field, field.default)
 
-		if (defaultDef == null) return ''
-		return `.default(${defaultDef})`
+		if (defaultDef == null) return
+		return {
+			code: `.default(${defaultDef})`,
+		}
 	}
 
 	if (isDefaultScalarList(field)) {
 		if (field.type === 'Bytes') {
-			return `.$defaultFn(() => [ ${field.default
-				.map((value) => `Buffer.from('${value}', 'base64')`)
-				.join(', ')} ])`
+			return {
+				code: `.$defaultFn(() => [ ${field.default
+					.map((value) => `Buffer.from('${value}', 'base64')`)
+					.join(', ')} ])`,
+			}
 		}
 
 		const defaultDefs = field.default.map((value) =>
 			getDefaultScalarDefinition(field, value)
 		)
 
-		if (defaultDefs.some((val) => val == null)) return ''
-		return `.default([${defaultDefs.join(', ')}])`
+		if (defaultDefs.some((val) => val == null)) return
+		return {
+			code: `.default([${defaultDefs.join(', ')}])`,
+		}
 	}
 
 	console.warn(
@@ -186,7 +207,6 @@ function onDefault(field: FieldWithDefault) {
 			field.name
 		}`
 	)
-	return ''
 }
 
 function getDefaultScalarDefinition(

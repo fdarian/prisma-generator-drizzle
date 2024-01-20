@@ -2,6 +2,7 @@ import { createId, isCuid } from '@paralleldrive/cuid2'
 import { isAfter, subSeconds } from 'date-fns'
 import Decimal from 'decimal.js'
 import { eq, inArray } from 'drizzle-orm'
+import { validate as validateUuid } from 'uuid'
 import { throwIfnull } from 'tests/utils/query'
 import { TestContext } from 'tests/utils/types'
 import { describe, expect, test } from 'vitest'
@@ -44,6 +45,10 @@ export function testDefault({ db, schema, provider }: TestContext) {
 			)
 			expect(result.float, 'Invalid float').toBe(1.123)
 			expect(result.bytes.toString(), 'Invalid bytes').toBe('hello world')
+
+			if (provider === 'postgres') {
+				expect(validateUuid(result.pgUuid)).toBe(true)
+			}
 
 			if (provider !== 'sqlite') {
 				expect(result.enum, 'Invalid enum').toBe('TypeTwo')

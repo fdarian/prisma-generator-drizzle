@@ -82,28 +82,29 @@ export const mysqlAdapter = createAdapter({
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql#datetime
 		DateTime(field) {
-			const hasDefaultNow =
-				hasDefault(field) &&
-				isDefaultFunc(field) &&
-				field.default.name === 'now'
-
 			return createField({
 				field,
-				imports: [
-					namedImport(['datetime'], coreModule),
-					...(hasDefaultNow ? [namedImport(['sql'], 'drizzle-orm')] : []),
-				],
+				imports: [namedImport(['datetime'], coreModule)],
 				func: `datetime('${getDbName(field)}', { mode: 'date', fsp: 3 })`,
 				// https://github.com/drizzle-team/drizzle-orm/issues/921
 				onDefault: (field) => {
-					if (hasDefaultNow) {
-						return `.default(sql\`CURRENT_TIMESTAMP(3)\`)`
+					if (
+						hasDefault(field) &&
+						isDefaultFunc(field) &&
+						field.default.name === 'now'
+					) {
+						return {
+							imports: [namedImport(['sql'], 'drizzle-orm')],
+							code: '.default(sql`CURRENT_TIMESTAMP(3)`)',
+						}
 					}
 
 					// Drizzle doesn't respect the timezone, different on postgres
 					// Might be caused by https://github.com/drizzle-team/drizzle-orm/issues/1442
 					if (field.type === 'DateTime') {
-						return `.$defaultFn(() => new Date('${field.default}'))`
+						return {
+							code: `.$defaultFn(() => new Date('${field.default}'))`,
+						}
 					}
 				},
 			})
@@ -136,7 +137,9 @@ export const mysqlAdapter = createAdapter({
 						isDefaultFunc(field) &&
 						field.default.name === 'autoincrement'
 					) {
-						return `.autoincrement()`
+						return {
+							code: '.autoincrement()',
+						}
 					}
 				},
 			})
@@ -147,7 +150,9 @@ export const mysqlAdapter = createAdapter({
 				field,
 				imports: [namedImport(['json'], coreModule)],
 				func: `json('${getDbName(field)}')`,
-				onDefault: (field) => `.$defaultFn(() => (${field.default}))`,
+				onDefault: (field) => ({
+					code: `.$defaultFn(() => (${field.default}))`,
+				}),
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql/#text
