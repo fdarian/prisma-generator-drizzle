@@ -13,7 +13,7 @@
 	"scripts": {
 		"start": "node dist/bin.js",
 		"dev": "tsup src/generator.ts src/bin.ts --watch",
-		"build": "tsup src/generator.ts src/bin.ts",
+		"build": "tsup src/generator.ts src/bin.ts --clean",
 		"prepack": "bun run build",
 		"test": "bun test"
 	},
