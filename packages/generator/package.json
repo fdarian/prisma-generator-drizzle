@@ -1,47 +1,43 @@
 {
-  "name": "prisma-generator-drizzle",
-  "description": "A Prisma generator for generating Drizzle schema with ease",
-  "version": "0.5.5",
-  "main": "dist/generator.js",
-  "license": "MIT",
-  "bin": {
-    "prisma-generator-drizzle": "dist/bin.js"
-  },
-  "engines": {
-    "node": ">=14.0"
-  },
-  "scripts": {
-    "start": "node dist/bin.js",
-    "dev": "tsup src/generator.ts src/bin.ts --watch",
-    "build": "tsup src/generator.ts src/bin.ts",
-    "prepack": "yarn build",
-    "test": "bun test"
-  },
-  "dependencies": {
-    "@prisma/client": "5.8.1",
-    "@prisma/generator-helper": "5.8.1",
-    "@prisma/sdk": "4.0.0",
-    "fp-ts": "^2.16.2",
-    "lodash": "^4.17.21",
-    "pluralize": "^8.0.0"
-  },
-  "devDependencies": {
-    "@types/lodash": "^4.14.202",
-    "@types/node": "^20.11.5",
-    "@types/pluralize": "^0.0.33",
-    "@types/prettier": "3.0.0",
-    "prisma": "5.8.1",
-    "tsup": "^8.0.1",
-    "typescript": "5.3.3"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/farreldarian/prisma-generator-drizzle"
-  },
-  "author": "Farrel Darian <contact@farreldarian.com>",
-  "keywords": [
-    "prisma",
-    "drizzle",
-    "generator"
-  ]
+	"name": "prisma-generator-drizzle",
+	"description": "A Prisma generator for generating Drizzle schema with ease",
+	"version": "0.5.5",
+	"main": "dist/generator.js",
+	"license": "MIT",
+	"bin": {
+		"prisma-generator-drizzle": "dist/bin.js"
+	},
+	"engines": {
+		"node": ">=14.0"
+	},
+	"scripts": {
+		"start": "node dist/bin.js",
+		"dev": "tsup src/generator.ts src/bin.ts --watch",
+		"build": "tsup src/generator.ts src/bin.ts",
+		"prepack": "yarn build",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@prisma/client": "5.8.1",
+		"@prisma/generator-helper": "5.8.1",
+		"@prisma/sdk": "4.0.0",
+		"fp-ts": "^2.16.2",
+		"lodash": "^4.17.21",
+		"pluralize": "^8.0.0"
+	},
+	"devDependencies": {
+		"@types/lodash": "^4.14.202",
+		"@types/node": "^20.11.5",
+		"@types/pluralize": "^0.0.33",
+		"@types/prettier": "3.0.0",
+		"prisma": "5.8.1",
+		"tsup": "^8.0.1",
+		"typescript": "5.3.3"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/farreldarian/prisma-generator-drizzle"
+	},
+	"author": "Farrel Darian <contact@farreldarian.com>",
+	"keywords": ["prisma", "drizzle", "generator"]
 }
