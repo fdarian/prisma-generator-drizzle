@@ -89,6 +89,13 @@ export const sqliteAdapter = createAdapter({
 				func: `integer('${getDbName(field)}', { mode: 'boolean' })`,
 			})
 		},
+		Bytes(field) {
+			return createField({
+				field,
+				imports: [namedImport(['blob'], coreModule)],
+				func: `blob('${getDbName(field)}', { mode: 'buffer' })`,
+			})
+		},
 		// Prisma: https://arc.net/l/quote/grwnsumx
 		// Drizzle: https://arc.net/l/quote/fpupjigo
 		DateTime(field) {
