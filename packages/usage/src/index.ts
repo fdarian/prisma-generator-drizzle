@@ -3,7 +3,7 @@ import { Client } from 'pg'
 import { schema } from 'prisma/drizzle/schema'
 
 const client = new Client({
-  connectionString: process.env.DATABASE_URL,
+	connectionString: process.env.DATABASE_URL,
 })
 
 await client.connect()

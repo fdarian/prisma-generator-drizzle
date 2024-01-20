@@ -3,6 +3,6 @@ import { postgresAdapter } from './providers/postgres'
 import { sqliteAdapter } from './providers/sqlite'
 
 export type Adapter =
-  | typeof postgresAdapter
-  | typeof mysqlAdapter
-  | typeof sqliteAdapter
+	| typeof postgresAdapter
+	| typeof mysqlAdapter
+	| typeof sqliteAdapter

@@ -3,7 +3,7 @@ import { Adapter } from './adapter/types'
 import { Config } from './config'
 
 export type Context = {
-  adapter: Adapter
-  config: Config
-  datamodel: DMMF.Datamodel
+	adapter: Adapter
+	config: Config
+	datamodel: DMMF.Datamodel
 }

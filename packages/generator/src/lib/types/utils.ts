@@ -7,16 +7,16 @@
  * => { a: string, b: string, c: number, d: bigint }
  */
 export type Prettify<T> = {
-  [K in keyof T]: T[K]
+	[K in keyof T]: T[K]
 } & {}
 
 export type MakeRequired<
-  shake extends Record<string, any>,
-  key extends keyof shake,
+	shake extends Record<string, any>,
+	key extends keyof shake,
 > = Omit<shake, key> & Required<Pick<shake, key>>
 
 export type ModifyType<
-  shape extends Record<string, any>,
-  key extends keyof shape,
-  modified,
+	shape extends Record<string, any>,
+	key extends keyof shape,
+	modified,
 > = Omit<shape, key> & Record<key, modified>
