@@ -38,6 +38,7 @@ export const user2_result: typeof users.$inferSelect = {
 	boolean: null,
 	datetime: null,
 	decimal: null,
+	bytes: null,
 	float: null,
 	json: null,
 	teamId: null,
