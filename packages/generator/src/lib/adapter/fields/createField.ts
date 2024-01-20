@@ -52,17 +52,30 @@ export function createField(input: CreateFieldInput) {
 	}
 }
 
-function getCustomType(field: DMMF.Field) {
-	if (
-		field.documentation == null ||
-		!field.documentation.startsWith('drizzle.type ')
-	)
-		return
+/**
+ * e.g.
+ * Unknown
+ * - Input: just a doc
+ * - Returns: undefined
+ * When Exists
+ * - Input: drizzle.type viem::Address
+ * - Returns: viem:Address
+ */
+function getDirective(field: DMMF.Field, directive: string) {
+	if (field.documentation == null) return
 
-	const splits = field.documentation
-		.replaceAll('drizzle.type', '')
+	return field.documentation
+		.split('\n')
+		.find((doc) => doc.startsWith(directive))
+		?.replaceAll(directive, '')
 		.trim()
-		.split('::')
+}
+
+function getCustomType(field: DMMF.Field) {
+	const directive = getDirective(field, 'drizzle.type')
+	if (directive == null) return
+
+	const splits = directive.split('::')
 
 	if (splits.length !== 2)
 		throw new Error(`Invalid type definition: ${field.documentation}`)
@@ -75,16 +88,10 @@ function getCustomType(field: DMMF.Field) {
 }
 
 function getCustomDefault(field: DMMF.Field) {
-	if (
-		field.documentation == null ||
-		!field.documentation.startsWith('drizzle.default ')
-	)
-		return
+	const directive = getDirective(field, 'drizzle.default')
+	if (directive == null) return
 
-	const splits = field.documentation
-		.replaceAll('drizzle.default', '')
-		.trim()
-		.split('::')
+	const splits = directive.split('::')
 
 	if (splits.length !== 2)
 		throw new Error(`Invalid default definition: ${field.documentation}`)
