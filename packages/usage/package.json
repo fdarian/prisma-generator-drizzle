@@ -1,34 +1,39 @@
 {
-  "name": "usage",
-  "private": true,
-  "version": "1.0.0",
-  "license": "MIT",
-  "type": "module",
-  "scripts": {
-    "start": "bun run src/index.ts",
-    "test": "bun run scripts/test.ts",
-    "generate": "prisma generate"
-  },
-  "dependencies": {
-    "@paralleldrive/cuid2": "^2.2.2",
-    "@prisma/client": "5.8.1",
-    "better-sqlite3": "^9.3.0",
-    "decimal.js": "^10.4.3",
-    "date-fns": "^3.2.0",
-    "drizzle-orm": "^0.29.3",
-    "mysql2": "^3.7.1",
-    "pg": "^8.11.3",
-    "postgres": "^3.4.3",
-    "valibot": "^0.26.0",
-    "vitest": "^1.2.1"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.8",
-    "@types/node": "20.11.5",
-    "@types/pg": "^8.10.9",
-    "bun-types": "^1.0.23",
-    "prisma": "5.8.1",
-    "prisma-generator-drizzle": "workspace:*",
-    "typescript": "5.3.3"
-  }
+	"name": "usage",
+	"private": true,
+	"version": "1.0.0",
+	"license": "MIT",
+	"type": "module",
+	"scripts": {
+		"start": "bun run src/index.ts",
+		"test": "vitest run",
+		"generate": "prisma generate",
+		"pushreset:postgres": "DATABASE_URL=$PG_DATABASE_URL bun prisma db push --schema prisma/schema.prisma --force-reset --accept-data-loss",
+		"pushreset:sqlite": "DATABASE_URL=$MYSQL_DATABASE_URL bun prisma db push --schema prisma/mysql/schema.prisma --force-reset --accept-data-loss",
+		"pushreset:mysql": "bun prisma db push --schema prisma/sqlite/schema.prisma --force-reset --accept-data-loss",
+		"clone:sqlite": "bun run scripts/cloneSqlite.ts",
+		"clone:mysql": "bun run scripts/cloneMysql.ts"
+	},
+	"dependencies": {
+		"@paralleldrive/cuid2": "^2.2.2",
+		"@prisma/client": "5.8.1",
+		"better-sqlite3": "^9.3.0",
+		"decimal.js": "^10.4.3",
+		"date-fns": "^3.2.0",
+		"drizzle-orm": "^0.29.3",
+		"mysql2": "^3.7.1",
+		"pg": "^8.11.3",
+		"postgres": "^3.4.3",
+		"valibot": "^0.26.0",
+		"vitest": "^1.2.1"
+	},
+	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.8",
+		"@types/node": "20.11.5",
+		"@types/pg": "^8.10.9",
+		"bun-types": "^1.0.23",
+		"prisma": "5.8.1",
+		"prisma-generator-drizzle": "workspace:*",
+		"typescript": "5.3.3"
+	}
 }

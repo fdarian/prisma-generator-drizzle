@@ -3,10 +3,6 @@
 	"pipeline": {
 		"build": {
 			"outputs": ["dist"]
-		},
-		"test": {
-			"cache": false,
-			"dependsOn": ["^build"]
 		}
 	}
 }

@@ -7,10 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// start -sqlite
 enum UserType {
   TypeOne
   TypeTwo
 }
+
+// end -sqlite
 
 model Team {
   id        String   @id
@@ -27,9 +30,9 @@ model User {
   boolean           Boolean?
   datetime          DateTime?
   decimal           Decimal?
-  enum              UserType
+  enum              UserType // -sqlite
   float             Float?
-  json              Json?
+  json              Json? // -sqlite
   bytes             Bytes?
   team              Team?      @relation(fields: [teamId], references: [id])
   teamId            String?
@@ -126,15 +129,41 @@ model Default {
   float     Float?    @default(1.123)
   bytes     Bytes?    @default("aGVsbG8gd29ybGQ=")
 
-  enum UserType @default(TypeTwo)
-  json Json?    @default("{\"foo\": \"bar\"}")
+  enum UserType @default(TypeTwo) // -sqlite
+  json Json?    @default("{\"foo\": \"bar\"}") // -sqlite
 
-  stringList String[] @default(["John", "Doe"])
+  stringList String[] @default(["John", "Doe"]) // -sqlite -mysql
 }
 
 model AutoIncrement {
   id  Int    @id @default(autoincrement())
   ref String @unique
+}
+
+// #endregion
+
+// #region Field
+
+// start -sqlite
+enum Enum {
+  A
+  B
+}
+
+// end -sqlite
+
+model Field {
+  id       String    @id
+  string   String?
+  boolean  Boolean?
+  int      Int?
+  bigint   BigInt?
+  float    Float?
+  decimal  Decimal?
+  datetime DateTime?
+  bytes    Bytes?
+  json     Json? // -sqlite
+  enum     Enum? // -sqlite
 }
 
 // #endregion
