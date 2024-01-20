@@ -3,8 +3,31 @@ import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createAdapter } from '../adapter'
 import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
+import { createModule } from '~/lib/syntaxes/module'
 
 const coreModule = 'drizzle-orm/mysql-core'
+
+const customBytesModule = createModule({
+	name: 'custom-bytes',
+	declarations: [
+		{
+			imports: [namedImport(['customType'], coreModule)],
+			code: `export const customBytes = customType<{ data: Buffer }>({
+	dataType() {
+		return 'LONGBLOB';
+	},
+	fromDriver(value: unknown) {
+		if (Buffer.isBuffer(value)) return value
+		throw new Error('Expected Buffer')
+	},
+	toDriver(value: Buffer) {
+		return value
+	}
+});`,
+		},
+	],
+})
+
 export const mysqlAdapter = createAdapter({
 	name: 'mysql',
 	getDeclarationFunc: {
@@ -48,6 +71,13 @@ export const mysqlAdapter = createAdapter({
 				field,
 				imports: [namedImport(['boolean'], coreModule)],
 				func: `boolean('${getDbName(field)}')`,
+			})
+		},
+		Bytes(field) {
+			return createField({
+				field,
+				imports: [namedImport(['customBytes'], `./${customBytesModule.name}`)],
+				func: `customBytes('${getDbName(field)}')`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql#datetime
@@ -129,4 +159,5 @@ export const mysqlAdapter = createAdapter({
 			})
 		},
 	},
+	extraModules: [customBytesModule],
 })
