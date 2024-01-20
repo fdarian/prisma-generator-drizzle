@@ -7,59 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// start -sqlite
-enum UserType {
-  TypeOne
-  TypeTwo
-}
-
-// end -sqlite
-
-model Team {
-  id        String   @id
-  name      String
-  users     User[]
-  createdAt DateTime @default(now())
-}
-
-model User {
-  id                String     @id
-  email             String     @unique
-  name              String?
-  bigint            BigInt?
-  boolean           Boolean?
-  datetime          DateTime?
-  decimal           Decimal?
-  enum              UserType // -sqlite
-  float             Float?
-  json              Json? // -sqlite
-  bytes             Bytes?
-  team              Team?      @relation(fields: [teamId], references: [id])
-  teamId            String?
-  receivedTransfers Transfer[] @relation("transfer_to")
-  sentTransfers     Transfer[] @relation("transfer_from")
-  createdAt         DateTime   @default(now())
-}
-
-model Payment {
-  id                String    @id
-  paymentTransfer   Transfer? @relation("Payment_paymentTransfer", fields: [paymentTransferId], references: [id])
-  paymentTransferId String?   @unique
-  taxTransfer       Transfer? @relation("Payment_taxTransfer", fields: [taxTransferId], references: [id])
-  taxTransferId     String?   @unique
-}
-
-model Transfer {
-  id        String   @id
-  from      User     @relation("transfer_from", fields: [fromId], references: [id])
-  fromId    String
-  to        User     @relation("transfer_to", fields: [toId], references: [id])
-  toId      String
-  createdAt DateTime @default(now())
-  payment   Payment? @relation("Payment_paymentTransfer")
-  tax       Payment? @relation("Payment_taxTransfer")
-}
-
 model SelfReference {
   id String @id
 
@@ -113,6 +60,14 @@ model ModelWithIgnoredField {
 // #endregion
 
 // #region Default
+// start -sqlite
+enum EnumForDefault {
+  TypeOne
+  TypeTwo
+}
+
+// end -sqlite
+
 model Default {
   id        String    @id
   /// drizzle.default @paralleldrive/cuid2::createId
@@ -129,8 +84,8 @@ model Default {
   float     Float?    @default(1.123)
   bytes     Bytes?    @default("aGVsbG8gd29ybGQ=")
 
-  enum UserType @default(TypeTwo) // -sqlite
-  json Json?    @default("{\"foo\": \"bar\"}") // -sqlite
+  enum EnumForDefault @default(TypeTwo) // -sqlite
+  json Json?          @default("{\"foo\": \"bar\"}") // -sqlite
 
   stringList String[] @default(["John", "Doe"]) // -sqlite -mysql
 }
