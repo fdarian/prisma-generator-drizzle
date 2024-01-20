@@ -167,3 +167,60 @@ model Field {
 }
 
 // #endregion
+
+// #region one to many
+model OneToMany_One {
+  id     String         @id
+  manyId String
+  many   OneToMany_Many @relation(fields: [manyId], references: [id])
+}
+
+model OneToMany_Many {
+  id   String          @id
+  ones OneToMany_One[]
+}
+
+// #endregion
+
+// #region one to one
+model OneToOne_A {
+  id  String      @id
+  b   OneToOne_B? @relation(fields: [bId], references: [id])
+  bId String?     @unique
+}
+
+model OneToOne_B {
+  id String      @id
+  a  OneToOne_A?
+}
+
+// #endregion
+
+// #region Disambiguating
+model Disambiguating_Transfer {
+  id          String               @id
+  from        Disambiguating_User  @relation("Disambiguating_Transfer_from", fields: [fromId], references: [id])
+  fromId      String
+  to          Disambiguating_User  @relation("Disambiguating_Transfer_to", fields: [toId], references: [id])
+  toId        String
+  salePayment Disambiguating_Sale? @relation("Disambiguating_Sale_payment")
+  saleTax     Disambiguating_Sale? @relation("Disambiguating_Sale_tax")
+  createdAt   DateTime             @default(now())
+}
+
+model Disambiguating_User {
+  id String @id
+
+  receivedTransfers Disambiguating_Transfer[] @relation("Disambiguating_Transfer_to")
+  sentTransfers     Disambiguating_Transfer[] @relation("Disambiguating_Transfer_from")
+}
+
+model Disambiguating_Sale {
+  id        String                  @id
+  payment   Disambiguating_Transfer @relation("Disambiguating_Sale_payment", fields: [paymentId], references: [id])
+  paymentId String                  @unique
+  tax       Disambiguating_Transfer @relation("Disambiguating_Sale_tax", fields: [taxId], references: [id])
+  taxId     String                  @unique
+}
+
+// #endregion
