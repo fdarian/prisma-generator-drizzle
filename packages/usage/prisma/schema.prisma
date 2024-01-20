@@ -30,6 +30,7 @@ model User {
   enum              UserType
   float             Float?
   json              Json?
+  bytes             Bytes?
   team              Team?      @relation(fields: [teamId], references: [id])
   teamId            String?
   receivedTransfers Transfer[] @relation("transfer_to")
@@ -123,6 +124,7 @@ model Default {
   bigint    BigInt?   @default(1)
   decimal   Decimal?  @default(1.123)
   float     Float?    @default(1.123)
+  bytes     Bytes?    @default("aGVsbG8gd29ybGQ=")
 
   enum UserType @default(TypeTwo)
   json Json?    @default("{\"foo\": \"bar\"}")

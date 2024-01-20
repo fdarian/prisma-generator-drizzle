@@ -47,6 +47,7 @@ export function testDefault(
 				'1.123'
 			)
 			expect(result!.float, 'Invalid float').toBe(1.123)
+			expect(result!.bytes.toString(), 'Invalid bytes').toBe('hello world')
 
 			if (type !== 'sqlite') {
 				expect(result!.enum, 'Invalid enum').toBe('TypeTwo')

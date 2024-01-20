@@ -13,6 +13,7 @@ export const user_insert = {
 	datetime: new Date('2020-01-23T12:01:30Z'),
 	// 65, 30 precision
 	decimal: '0.567890123456789',
+	bytes: Buffer.from('hello world'),
 	enum: 'TypeOne',
 	float: 0.123,
 	json: { key: 'value' },
@@ -37,6 +38,7 @@ export const user2_result: typeof users.$inferSelect = {
 	boolean: null,
 	datetime: null,
 	decimal: null,
+	bytes: null,
 	float: null,
 	json: null,
 	teamId: null,

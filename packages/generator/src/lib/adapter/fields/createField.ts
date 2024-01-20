@@ -149,6 +149,10 @@ function onDefault(field: FieldWithDefault) {
 	}
 
 	if (isDefaultScalar(field)) {
+		if (field.type === 'Bytes') {
+			return `.$defaultFn(() => Buffer.from('${field.default}', 'base64'))`
+		}
+
 		const defaultDef = getDefaultScalarDefinition(field, field.default)
 
 		if (defaultDef == null) return ''
@@ -156,6 +160,12 @@ function onDefault(field: FieldWithDefault) {
 	}
 
 	if (isDefaultScalarList(field)) {
+		if (field.type === 'Bytes') {
+			return `.$defaultFn(() => [ ${field.default
+				.map((value) => `Buffer.from('${value}', 'base64')`)
+				.join(', ')} ])`
+		}
+
 		const defaultDefs = field.default.map((value) =>
 			getDefaultScalarDefinition(field, value)
 		)
@@ -193,6 +203,7 @@ function getDefaultScalarDefinition(
 			return `'${value}'`
 		case 'DateTime':
 			return `new Date('${value}')`
+
 		default:
 			console.warn(
 				`Unsupported default value: ${JSON.stringify(value)} on field ${
