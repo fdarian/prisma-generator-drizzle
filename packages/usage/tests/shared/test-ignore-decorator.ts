@@ -1,7 +1,8 @@
 import { Db, Schema } from 'src/lib/types'
+import { TestContext } from 'tests/utils/types'
 import { describe, expect, test } from 'vitest'
 
-export function testIgnoreDecorator(db: Db, schema: Schema) {
+export function testIgnoreDecorator({ schema }: TestContext) {
 	describe('@ignore', async () => {
 		test('should not have ignored model', () => {
 			expect(schema).not.toHaveProperty('IgnoredModel')

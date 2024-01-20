@@ -2,15 +2,11 @@ import { createId, isCuid } from '@paralleldrive/cuid2'
 import { isAfter } from 'date-fns'
 import Decimal from 'decimal.js'
 import { eq, inArray } from 'drizzle-orm'
-import { Db, Schema } from 'src/lib/types'
+import { TestContext } from 'tests/utils/types'
 import { setTimeout } from 'timers/promises'
 import { describe, expect, test } from 'vitest'
 
-export function testDefault(
-	db: Db,
-	schema: Schema,
-	type: 'sqlite' | 'postgres' | 'mysql'
-) {
+export function testDefault({ db, schema, provider }: TestContext) {
 	describe('@default syntax', () => {
 		test('@default', async () => {
 			const data = { id: createId() }
@@ -36,7 +32,7 @@ export function testDefault(
 			expect(result!.int, 'Invalid int').toBe(1)
 			expect(result!.boolean, 'Invalid boolean').toBe(true)
 			expect(result!.string, 'Invalid string').toBe('John')
-			if (type === 'postgres') {
+			if (provider === 'postgres') {
 				expect(result!.stringList, 'Invalid string list').toStrictEqual([
 					'John',
 					'Doe',
@@ -49,7 +45,7 @@ export function testDefault(
 			expect(result!.float, 'Invalid float').toBe(1.123)
 			expect(result!.bytes.toString(), 'Invalid bytes').toBe('hello world')
 
-			if (type !== 'sqlite') {
+			if (provider !== 'sqlite') {
 				expect(result!.enum, 'Invalid enum').toBe('TypeTwo')
 				expect(result!.json, 'Invalid json').toStrictEqual({ foo: 'bar' })
 			}
