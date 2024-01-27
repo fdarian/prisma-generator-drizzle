@@ -17,9 +17,6 @@ import {
 	createModelModule,
 	ModelModule,
 } from './lib/adapter/modules/createModelModule'
-import { mysqlAdapter } from './lib/adapter/providers/mysql'
-import { postgresAdapter } from './lib/adapter/providers/postgres'
-import { sqliteAdapter } from './lib/adapter/providers/sqlite'
 import { isRelationalQueryEnabled } from './lib/config'
 import { Context } from './lib/context'
 import { logger } from './lib/logger'
@@ -27,6 +24,7 @@ import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
 import { createModule, Module } from './lib/syntaxes/module'
+import { setGeneratorContext } from './shared/generator-context'
 
 const { version } = require('../package.json')
 
@@ -39,6 +37,7 @@ generatorHandler({
 		}
 	},
 	onGenerate: async (options: GeneratorOptions) => {
+		setGeneratorContext(options)
 		logger.applyConfig(options)
 
 		logger.log('Generating drizzle schema...')
@@ -48,7 +47,7 @@ generatorHandler({
 		if (options.datasources.length > 1)
 			throw new Error('Only one datasource is supported')
 
-		const adapter = getAdapter(options)
+		const adapter = await getAdapter(options)
 		const ctx: Context = {
 			adapter,
 			config: options.generator.config,
@@ -189,23 +188,31 @@ function writeModule(basePath: string, module: Module) {
 	fs.writeFileSync(writeLocation, module.code)
 }
 
-function getAdapter(options: GeneratorOptions) {
-	return (() => {
-		switch (options.datasources[0].provider) {
-			case 'cockroachdb': // CockroahDB should be postgres compatible
-			case 'postgres':
-			case 'postgresql':
-				return postgresAdapter
-			case 'mysql':
-				return mysqlAdapter
-			case 'sqlite':
-				return sqliteAdapter
-			default:
-				throw new Error(
-					`Connector ${options.datasources[0].provider} is not supported`
-				)
+/**
+ * @dev Importing the adapter dynamically so `getGeneratorContext()` won't
+ * be called before initialization (`onGenerate`)
+ */
+async function getAdapter(options: GeneratorOptions) {
+	switch (options.datasources[0].provider) {
+		case 'cockroachdb': // CockroahDB should be postgres compatible
+		case 'postgres':
+		case 'postgresql': {
+			const mod = await import('./lib/adapter/providers/postgres')
+			return mod.postgresAdapter
 		}
-	})()
+		case 'mysql': {
+			const mod = await import('./lib/adapter/providers/mysql')
+			return mod.mysqlAdapter
+		}
+		case 'sqlite': {
+			const mod = await import('./lib/adapter/providers/sqlite')
+			return mod.sqliteAdapter
+		}
+		default:
+			throw new Error(
+				`Connector ${options.datasources[0].provider} is not supported`
+			)
+	}
 }
 
 function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {

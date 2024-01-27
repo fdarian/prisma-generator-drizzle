@@ -1,4 +1,4 @@
-import { getGeneratorContext } from '~/shared/generatorContext'
+import { getGeneratorContext } from '~/shared/generator-context'
 
 export function namedImport(names: string[], path: string) {
 	return {
@@ -38,14 +38,13 @@ export type ImportValue =
 	| ReturnType<typeof defaultImportValue>
 	| ReturnType<typeof wildcardImport>
 
-const isNodeNext =
-	getGeneratorContext().moduleResolution.toLowerCase() !== 'nodenext'
-
 /**
  * Adds the .js extension to relative imports.
  */
 function renderImportPath(path: string) {
-	if (isNodeNext) return path
+	if (getGeneratorContext().moduleResolution?.toLowerCase() === 'nodenext') {
+		return path.startsWith('.') ? `${path}.js` : path
+	}
 
-	return path.startsWith('.') ? `${path}.js` : path
+	return path
 }
