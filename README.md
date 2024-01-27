@@ -68,7 +68,10 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 | output          | Change the output                 | "./drizzle" | "../models" |
 | formatter       | Run prettier after generation     | -           | "prettier"  |
 | relationalQuery | Flag to generate relational query | true        | false       |
+| moduleResolution         | Specify the [module resolution](https://www.typescriptlang.org/tsconfig#moduleResolution) that will affect the import style | _*auto_           | nodenext        |
 | verbose         | Flag to enable verbose logging    | -           | true        |
+
+_* It will find the closest tsconfig from the current working directory. Note that [extends](https://www.typescriptlang.org/tsconfig#extends) is not supported_
 
 ### Setting up [relational query](https://orm.drizzle.team/docs/rqb)
 
@@ -187,3 +190,12 @@ export const users = pgTable('User', {
   ...
 })
 ```
+## Gotchas
+### Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'.
+
+By default, the generator will try to find the closest tsconfig from the current working directory to determine the import style, whether to add `.js` or not.
+
+If the generator still emits the wrong import style, you can explicitly set the `moduleResolution` option in the [generator configuration](#configuration).
+
+Check also [the discussion](https://github.com/farreldarian/prisma-generator-drizzle/issues/18)
+
