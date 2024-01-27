@@ -27,6 +27,7 @@ import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
 import { createModule, Module } from './lib/syntaxes/module'
+import { setGeneratorContext } from './shared/generatorContext'
 
 const { version } = require('../package.json')
 
@@ -39,6 +40,7 @@ generatorHandler({
 		}
 	},
 	onGenerate: async (options: GeneratorOptions) => {
+		setGeneratorContext(options)
 		logger.applyConfig(options)
 
 		logger.log('Generating drizzle schema...')
