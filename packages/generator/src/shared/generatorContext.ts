@@ -3,7 +3,7 @@ import fs from 'fs'
 import { GeneratorOptions } from '@prisma/generator-helper'
 
 type GeneratorContext = {
-	moduleResolution: string
+	moduleResolution?: string
 }
 
 let generatorContext_: GeneratorContext | undefined
@@ -24,11 +24,7 @@ export function getGeneratorContext() {
 
 function resolveModuleResolution(options: GeneratorOptions) {
 	const tsConfig = readTsConfig(options)
-	const moduleResolution = tsConfig?.compilerOptions?.moduleResolution
-	if (moduleResolution == null) {
-		throw new Error('Could not resolve module resolution')
-	}
-	return moduleResolution
+	return tsConfig?.compilerOptions?.moduleResolution
 }
 
 function readTsConfig(options: GeneratorOptions) {
