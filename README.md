@@ -193,9 +193,9 @@ export const users = pgTable('User', {
 ## Gotchas
 ### Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'.
 
-By default, the generator will try to find the closest tsconfig from the current working directory to determine the import style, whether to add `.js` or not.
+By default, the generator will try to find the closest tsconfig from the current working directory to determine the import style, whether to add `.js` or not. When there's no config found, it will use the common import (e.g. `import { users } from './users'`).
 
-If the generator still emits the wrong import style, you can explicitly set the `moduleResolution` option in the [generator configuration](#configuration).
+You can explicitly set the `moduleResolution` option in the [generator configuration](#configuration).
 
 Check also [the discussion](https://github.com/farreldarian/prisma-generator-drizzle/issues/18)
 
