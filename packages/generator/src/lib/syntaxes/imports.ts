@@ -1,4 +1,4 @@
-import { getGeneratorContext } from '~/shared/generatorContext'
+import { getGeneratorContext } from '~/shared/generator-context'
 
 export function namedImport(names: string[], path: string) {
 	return {
