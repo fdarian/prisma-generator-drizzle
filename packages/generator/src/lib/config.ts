@@ -7,3 +7,9 @@ export function isRelationalQueryEnabled(config: Config) {
 	if (value === 'false') return false
 	return true
 }
+
+export function getModuleResolution(config: Config) {
+	if ('moduleResolution' in config) {
+		return config.moduleResolution
+	}
+}

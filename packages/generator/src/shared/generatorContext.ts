@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { GeneratorOptions } from '@prisma/generator-helper'
+import { getModuleResolution } from '~/lib/config'
 
 type GeneratorContext = {
 	moduleResolution?: string
@@ -23,6 +24,9 @@ export function getGeneratorContext() {
 }
 
 function resolveModuleResolution(options: GeneratorOptions) {
+	const specified = getModuleResolution(options.generator.config)
+	if (specified) return specified
+
 	const tsConfig = readTsConfig(options)
 	return tsConfig?.compilerOptions?.moduleResolution
 }
