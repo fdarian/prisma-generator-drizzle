@@ -27,25 +27,19 @@ function resolveModuleResolution(options: GeneratorOptions) {
 	const specified = getModuleResolution(options.generator.config)
 	if (specified) return specified
 
-	const tsConfig = readTsConfig(options)
+	const tsConfigPath = findTsConfig()
+	if (!tsConfigPath) return
+
+	const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf-8'))
 	return tsConfig?.compilerOptions?.moduleResolution
 }
 
-function readTsConfig(options: GeneratorOptions) {
-	let tsConfigPath = path.join(process.cwd(), 'tsconfig.json')
+function findTsConfig() {
+	let projectDir = process.cwd()
+	while (projectDir !== '/') {
+		const tsConfigPath = path.join(projectDir, 'tsconfig.json')
+		if (fs.existsSync(tsConfigPath)) return tsConfigPath
 
-	if (!fs.existsSync(tsConfigPath)) {
-		let resolutionPath = options.generator.output?.value
-		if (!resolutionPath) return
-
-		while (!fs.existsSync(tsConfigPath)) {
-			if (resolutionPath === '/') return
-			resolutionPath = path.join(resolutionPath, '..')
-		}
-
-		tsConfigPath = path.join(resolutionPath, 'tsconfig.json')
+		projectDir = path.join(projectDir, '..')
 	}
-
-	const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf-8'))
-	return tsConfig
 }
