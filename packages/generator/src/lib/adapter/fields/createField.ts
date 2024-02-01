@@ -7,7 +7,7 @@ export type DefineImport = {
 	name: string
 }
 
-interface CreateFieldInput {
+export interface CreateFieldInput {
 	field: DMMF.Field
 	imports?: ImportValue[]
 	func: string

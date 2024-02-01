@@ -109,17 +109,18 @@ enum Enum {
 // end -sqlite
 
 model Field {
-  id       String    @id
-  string   String?
-  boolean  Boolean?
-  int      Int?
-  bigint   BigInt?
-  float    Float?
-  decimal  Decimal?
-  datetime DateTime?
-  bytes    Bytes?
-  json     Json? // -sqlite
-  enum     Enum? // -sqlite
+  id         String    @id
+  string     String?
+  boolean    Boolean?
+  int        Int?
+  bigint     BigInt?
+  float      Float?
+  decimal    Decimal?
+  datetime   DateTime?
+  stringList String[] // -mysql -sqlite
+  bytes      Bytes?
+  json       Json? // -sqlite
+  enum       Enum? // -sqlite
 }
 
 // #endregion

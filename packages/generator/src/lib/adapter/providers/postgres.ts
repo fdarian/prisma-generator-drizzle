@@ -2,7 +2,12 @@ import { camelCase, kebabCase } from 'lodash'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createAdapter } from '../adapter'
-import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
+import {
+	CreateFieldInput,
+	createField as baseCreateField,
+	hasDefault,
+	isDefaultFunc,
+} from '../fields/createField'
 import { createModule } from '~/lib/syntaxes/module'
 
 const coreModule = 'drizzle-orm/pg-core'
@@ -27,6 +32,16 @@ const customBytesModule = createModule({
 		},
 	],
 })
+
+function createField(input: CreateFieldInput) {
+	const result = baseCreateField(input)
+
+	if (result.field.isList) {
+		result.func += '.array()'
+	}
+
+	return result
+}
 
 export const postgresAdapter = createAdapter({
 	name: 'postgres',
