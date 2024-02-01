@@ -34,13 +34,11 @@ const customBytesModule = createModule({
 })
 
 function createField(input: CreateFieldInput) {
-	const result = baseCreateField(input)
-
-	if (result.field.isList) {
-		result.func += '.array()'
+	if (input.field.isList) {
+		input.func += '.array()'
 	}
 
-	return result
+	return baseCreateField(input)
 }
 
 export const postgresAdapter = createAdapter({
