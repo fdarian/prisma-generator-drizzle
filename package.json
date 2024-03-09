@@ -1,8 +1,6 @@
 {
-  "workspaces": [
-    "packages/*"
-  ],
-  "devDependencies": {
-    "@biomejs/biome": "^1.6.0"
-  }
+	"workspaces": ["packages/*"],
+	"devDependencies": {
+		"@biomejs/biome": "^1.6.0"
+	}
 }

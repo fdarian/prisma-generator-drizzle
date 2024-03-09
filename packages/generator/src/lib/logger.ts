@@ -1,4 +1,4 @@
-import { GeneratorOptions } from '@prisma/generator-helper'
+import type { GeneratorOptions } from '@prisma/generator-helper'
 import { logger as baseLogger } from '@prisma/sdk'
 import { GENERATOR_NAME } from 'src/constants'
 

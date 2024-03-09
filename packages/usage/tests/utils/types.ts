@@ -1,4 +1,4 @@
-import { Db, Schema } from 'src/lib/types'
+import type { Db, Schema } from 'src/lib/types'
 
 export type TestContext = {
 	db: Db

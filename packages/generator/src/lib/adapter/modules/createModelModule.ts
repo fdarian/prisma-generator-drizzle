@@ -1,5 +1,5 @@
-import { DMMF } from '@prisma/generator-helper'
-import { Context } from '../../context'
+import type { DMMF } from '@prisma/generator-helper'
+import type { Context } from '../../context'
 import { getModelModuleName } from '../../prisma-helpers/model'
 import { createModule } from '../../syntaxes/module'
 import { generateTableDeclaration } from '../declarations/generateTableDeclaration'

@@ -4,7 +4,7 @@ import Decimal from 'decimal.js'
 import { eq, inArray } from 'drizzle-orm'
 import { validate as validateUuid } from 'uuid'
 import { throwIfnull } from 'tests/utils/query'
-import { TestContext } from 'tests/utils/types'
+import type { TestContext } from 'tests/utils/types'
 import { describe, expect, test } from 'vitest'
 
 export function testDefault({ db, schema, provider }: TestContext) {

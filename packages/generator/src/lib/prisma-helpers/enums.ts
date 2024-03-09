@@ -1,4 +1,4 @@
-import { DMMF } from '@prisma/generator-helper'
+import type { DMMF } from '@prisma/generator-helper'
 import { camelCase, kebabCase, memoize } from 'lodash'
 
 export const getEnumVarName = memoize((prismaEnum: DMMF.DatamodelEnum) => {

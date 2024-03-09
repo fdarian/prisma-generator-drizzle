@@ -1,4 +1,4 @@
-import { TestContext } from 'tests/utils/types'
+import type { TestContext } from 'tests/utils/types'
 import { describe, expect, test } from 'vitest'
 
 export function testIgnoreDecorator({ schema }: TestContext) {
