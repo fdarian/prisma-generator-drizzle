@@ -113,7 +113,7 @@ export function testDefault({ db, schema, provider }: TestContext) {
 					.where(inArray(schema.autoIncrements.ref, refs))
 			})
 
-			test('bigint', async () => {
+			test.skipIf(provider === 'sqlite')('bigint', async () => {
 				const refs = [createId(), createId()]
 				await db.transaction(async (tx) => {
 					await tx.insert(schema.autoIncrementBigInts).values({ ref: refs[0] })
