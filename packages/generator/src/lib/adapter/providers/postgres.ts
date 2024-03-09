@@ -70,10 +70,17 @@ export const postgresAdapter = createAdapter({
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#bigint
 		BigInt(field) {
+			const func =
+				hasDefault(field) &&
+				isDefaultFunc(field) &&
+				field.default.name === 'autoincrement'
+					? 'bigserial'
+					: 'bigint'
+
 			return createField({
 				field,
-				imports: [namedImport(['bigint'], coreModule)],
-				func: `bigint('${getDbName(field)}', { mode: 'bigint' })`,
+				imports: [namedImport([func], coreModule)],
+				func: `${func}('${getDbName(field)}', { mode: 'bigint' })`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#boolean
