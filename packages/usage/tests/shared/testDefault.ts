@@ -83,33 +83,66 @@ export function testDefault({ db, schema, provider }: TestContext) {
 			await db.delete(schema.defaults).where(eq(schema.defaults.id, data.id))
 		})
 
-		test('incremental', async () => {
-			const refs = [createId(), createId()]
-			await db.transaction(async (tx) => {
-				await tx.insert(schema.autoIncrements).values({ ref: refs[0] })
-				await tx.insert(schema.autoIncrements).values({ ref: refs[1] })
+		describe('autoincrement', () => {
+			test('int', async () => {
+				const refs = [createId(), createId()]
+				await db.transaction(async (tx) => {
+					await tx.insert(schema.autoIncrements).values({ ref: refs[0] })
+					await tx.insert(schema.autoIncrements).values({ ref: refs[1] })
+				})
+				// --
+
+				const result1 = await db.query.autoIncrements
+					.findFirst({
+						where: (autoIncrements, { eq }) => eq(autoIncrements.ref, refs[0]),
+						columns: { id: true },
+					})
+					.then(throwIfnull)
+
+				const result2 = await db.query.autoIncrements
+					.findFirst({
+						where: (autoIncrements, { eq }) => eq(autoIncrements.ref, refs[1]),
+						columns: { id: true },
+					})
+					.then(throwIfnull)
+				expect(result2.id).toBe(result1.id + 1)
+
+				// --
+				await db
+					.delete(schema.autoIncrements)
+					.where(inArray(schema.autoIncrements.ref, refs))
 			})
-			// --
 
-			const result1 = await db.query.autoIncrements
-				.findFirst({
-					where: (autoIncrements, { eq }) => eq(autoIncrements.ref, refs[0]),
-					columns: { id: true },
+			test('bigint', async () => {
+				const refs = [createId(), createId()]
+				await db.transaction(async (tx) => {
+					await tx.insert(schema.autoIncrementBigInts).values({ ref: refs[0] })
+					await tx.insert(schema.autoIncrementBigInts).values({ ref: refs[1] })
 				})
-				.then(throwIfnull)
+				// --
 
-			const result2 = await db.query.autoIncrements
-				.findFirst({
-					where: (autoIncrements, { eq }) => eq(autoIncrements.ref, refs[1]),
-					columns: { id: true },
-				})
-				.then(throwIfnull)
-			expect(result2.id).toBe(result1.id + 1)
+				const result1 = await db.query.autoIncrementBigInts
+					.findFirst({
+						where: (autoIncrementBigInts, { eq }) =>
+							eq(autoIncrementBigInts.ref, refs[0]),
+						columns: { id: true },
+					})
+					.then(throwIfnull)
 
-			// --
-			await db
-				.delete(schema.autoIncrements)
-				.where(inArray(schema.autoIncrements.ref, refs))
+				const result2 = await db.query.autoIncrementBigInts
+					.findFirst({
+						where: (autoIncrementBigInts, { eq }) =>
+							eq(autoIncrementBigInts.ref, refs[1]),
+						columns: { id: true },
+					})
+					.then(throwIfnull)
+				expect(result2.id).toBe(result1.id + 1n)
+
+				// --
+				await db
+					.delete(schema.autoIncrementBigInts)
+					.where(inArray(schema.autoIncrementBigInts.ref, refs))
+			})
 		})
 	})
 }
