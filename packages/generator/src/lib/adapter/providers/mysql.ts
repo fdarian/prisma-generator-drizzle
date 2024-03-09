@@ -63,6 +63,17 @@ export const mysqlAdapter = createAdapter({
 				field,
 				imports: [namedImport(['bigint'], coreModule)],
 				func: `bigint('${getDbName(field)}', { mode: 'bigint' })`,
+				onDefault(field) {
+					if (
+						field.isId &&
+						isDefaultFunc(field) &&
+						field.default.name === 'autoincrement'
+					) {
+						return {
+							code: '.autoincrement()',
+						}
+					}
+				},
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql/#boolean
