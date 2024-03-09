@@ -96,6 +96,11 @@ model AutoIncrement {
   ref String @unique
 }
 
+model AutoIncrementBigInt {
+  id  BigInt @id @default(autoincrement())
+  ref String @unique
+}
+
 // #endregion
 
 // #region Field

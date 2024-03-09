@@ -199,3 +199,6 @@ You can explicitly set the `moduleResolution` option in the [generator configura
 
 Check also [the discussion](https://github.com/farreldarian/prisma-generator-drizzle/issues/18)
 
+### SqliteError: NOT NULL constraint failed: \<table-name\>.id
+
+Currently having `@default(autoincrement())` only work for postgres and mysql.
