@@ -1,14 +1,14 @@
 import { schema } from 'prisma/drizzle/schema'
 import { db } from 'src/lib/postgres'
+import { testDefault } from './shared/testDefault'
+import { testDisambiguatingRelationship } from './shared/testDisambiguatingRelationship'
+import { testFields } from './shared/testFields'
 import { testIgnoreDecorator } from './shared/testIgnoreDecorator'
 import { testManyToMany } from './shared/testManyToMany'
-import { testDefault } from './shared/testDefault'
-import { testSelfReferring } from './shared/testSelfReferring'
-import type { TestContext } from './utils/types'
-import { testFields } from './shared/testFields'
 import { testOneToMany } from './shared/testOneToMany'
 import { testOneToOne } from './shared/testOneToOne'
-import { testDisambiguatingRelationship } from './shared/testDisambiguatingRelationship'
+import { testSelfReferring } from './shared/testSelfReferring'
+import type { TestContext } from './utils/types'
 
 const ctx: TestContext = { db, schema, provider: 'postgres' }
 
