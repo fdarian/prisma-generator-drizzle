@@ -3,7 +3,7 @@ import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createAdapter } from '../adapter'
 import {
-	CreateFieldInput,
+	type CreateFieldInput,
 	createField as baseCreateField,
 	hasDefault,
 	isDefaultFunc,

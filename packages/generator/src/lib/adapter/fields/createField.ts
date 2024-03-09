@@ -1,6 +1,6 @@
-import { DMMF } from '@prisma/generator-helper'
-import { ImportValue, namedImport } from '~/lib/syntaxes/imports'
-import { MakeRequired, ModifyType, Prettify } from '~/lib/types/utils'
+import type { DMMF } from '@prisma/generator-helper'
+import { type ImportValue, namedImport } from '~/lib/syntaxes/imports'
+import type { MakeRequired, ModifyType, Prettify } from '~/lib/types/utils'
 
 export type DefineImport = {
 	module: string
@@ -111,7 +111,9 @@ function getCustomDefault(field: DMMF.Field) {
 			imports: namedImport([type], module),
 			code: `.$defaultFn(() => ${type}())`,
 		}
-	} else if (splits2.length !== 3)
+	}
+
+	if (splits2.length !== 3)
 		throw new Error(`Invalid default definition: ${field.documentation}`)
 
 	const [type, code] = splits2

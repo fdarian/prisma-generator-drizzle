@@ -1,6 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { Db, Schema } from 'src/lib/types'
-import { TestContext } from 'tests/utils/types'
+import type { TestContext } from 'tests/utils/types'
 import { describe, expect, test } from 'vitest'
 
 export async function testManyToMany({ db, schema }: TestContext) {

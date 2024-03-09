@@ -1,7 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { eq } from 'drizzle-orm'
 import { throwIfnull } from 'tests/utils/query'
-import { TestContext } from 'tests/utils/types'
+import type { TestContext } from 'tests/utils/types'
 
 export function testOneToOne({ db, schema }: TestContext) {
 	const b: typeof schema.oneToOneBs.$inferInsert = { id: createId() }

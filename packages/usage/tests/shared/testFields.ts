@@ -2,7 +2,7 @@ import { createId } from '@paralleldrive/cuid2'
 import Decimal from 'decimal.js'
 import { eq } from 'drizzle-orm'
 import { throwIfnull } from 'tests/utils/query'
-import { TestContext } from 'tests/utils/types'
+import type { TestContext } from 'tests/utils/types'
 
 export function testFields({ db, schema, provider }: TestContext) {
 	type Data = typeof schema.fields.$inferInsert

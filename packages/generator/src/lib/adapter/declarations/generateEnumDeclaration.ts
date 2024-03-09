@@ -1,7 +1,7 @@
-import { DMMF } from '@prisma/generator-helper'
+import type { DMMF } from '@prisma/generator-helper'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getEnumVarName } from '../../prisma-helpers/enums'
-import { Adapter } from '../types'
+import type { Adapter } from '../types'
 
 export function generateEnumDeclaration(
 	adapter: Adapter,

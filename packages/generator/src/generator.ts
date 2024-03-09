@@ -1,29 +1,33 @@
+import { execSync } from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
 import {
-	DMMF,
+	type DMMF,
+	type GeneratorOptions,
 	generatorHandler,
-	GeneratorOptions,
 } from '@prisma/generator-helper'
-import { execSync } from 'child_process'
 import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
-import fs from 'fs'
 import { isEmpty } from 'lodash'
-import path from 'path'
 import { GENERATOR_NAME } from './constants'
 import { generateEnumDeclaration } from './lib/adapter/declarations/generateEnumDeclaration'
 import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
 import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
 import {
+	type ModelModule,
 	createModelModule,
-	ModelModule,
 } from './lib/adapter/modules/createModelModule'
 import { isRelationalQueryEnabled } from './lib/config'
-import { Context } from './lib/context'
+import type { Context } from './lib/context'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
-import { ImportValue, namedImport, NamedImport } from './lib/syntaxes/imports'
-import { createModule, Module } from './lib/syntaxes/module'
+import {
+	type ImportValue,
+	type NamedImport,
+	namedImport,
+} from './lib/syntaxes/imports'
+import { type Module, createModule } from './lib/syntaxes/module'
 import { setGeneratorContext } from './shared/generator-context'
 
 const { version } = require('../package.json')
@@ -60,13 +64,13 @@ generatorHandler({
 		fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 		fs.mkdirSync(basePath, { recursive: true })
 
-		adapter.extraModules?.forEach((module) => {
+		for (const module of adapter.extraModules ?? []) {
 			const moduleCreation = logger.createTask()
 			writeModule(basePath, module)
 			moduleCreation.end(`◟ ${module.name}.ts`)
-		})
+		}
 
-		options.dmmf.datamodel.enums.forEach((prismaEnum) => {
+		for (const prismaEnum of options.dmmf.datamodel.enums ?? []) {
 			const enumCreation = logger.createTask()
 
 			const enumModule = createModule({
@@ -76,8 +80,7 @@ generatorHandler({
 			writeModule(basePath, enumModule)
 
 			enumCreation.end(`◟ ${enumModule.name}.ts`)
-			return enumModule
-		})
+		}
 
 		const modelModules = options.dmmf.datamodel.models.map((model) => {
 			const modelCreation = logger.createTask()
@@ -143,7 +146,7 @@ generatorHandler({
 			writeModule(basePath, schemaModule)
 		}
 
-		const formatter = options.generator.config['formatter']
+		const formatter = options.generator.config.formatter
 		if (formatter === 'prettier') {
 			execSync(`prettier --write ${basePath}`, { stdio: 'inherit' })
 		}
@@ -173,7 +176,9 @@ export function reduceImports(imports: ImportValue[]) {
 				if (command.type !== 'namedImport') return accum
 
 				const imports = new Set(accum.get(command.module))
-				command.names.forEach((name) => imports.add(name))
+				for (const name of command.names) {
+					imports.add(name)
+				}
 
 				return accum.set(command.module, imports)
 			}),

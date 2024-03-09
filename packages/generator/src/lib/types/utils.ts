@@ -11,12 +11,12 @@ export type Prettify<T> = {
 } & {}
 
 export type MakeRequired<
-	shake extends Record<string, any>,
+	shake extends Record<string, unknown>,
 	key extends keyof shake,
 > = Omit<shake, key> & Required<Pick<shake, key>>
 
 export type ModifyType<
-	shape extends Record<string, any>,
+	shape extends Record<string, unknown>,
 	key extends keyof shape,
 	modified,
 > = Omit<shape, key> & Record<key, modified>

@@ -1,6 +1,6 @@
-import { DMMF } from '@prisma/generator-helper'
-import { Adapter } from './adapter/types'
-import { Config } from './config'
+import type { DMMF } from '@prisma/generator-helper'
+import type { Adapter } from './adapter/types'
+import type { Config } from './config'
 
 export type Context = {
 	adapter: Adapter

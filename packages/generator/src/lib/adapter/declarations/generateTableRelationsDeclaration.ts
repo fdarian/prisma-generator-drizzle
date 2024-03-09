@@ -1,16 +1,16 @@
-import { DMMF } from '@prisma/generator-helper'
+import type { DMMF } from '@prisma/generator-helper'
 import { map } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import { camelCase, kebabCase } from 'lodash'
 import pluralize from 'pluralize'
-import { ModelModule } from '~/lib/adapter/model-module'
 import {
-	PrismaRelationField,
+	type PrismaRelationField,
 	isRelationField,
 } from '~/lib/prisma-helpers/field'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
 import { namedImport } from '../../syntaxes/imports'
+import type { ModelModule } from '../modules/createModelModule'
 
 type GenerateTableRelationsInput = {
 	fields: PrismaRelationField[]
@@ -40,7 +40,7 @@ export function generateTableRelationsDeclaration(
 }
 
 function getRelationField(ctx: GenerateTableRelationsInput) {
-	return function (field: PrismaRelationField) {
+	return (field: PrismaRelationField) => {
 		const { implicit, opts, referenceModelVarName } = !field.isList
 			? getOneToOneOrManyRelation(field, ctx)
 			: opposingIsList(field, ctx)

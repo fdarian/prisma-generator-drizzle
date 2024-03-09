@@ -1,6 +1,6 @@
-import path from 'path'
-import fs from 'fs'
-import { GeneratorOptions } from '@prisma/generator-helper'
+import fs from 'node:fs'
+import path from 'node:path'
+import type { GeneratorOptions } from '@prisma/generator-helper'
 import { getModuleResolution } from '~/lib/config'
 
 type GeneratorContext = {

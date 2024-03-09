@@ -1,4 +1,4 @@
-export {}
+export type {}
 
 const BASE_PATH = './prisma/schema.prisma'
 const TARGET_PATH = './prisma/sqlite/schema.prisma'
