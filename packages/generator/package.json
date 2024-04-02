@@ -24,7 +24,8 @@
 		"fp-ts": "^2.16.2",
 		"lodash": "^4.17.21",
 		"pluralize": "^8.0.0",
-		"strip-json-comments": "^5.0.1"
+		"strip-json-comments": "^5.0.1",
+		"valibot": "^0.30.0"
 	},
 	"devDependencies": {
 		"@types/lodash": "^4.14.202",
