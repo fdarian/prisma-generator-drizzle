@@ -1,9 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { GeneratorOptions } from '@prisma/generator-helper'
-import stripJsonComments from 'strip-json-comments'
 import { object, safeParse, string } from 'valibot'
 import { getModuleResolution } from '~/lib/config'
+import stripJsonComments from '~/lib/strip-json-comments'
 
 type GeneratorContext = {
 	moduleResolution?: string
