@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { GeneratorOptions } from '@prisma/generator-helper'
 import stripJsonComments from 'strip-json-comments'
+import { object, safeParse, string } from 'valibot'
 import { getModuleResolution } from '~/lib/config'
 
 type GeneratorContext = {
@@ -31,9 +32,17 @@ function resolveModuleResolution(options: GeneratorOptions) {
 	const tsConfigPath = findTsConfig()
 	if (!tsConfigPath) return
 
-	const tsConfig = readTsConfig(tsConfigPath)
-	return tsConfig?.compilerOptions?.moduleResolution
+	const parsing = safeParse(TsConfig, readTsConfig(tsConfigPath))
+	if (!parsing.success) return
+
+	return parsing.output.compilerOptions.moduleResolution
 }
+
+const TsConfig = object({
+	compilerOptions: object({
+		moduleResolution: string(),
+	}),
+})
 
 function readTsConfig(tsConfigPath: string) {
 	return JSON.parse(stripJsonComments(fs.readFileSync(tsConfigPath, 'utf-8')))
