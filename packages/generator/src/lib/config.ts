@@ -9,7 +9,7 @@ import {
 	optional,
 	safeParse,
 } from 'valibot'
-import { ModuleResolution } from '~/shared/generator-context'
+import { ModuleResolution } from '~/shared/generator-context/module-resolution'
 
 const BooleanInStr = coerce(boolean(), (value) => {
 	if (typeof value !== 'string') return value
