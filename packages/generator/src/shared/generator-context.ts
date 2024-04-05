@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { GeneratorOptions } from '@prisma/generator-helper'
-import { object, parse } from 'valibot'
-import { type Config, ModuleResolution, parseConfig } from '~/lib/config'
+import { brand, object, parse, string, transform } from 'valibot'
+import { type Config, parseConfig } from '~/lib/config'
 import stripJsonComments from '~/lib/strip-json-comments'
 
 type GeneratorContext = {
@@ -33,6 +33,11 @@ export function getGeneratorContext() {
 }
 
 // #region Module resolution
+
+export const ModuleResolution = brand(
+	transform(string(), (value) => value.toLowerCase()),
+	'ModuleResolution'
+)
 
 export function getModuleResolution() {
 	return getGeneratorContext().config.moduleResolution
@@ -71,3 +76,7 @@ function findTsConfig() {
 }
 
 // #endregion
+
+export function isRelationalQueryEnabled() {
+	return getGeneratorContext().config.relationalQuery
+}

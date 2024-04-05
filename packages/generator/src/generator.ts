@@ -17,7 +17,6 @@ import {
 	type ModelModule,
 	createModelModule,
 } from './lib/adapter/modules/createModelModule'
-import { isRelationalQueryEnabled } from './lib/config'
 import type { Context } from './lib/context'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
@@ -28,7 +27,10 @@ import {
 	namedImport,
 } from './lib/syntaxes/imports'
 import { type Module, createModule } from './lib/syntaxes/module'
-import { setGeneratorContext } from './shared/generator-context'
+import {
+	isRelationalQueryEnabled,
+	setGeneratorContext,
+} from './shared/generator-context'
 
 const { version } = require('../package.json')
 
