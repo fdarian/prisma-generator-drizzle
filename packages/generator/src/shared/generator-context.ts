@@ -2,19 +2,26 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { GeneratorOptions } from '@prisma/generator-helper'
 import { object, parse, string } from 'valibot'
-import { getModuleResolution } from '~/lib/config'
+import { type Config, getModuleResolution, parseConfig } from '~/lib/config'
 import stripJsonComments from '~/lib/strip-json-comments'
 
 type GeneratorContext = {
 	moduleResolution?: string
+	config: Config
 }
 
 let generatorContext_: GeneratorContext | undefined
 
 export function setGeneratorContext(options: GeneratorOptions) {
-	generatorContext_ = {
+	const config = parseConfig(options.generator.config)
+
+	const context: GeneratorContext = {
 		moduleResolution: resolveModuleResolution(options),
+		config,
 	}
+	generatorContext_ = context
+
+	return context
 }
 
 export function getGeneratorContext() {
