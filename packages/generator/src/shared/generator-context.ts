@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { GeneratorOptions } from '@prisma/generator-helper'
-import { object, safeParse, string } from 'valibot'
+import { object, parse, string } from 'valibot'
 import { getModuleResolution } from '~/lib/config'
 import stripJsonComments from '~/lib/strip-json-comments'
 
@@ -32,10 +32,12 @@ function resolveModuleResolution(options: GeneratorOptions) {
 	const tsConfigPath = findTsConfig()
 	if (!tsConfigPath) return
 
-	const parsing = safeParse(TsConfig, readTsConfig(tsConfigPath))
-	if (!parsing.success) return
-
-	return parsing.output.compilerOptions.moduleResolution
+	try {
+		const { compilerOptions } = parse(TsConfig, readTsConfig(tsConfigPath))
+		return compilerOptions.moduleResolution
+	} catch {
+		return
+	}
 }
 
 const TsConfig = object({
