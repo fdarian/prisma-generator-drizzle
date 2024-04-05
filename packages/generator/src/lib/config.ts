@@ -4,6 +4,7 @@ import {
 	type SchemaIssues,
 	boolean,
 	coerce,
+	flatten,
 	object,
 	optional,
 	safeParse,
@@ -30,7 +31,22 @@ export function parseConfig(config: GeneratorOptions['generator']['config']) {
 
 class ConfigError extends Error {
 	constructor(issues: SchemaIssues) {
-		super('Invalid config')
+		super(`\n${formatError(issues)}`)
 		this.name = 'ConfigError'
 	}
+}
+
+function formatError(issues: SchemaIssues) {
+	let message = ''
+
+	const flattened = flatten(issues)
+	if (flattened.root) {
+		message += `${flattened.root}\n`
+	}
+
+	for (const [key, issues] of Object.entries(flattened.nested)) {
+		message += `\n${key}: ${issues}\n`
+	}
+
+	return message
 }
