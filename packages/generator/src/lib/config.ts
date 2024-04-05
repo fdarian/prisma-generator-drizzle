@@ -2,12 +2,14 @@ import type { GeneratorOptions } from '@prisma/generator-helper'
 import {
 	type Output,
 	type SchemaIssues,
+	brand,
 	coerce,
 	literal,
 	object,
 	optional,
 	safeParse,
 	string,
+	transform,
 	union,
 } from 'valibot'
 
@@ -19,9 +21,14 @@ const BooleanInStr = coerce(
 	}
 )
 
+export const ModuleResolution = brand(
+	transform(string(), (value) => value.toLowerCase()),
+	'ModuleResolution'
+)
+
 const Config = object({
 	relationalQuery: optional(BooleanInStr),
-	moduleResolution: optional(string()),
+	moduleResolution: optional(ModuleResolution),
 	verbose: optional(BooleanInStr),
 })
 export type Config = Output<typeof Config>
@@ -36,12 +43,6 @@ export function isRelationalQueryEnabled(config: Config) {
 	const value = config.relationalQuery
 	if (value === 'false') return false
 	return true
-}
-
-export function getModuleResolution(config: Config) {
-	if ('moduleResolution' in config) {
-		return config.moduleResolution
-	}
 }
 
 class ConfigError extends Error {

@@ -1,4 +1,4 @@
-import { getGeneratorContext } from '~/shared/generator-context'
+import { getModuleResolution } from '~/shared/generator-context'
 
 export function namedImport(names: string[], path: string) {
 	return {
@@ -42,7 +42,7 @@ export type ImportValue =
  * Adds the .js extension to relative imports.
  */
 function renderImportPath(path: string) {
-	if (getGeneratorContext().moduleResolution?.toLowerCase() === 'nodenext') {
+	if (getModuleResolution() === 'nodenext') {
 		return path.startsWith('.') ? `${path}.js` : path
 	}
 

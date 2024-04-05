@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { GeneratorOptions } from '@prisma/generator-helper'
-import { object, parse, string } from 'valibot'
-import { type Config, getModuleResolution, parseConfig } from '~/lib/config'
+import { object, parse } from 'valibot'
+import { type Config, ModuleResolution, parseConfig } from '~/lib/config'
 import stripJsonComments from '~/lib/strip-json-comments'
 
 type GeneratorContext = {
@@ -16,7 +16,7 @@ export function setGeneratorContext(options: GeneratorOptions) {
 	const config = parseConfig(options.generator.config)
 
 	const context: GeneratorContext = {
-		moduleResolution: resolveModuleResolution(options),
+		moduleResolution: config.moduleResolution ?? resolveModuleResolution(),
 		config,
 	}
 	generatorContext_ = context
@@ -32,10 +32,13 @@ export function getGeneratorContext() {
 	return generatorContext_
 }
 
-function resolveModuleResolution(options: GeneratorOptions) {
-	const specified = getModuleResolution(options.generator.config)
-	if (specified) return specified
+// #region Module resolution
 
+export function getModuleResolution() {
+	return getGeneratorContext().config.moduleResolution
+}
+
+function resolveModuleResolution() {
 	const tsConfigPath = findTsConfig()
 	if (!tsConfigPath) return
 
@@ -49,7 +52,7 @@ function resolveModuleResolution(options: GeneratorOptions) {
 
 const TsConfig = object({
 	compilerOptions: object({
-		moduleResolution: string(),
+		moduleResolution: ModuleResolution,
 	}),
 })
 
@@ -66,3 +69,5 @@ function findTsConfig() {
 		projectDir = path.join(projectDir, '..')
 	}
 }
+
+// #endregion
