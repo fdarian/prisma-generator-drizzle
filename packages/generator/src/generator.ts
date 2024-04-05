@@ -93,7 +93,7 @@ generatorHandler({
 			return modelModule
 		})
 
-		if (isRelationalQueryEnabled(options.generator.config)) {
+		if (isRelationalQueryEnabled()) {
 			const relationalModules = modelModules.flatMap((modelModule) => {
 				const creation = logger.createTask()
 

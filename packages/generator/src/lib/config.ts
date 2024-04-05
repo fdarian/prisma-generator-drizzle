@@ -2,24 +2,21 @@ import type { GeneratorOptions } from '@prisma/generator-helper'
 import {
 	type Output,
 	type SchemaIssues,
+	boolean,
 	brand,
 	coerce,
-	literal,
 	object,
 	optional,
 	safeParse,
 	string,
 	transform,
-	union,
 } from 'valibot'
+import { getGeneratorContext } from '~/shared/generator-context'
 
-const BooleanInStr = coerce(
-	union([literal('true'), literal('false')]),
-	(value) => {
-		if (typeof value !== 'string') return value
-		return value.toLowerCase()
-	}
-)
+const BooleanInStr = coerce(boolean(), (value) => {
+	if (typeof value !== 'string') return value
+	return value.toLowerCase() === 'true'
+})
 
 export const ModuleResolution = brand(
 	transform(string(), (value) => value.toLowerCase()),
@@ -39,10 +36,8 @@ export function parseConfig(config: GeneratorOptions['generator']['config']) {
 	return parsing.output
 }
 
-export function isRelationalQueryEnabled(config: Config) {
-	const value = config.relationalQuery
-	if (value === 'false') return false
-	return true
+export function isRelationalQueryEnabled() {
+	return getGeneratorContext().config.relationalQuery
 }
 
 class ConfigError extends Error {
