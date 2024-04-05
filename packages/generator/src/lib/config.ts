@@ -2,19 +2,24 @@ import type { GeneratorOptions } from '@prisma/generator-helper'
 import {
 	type Output,
 	type SchemaIssues,
-	boolean,
 	coerce,
 	flatten,
+	literal,
 	object,
 	optional,
 	safeParse,
+	transform,
+	union,
 } from 'valibot'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
 
-const BooleanInStr = coerce(boolean(), (value) => {
-	if (typeof value !== 'string') return value
-	return value.toLowerCase() === 'true'
-})
+const BooleanInStr = transform(
+	coerce(union([literal('true'), literal('false')]), (value) => {
+		if (typeof value !== 'string') return value
+		return value.toLowerCase() === 'true'
+	}),
+	(value) => value === 'true'
+)
 
 const Config = object({
 	relationalQuery: optional(BooleanInStr),
@@ -31,7 +36,7 @@ export function parseConfig(config: GeneratorOptions['generator']['config']) {
 
 class ConfigError extends Error {
 	constructor(issues: SchemaIssues) {
-		super(`\n${formatError(issues)}`)
+		super(`[prisma-generator-drizzle] Invalid Config:\n${formatError(issues)}`)
 		this.name = 'ConfigError'
 	}
 }
@@ -41,11 +46,11 @@ function formatError(issues: SchemaIssues) {
 
 	const flattened = flatten(issues)
 	if (flattened.root) {
-		message += `${flattened.root}\n`
+		message += `\n- ${flattened.root}`
 	}
 
 	for (const [key, issues] of Object.entries(flattened.nested)) {
-		message += `\n${key}: ${issues}\n`
+		message += `\n- ${key}: ${issues}`
 	}
 
 	return message
