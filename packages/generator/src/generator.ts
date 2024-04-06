@@ -25,6 +25,7 @@ import type { Module } from './lib/syntaxes/module'
 import {
 	isRelationalQueryEnabled,
 	initializeGenerator,
+	getGeneratorContext,
 } from './shared/generator-context'
 import {
 	generateRelationalModules,
@@ -56,12 +57,6 @@ generatorHandler({
 			datamodel: options.dmmf.datamodel,
 		}
 
-		const basePath = options.generator.output?.value
-		if (!basePath) throw new Error('No output path specified')
-
-		fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
-		fs.mkdirSync(basePath, { recursive: true })
-
 		const modules: GeneratedModules = {
 			extras: adapter.extraModules,
 			enums: generateEnumModules(options, adapter),
@@ -84,15 +79,13 @@ generatorHandler({
 			modules.implicitRelational = implicit.relational
 		}
 
-		for (const module of flattenModules(modules)) {
-			writeModule(basePath, module)
-		}
-
-		handleFormatting(options, basePath)
+		writeModules(modules)
+		handleFormatting(options)
 	},
 })
 
-function handleFormatting(options: GeneratorOptions, basePath: string) {
+function handleFormatting(options: GeneratorOptions) {
+	const basePath = getGeneratorContext().outputBasePath
 	const formatter = options.generator.config.formatter
 	if (formatter === 'prettier') {
 		execSync(`prettier --write ${basePath}`, { stdio: 'inherit' })
@@ -134,9 +127,16 @@ export function reduceImports(imports: ImportValue[]) {
 	]
 }
 
-function writeModule(basePath: string, module: Module) {
-	const writeLocation = path.join(basePath, `${module.name}.ts`)
-	fs.writeFileSync(writeLocation, module.code)
+function writeModules(modules: GeneratedModules) {
+	const basePath = getGeneratorContext().outputBasePath
+
+	fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
+	fs.mkdirSync(basePath, { recursive: true })
+
+	for (const module of flattenModules(modules)) {
+		const writeLocation = path.join(basePath, `${module.name}.ts`)
+		fs.writeFileSync(writeLocation, module.code)
+	}
 }
 
 /**
