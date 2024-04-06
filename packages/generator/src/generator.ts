@@ -24,7 +24,7 @@ import {
 import { type Module } from './lib/syntaxes/module'
 import {
 	isRelationalQueryEnabled,
-	setGeneratorContext,
+	initializeGenerator,
 } from './shared/generator-context'
 import {
 	generateRelationalModules,
@@ -46,7 +46,7 @@ generatorHandler({
 		}
 	},
 	onGenerate: async (options: GeneratorOptions) => {
-		setGeneratorContext(options)
+		initializeGenerator(options)
 
 		logger.log('Generating drizzle schema...')
 

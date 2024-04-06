@@ -9,7 +9,7 @@ type GeneratorContext = {
 
 let generatorContext_: GeneratorContext | undefined
 
-export function setGeneratorContext(options: GeneratorOptions) {
+export function initializeGenerator(options: GeneratorOptions) {
 	const config = parseConfig(options.generator.config)
 
 	const context: GeneratorContext = {
