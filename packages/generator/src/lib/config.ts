@@ -12,6 +12,7 @@ import {
 	union,
 } from 'valibot'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
+import { withDefault } from './valibot-schema'
 
 const BooleanInStr = transform(
 	coerce(union([literal('true'), literal('false')]), (value) => {
@@ -22,7 +23,7 @@ const BooleanInStr = transform(
 )
 
 const Config = object({
-	relationalQuery: optional(BooleanInStr),
+	relationalQuery: withDefault(optional(BooleanInStr), true),
 	moduleResolution: optional(ModuleResolution),
 	verbose: optional(BooleanInStr),
 })
