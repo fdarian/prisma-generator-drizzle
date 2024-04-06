@@ -14,7 +14,6 @@ import {
 	type ModelModule,
 	generateModelModules,
 } from './lib/adapter/modules/model'
-import type { Context } from './lib/context'
 import { logger } from './lib/logger'
 import {
 	type ImportValue,
@@ -52,20 +51,16 @@ generatorHandler({
 		logger.log('Generating drizzle schema...')
 
 		const adapter = await getAdapter(options)
-		const ctx: Context = {
-			adapter,
-			datamodel: options.dmmf.datamodel,
-		}
 
 		const modules: GeneratedModules = {
 			extras: adapter.extraModules,
-			enums: generateEnumModules(options, adapter),
-			models: generateModelModules(options, ctx),
+			enums: generateEnumModules(adapter),
+			models: generateModelModules(adapter),
 		}
 
 		if (isRelationalQueryEnabled()) {
-			const relational = generateRelationalModules(modules, ctx)
-			const implicit = generateImplicitModules(relational, ctx)
+			const relational = generateRelationalModules(modules.models)
+			const implicit = generateImplicitModules(adapter, relational)
 			const schema = generateSchemaModule({
 				...modules,
 				relational: relational,

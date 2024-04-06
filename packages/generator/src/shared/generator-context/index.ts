@@ -5,6 +5,8 @@ import { resolveModuleResolution } from './module-resolution'
 type Generator = {
 	outputBasePath: string
 	moduleResolution?: string
+	//
+	dmmf: GeneratorOptions['dmmf']
 	config: Config
 }
 
@@ -18,6 +20,8 @@ export function initializeGenerator(options: GeneratorOptions) {
 	const context: Generator = {
 		moduleResolution: config.moduleResolution ?? resolveModuleResolution(),
 		outputBasePath: getBasePath(options),
+		//
+		dmmf: options.dmmf,
 		config,
 	}
 	generator_ = context
