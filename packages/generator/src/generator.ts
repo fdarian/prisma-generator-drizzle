@@ -8,10 +8,8 @@ import {
 } from '@prisma/generator-helper'
 import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
-import { isEmpty } from 'lodash'
 import { GENERATOR_NAME } from './constants'
 import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
-import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
 import { generateEnumModules } from './lib/adapter/modules/enums'
 import {
 	type ModelModule,
@@ -20,7 +18,6 @@ import {
 } from './lib/adapter/modules/model'
 import type { Context } from './lib/context'
 import { logger } from './lib/logger'
-import { isRelationField } from './lib/prisma-helpers/field'
 import {
 	type ImportValue,
 	type NamedImport,
@@ -31,6 +28,12 @@ import {
 	isRelationalQueryEnabled,
 	setGeneratorContext,
 } from './shared/generator-context'
+import {
+	createRelationalModule,
+	generateRelationalModules,
+	type RelationalModule,
+} from './lib/adapter/modules/relational'
+import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
 
 const { version } = require('../package.json')
 
@@ -72,11 +75,7 @@ generatorHandler({
 		}
 
 		if (isRelationalQueryEnabled()) {
-			modules.relational = modules.models.flatMap((modelModule) => {
-				const relationalModule = createRelationalModule({ ctx, modelModule })
-				if (relationalModule == null) return []
-				return relationalModule
-			})
+			modules.relational = generateRelationalModules(modules, ctx)
 
 			modules.implicitModels = modules.relational
 				.flatMap((module) => module.implicit)
@@ -187,35 +186,9 @@ function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
 	return [...accum, model]
 }
 
-function createRelationalModule(input: {
-	modelModule: ModelModule
-	ctx: Context
-}) {
-	const { model } = input.modelModule
-
-	const relationalFields = model.fields.filter(isRelationField)
-	if (isEmpty(relationalFields)) return undefined
-
-	const declaration = generateTableRelationsDeclaration({
-		fields: relationalFields,
-		modelModule: input.modelModule,
-		datamodel: input.ctx.datamodel,
-	})
-	return createModule({
-		name: `${input.modelModule.name}-relations`,
-		declarations: [declaration],
-		implicit: declaration.implicit,
-	})
-}
-
-type RelationalModule = NonNullable<ReturnType<typeof createRelationalModule>>
-
 // #region Generated Modules
 
-type GeneratedModules = {
-	extras?: Module[]
-	enums: Module[]
-	models: ModelModule[]
+export type GeneratedModules = BaseGeneratedModules & {
 	relational?: RelationalModule[]
 	implicitModels?: ModelModule[]
 	implicitRelational?: Module[]
