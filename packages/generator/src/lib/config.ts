@@ -2,25 +2,14 @@ import type { GeneratorOptions } from '@prisma/generator-helper'
 import {
 	type Output,
 	type SchemaIssues,
-	coerce,
 	flatten,
-	literal,
 	object,
 	optional,
 	safeParse,
-	transform,
-	union,
 } from 'valibot'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
 import { withDefault } from './valibot-schema'
-
-const BooleanInStr = transform(
-	coerce(union([literal('true'), literal('false')]), (value) => {
-		if (typeof value !== 'string') return value
-		return value.toLowerCase() === 'true'
-	}),
-	(value) => value === 'true'
-)
+import { BooleanInStr } from './valibot-schema'
 
 const Config = object({
 	relationalQuery: withDefault(optional(BooleanInStr), true),
