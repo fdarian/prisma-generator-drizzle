@@ -65,59 +65,52 @@ generatorHandler({
 		fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 		fs.mkdirSync(basePath, { recursive: true })
 
-		const modulesToWrite: Module[] = []
-
-		const enumModules = (options.dmmf.datamodel.enums ?? []).map((prismaEnum) =>
-			createModule({
-				name: getEnumModuleName(prismaEnum),
-				declarations: [generateEnumDeclaration(adapter, prismaEnum)],
-			})
-		)
-		modulesToWrite.push(...enumModules)
-
-		const modelModules = options.dmmf.datamodel.models.map((model) =>
-			createModelModule({ model, ctx })
-		)
-		modulesToWrite.push(...modelModules)
+		const modules: GeneratedModules = {
+			enums: (options.dmmf.datamodel.enums ?? []).map((prismaEnum) =>
+				createModule({
+					name: getEnumModuleName(prismaEnum),
+					declarations: [generateEnumDeclaration(adapter, prismaEnum)],
+				})
+			),
+			models: options.dmmf.datamodel.models.map((model) =>
+				createModelModule({ model, ctx })
+			),
+		}
 
 		if (isRelationalQueryEnabled()) {
-			const relationalModules = modelModules.flatMap((modelModule) => {
+			modules.relational = modules.models.flatMap((modelModule) => {
 				const relationalModule = createRelationalModule({ ctx, modelModule })
 				if (relationalModule == null) return []
 				return relationalModule
 			})
-			modulesToWrite.push(...relationalModules)
 
-			const implicitModelModules = relationalModules
+			modules.implicitModels = modules.relational
 				.flatMap((module) => module.implicit)
 				.reduce(deduplicateModels, [] as DMMF.Model[])
 				.map((model) => createModelModule({ model, ctx }))
-			modulesToWrite.push(...implicitModelModules)
 
-			const implicitRelationalModules = implicitModelModules.flatMap(
+			modules.implicitRelational = modules.implicitModels.flatMap(
 				(modelModule) => {
 					const relationalModule = createRelationalModule({ ctx, modelModule })
 					if (relationalModule == null) return []
 					return relationalModule
 				}
 			)
-			modulesToWrite.push(...implicitRelationalModules)
 
-			const schemaModule = createModule({
+			modules.schema = createModule({
 				name: 'schema',
 				declarations: [
 					generateSchemaDeclaration([
-						...modelModules,
-						...relationalModules,
-						...implicitModelModules,
-						...implicitRelationalModules,
+						...modules.models,
+						...modules.relational,
+						...modules.implicitModels,
+						...modules.implicitRelational,
 					]),
 				],
 			})
-			modulesToWrite.push(schemaModule)
 		}
 
-		for (const module of modulesToWrite) {
+		for (const module of flattenModules(modules)) {
 			writeModule(basePath, module)
 		}
 
@@ -220,3 +213,24 @@ function createRelationalModule(input: {
 		implicit: declaration.implicit,
 	})
 }
+
+type RelationalModule = NonNullable<ReturnType<typeof createRelationalModule>>
+
+// #region Generated Modules
+
+type GeneratedModules = {
+	enums: Module[]
+	models: ModelModule[]
+	relational?: RelationalModule[]
+	implicitModels?: ModelModule[]
+	implicitRelational?: Module[]
+	schema?: Module
+}
+export function flattenModules(modules: GeneratedModules) {
+	const { schema, ...rest } = modules
+	return [schema, ...Object.values(rest)].filter(
+		(module): module is Module => module != null
+	)
+}
+
+// #endregion
