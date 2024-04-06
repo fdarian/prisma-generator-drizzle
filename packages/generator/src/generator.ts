@@ -9,7 +9,6 @@ import {
 import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import { GENERATOR_NAME } from './constants'
-import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
 import { generateEnumModules } from './lib/adapter/modules/enums'
 import {
 	type ModelModule,
@@ -22,7 +21,7 @@ import {
 	type NamedImport,
 	namedImport,
 } from './lib/syntaxes/imports'
-import { type Module, createModule } from './lib/syntaxes/module'
+import { type Module } from './lib/syntaxes/module'
 import {
 	isRelationalQueryEnabled,
 	setGeneratorContext,
@@ -33,6 +32,8 @@ import {
 } from './lib/adapter/modules/relational'
 import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
 import { generateImplicitModules } from './lib/adapter/modules/relational'
+import { RelationalModuleSet } from './lib/adapter/modules/relational'
+import { generateSchemaModules as generateSchemaModule } from './lib/adapter/modules/relational'
 
 const { version } = require('../package.json')
 
@@ -80,16 +81,11 @@ generatorHandler({
 			modules.implicitModels = implicit.models
 			modules.implicitRelational = implicit.relational
 
-			modules.schema = createModule({
-				name: 'schema',
-				declarations: [
-					generateSchemaDeclaration([
-						...modules.models,
-						...modules.relational,
-						...modules.implicitModels,
-						...modules.implicitRelational,
-					]),
-				],
+			modules.schema = generateSchemaModule({
+				...modules,
+				relational: modules.relational,
+				implicitModels: modules.implicitModels,
+				implicitRelational: modules.implicitRelational,
 			})
 		}
 
@@ -176,14 +172,13 @@ export function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
 	return [...accum, model]
 }
 
-// #region Generated Modules
-
-export type GeneratedModules = BaseGeneratedModules & {
-	relational?: RelationalModule[]
-	implicitModels?: ModelModule[]
-	implicitRelational?: Module[]
-	schema?: Module
-}
+export type GeneratedModules = BaseGeneratedModules &
+	Partial<RelationalModuleSet> & {
+		relational?: RelationalModule[]
+		implicitModels?: ModelModule[]
+		implicitRelational?: Module[]
+		schema?: Module
+	}
 export function flattenModules(modules: GeneratedModules) {
 	const { schema, ...rest } = modules
 	return [

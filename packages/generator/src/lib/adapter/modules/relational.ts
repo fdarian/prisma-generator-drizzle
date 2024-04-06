@@ -1,12 +1,19 @@
 import type { Context } from '../../context'
 import { isEmpty } from 'lodash'
 import { isRelationField } from '~/lib/prisma-helpers/field'
-import { createModule } from '~/lib/syntaxes/module'
+import { createModule, type Module } from '~/lib/syntaxes/module'
 import { generateTableRelationsDeclaration } from '../declarations/generateTableRelationsDeclaration'
 import { createModelModule, type ModelModule } from './model'
 import type { BaseGeneratedModules } from './sets/base-generated-modules'
 import { deduplicateModels } from '~/generator'
 import type { DMMF } from '@prisma/generator-helper'
+import { generateSchemaDeclaration } from '../declarations/generateSchemaDeclaration'
+
+export type RelationalModuleSet = {
+	relational: RelationalModule[]
+	implicitModels: ModelModule[]
+	implicitRelational: Module[]
+}
 
 export function generateRelationalModules(
 	modules: BaseGeneratedModules,
@@ -59,4 +66,20 @@ export function generateImplicitModules(
 		return relationalModule
 	})
 	return { models, relational }
+}
+
+export function generateSchemaModules(
+	modules: BaseGeneratedModules & RelationalModuleSet
+) {
+	return createModule({
+		name: 'schema',
+		declarations: [
+			generateSchemaDeclaration([
+				...modules.models,
+				...modules.relational,
+				...modules.implicitModels,
+				...modules.implicitRelational,
+			]),
+		],
+	})
 }
