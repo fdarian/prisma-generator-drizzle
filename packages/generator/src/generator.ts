@@ -85,11 +85,10 @@ generatorHandler({
 })
 
 function handleFormatting(options: GeneratorOptions) {
-	const basePath = getGeneratorContext().outputBasePath
-	const formatter = options.generator.config.formatter
-	if (formatter === 'prettier') {
-		execSync(`prettier --write ${basePath}`, { stdio: 'inherit' })
-	}
+	const generator = getGeneratorContext()
+	if (generator.config.formatter == null) return
+
+	execSync(`prettier --write ${generator.outputBasePath}`, { stdio: 'inherit' })
 }
 
 export function reduceImports(imports: ImportValue[]) {

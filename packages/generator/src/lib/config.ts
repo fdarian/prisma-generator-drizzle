@@ -6,6 +6,7 @@ import {
 	object,
 	optional,
 	safeParse,
+	literal,
 } from 'valibot'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
 import { withDefault } from './valibot-schema'
@@ -15,6 +16,7 @@ const Config = object({
 	relationalQuery: withDefault(optional(BooleanInStr), true),
 	moduleResolution: optional(ModuleResolution),
 	verbose: optional(BooleanInStr),
+	formatter: optional(literal('prettier')),
 })
 export type Config = Output<typeof Config>
 
