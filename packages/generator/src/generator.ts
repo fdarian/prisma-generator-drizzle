@@ -230,9 +230,11 @@ type GeneratedModules = {
 }
 export function flattenModules(modules: GeneratedModules) {
 	const { schema, ...rest } = modules
-	return [schema, ...Object.values(rest)].filter(
-		(module): module is Module => module != null
-	)
+	return [
+		schema,
+		...Object.values(rest) //
+			.flatMap((mod) => mod), //
+	].filter((module): module is Module => module != null)
 }
 
 // #endregion
