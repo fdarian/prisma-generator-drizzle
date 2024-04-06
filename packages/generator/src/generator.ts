@@ -21,7 +21,7 @@ import {
 	type NamedImport,
 	namedImport,
 } from './lib/syntaxes/imports'
-import { type Module } from './lib/syntaxes/module'
+import type { Module } from './lib/syntaxes/module'
 import {
 	isRelationalQueryEnabled,
 	initializeGenerator,
@@ -32,7 +32,7 @@ import {
 } from './lib/adapter/modules/relational'
 import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
 import { generateImplicitModules } from './lib/adapter/modules/relational'
-import { RelationalModuleSet } from './lib/adapter/modules/relational'
+import type { RelationalModuleSet } from './lib/adapter/modules/relational'
 import { generateSchemaModules as generateSchemaModule } from './lib/adapter/modules/relational'
 
 const { version } = require('../package.json')
