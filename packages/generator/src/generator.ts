@@ -10,16 +10,15 @@ import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
 import { isEmpty } from 'lodash'
 import { GENERATOR_NAME } from './constants'
-import { generateEnumDeclaration } from './lib/adapter/declarations/generateEnumDeclaration'
 import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
 import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
 import {
 	type ModelModule,
 	createModelModule,
 } from './lib/adapter/modules/createModelModule'
+import { generateEnumModules } from './lib/adapter/modules/enums'
 import type { Context } from './lib/context'
 import { logger } from './lib/logger'
-import { getEnumModuleName } from './lib/prisma-helpers/enums'
 import { isRelationField } from './lib/prisma-helpers/field'
 import {
 	type ImportValue,
@@ -67,12 +66,7 @@ generatorHandler({
 
 		const modules: GeneratedModules = {
 			extras: adapter.extraModules,
-			enums: (options.dmmf.datamodel.enums ?? []).map((prismaEnum) =>
-				createModule({
-					name: getEnumModuleName(prismaEnum),
-					declarations: [generateEnumDeclaration(adapter, prismaEnum)],
-				})
-			),
+			enums: generateEnumModules(options, adapter),
 			models: options.dmmf.datamodel.models.map((model) =>
 				createModelModule({ model, ctx })
 			),
