@@ -80,11 +80,11 @@ generatorHandler({
 		}
 
 		writeModules(modules)
-		handleFormatting(options)
+		handleFormatting()
 	},
 })
 
-function handleFormatting(options: GeneratorOptions) {
+function handleFormatting() {
 	const generator = getGenerator()
 	if (generator.config.formatter == null) return
 
