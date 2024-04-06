@@ -1,20 +1,19 @@
-import type { GeneratorOptions } from '@prisma/generator-helper'
 import { logger as baseLogger } from '@prisma/sdk'
 import { GENERATOR_NAME } from 'src/constants'
+import { getGeneratorContext } from '~/shared/generator-context'
 
-let isVerbose = false
-function applyConfig(value: GeneratorOptions) {
-	isVerbose = value.generator.config?.verbose === 'true'
+function isVerbose() {
+	return getGeneratorContext().config.verbose
 }
 
 function log(message: string) {
-	if (!isVerbose) return
+	if (!isVerbose()) return
 
 	baseLogger.log(`${GENERATOR_NAME}: ${message}`)
 }
 
 function createTask() {
-	if (!isVerbose) return { end: (_: string) => undefined }
+	if (!isVerbose()) return { end: (_: string) => undefined }
 
 	const timeStarted = Date.now()
 	return {
@@ -25,7 +24,6 @@ function createTask() {
 }
 
 export const logger = {
-	applyConfig,
 	log,
 	createTask,
 }
