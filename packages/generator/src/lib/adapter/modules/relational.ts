@@ -3,8 +3,10 @@ import { isEmpty } from 'lodash'
 import { isRelationField } from '~/lib/prisma-helpers/field'
 import { createModule } from '~/lib/syntaxes/module'
 import { generateTableRelationsDeclaration } from '../declarations/generateTableRelationsDeclaration'
-import type { ModelModule } from './model'
+import { createModelModule, type ModelModule } from './model'
 import type { BaseGeneratedModules } from './sets/base-generated-modules'
+import { deduplicateModels } from '~/generator'
+import type { DMMF } from '@prisma/generator-helper'
 
 export function generateRelationalModules(
 	modules: BaseGeneratedModules,
@@ -38,4 +40,23 @@ export function createRelationalModule(input: {
 	})
 }
 
-export type RelationalModule = NonNullable<ReturnType<typeof createRelationalModule>>
+export type RelationalModule = NonNullable<
+	ReturnType<typeof createRelationalModule>
+>
+
+export function generateImplicitModules(
+	relationalModules: RelationalModule[],
+	ctx: Context
+) {
+	const models = relationalModules
+		.flatMap((module) => module.implicit)
+		.reduce(deduplicateModels, [] as DMMF.Model[])
+		.map(createModelModule(ctx))
+
+	const relational = models.flatMap((modelModule) => {
+		const relationalModule = createRelationalModule({ ctx, modelModule })
+		if (relationalModule == null) return []
+		return relationalModule
+	})
+	return { models, relational }
+}

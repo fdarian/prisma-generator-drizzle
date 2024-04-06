@@ -13,7 +13,6 @@ import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSc
 import { generateEnumModules } from './lib/adapter/modules/enums'
 import {
 	type ModelModule,
-	createModelModule,
 	generateModelModules,
 } from './lib/adapter/modules/model'
 import type { Context } from './lib/context'
@@ -29,11 +28,11 @@ import {
 	setGeneratorContext,
 } from './shared/generator-context'
 import {
-	createRelationalModule,
 	generateRelationalModules,
 	type RelationalModule,
 } from './lib/adapter/modules/relational'
 import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
+import { generateImplicitModules } from './lib/adapter/modules/relational'
 
 const { version } = require('../package.json')
 
@@ -77,18 +76,9 @@ generatorHandler({
 		if (isRelationalQueryEnabled()) {
 			modules.relational = generateRelationalModules(modules, ctx)
 
-			modules.implicitModels = modules.relational
-				.flatMap((module) => module.implicit)
-				.reduce(deduplicateModels, [] as DMMF.Model[])
-				.map(createModelModule(ctx))
-
-			modules.implicitRelational = modules.implicitModels.flatMap(
-				(modelModule) => {
-					const relationalModule = createRelationalModule({ ctx, modelModule })
-					if (relationalModule == null) return []
-					return relationalModule
-				}
-			)
+			const implicit = generateImplicitModules(modules.relational, ctx)
+			modules.implicitModels = implicit.models
+			modules.implicitRelational = implicit.relational
 
 			modules.schema = createModule({
 				name: 'schema',
@@ -181,7 +171,7 @@ async function getAdapter(options: GeneratorOptions) {
 	}
 }
 
-function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
+export function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
 	if (accum.some(({ name }) => name === model.name)) return accum
 	return [...accum, model]
 }
