@@ -56,7 +56,6 @@ generatorHandler({
 		const adapter = await getAdapter(options)
 		const ctx: Context = {
 			adapter,
-			config: options.generator.config,
 			datamodel: options.dmmf.datamodel,
 		}
 
