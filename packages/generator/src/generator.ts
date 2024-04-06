@@ -75,18 +75,19 @@ generatorHandler({
 		}
 
 		if (isRelationalQueryEnabled()) {
-			modules.relational = generateRelationalModules(modules, ctx)
+			const relational = generateRelationalModules(modules, ctx)
+			const implicit = generateImplicitModules(relational, ctx)
+			const schema = generateSchemaModule({
+				...modules,
+				relational: relational,
+				implicitModels: implicit.models,
+				implicitRelational: implicit.relational,
+			})
 
-			const implicit = generateImplicitModules(modules.relational, ctx)
+			modules.schema = schema
+			modules.relational = relational
 			modules.implicitModels = implicit.models
 			modules.implicitRelational = implicit.relational
-
-			modules.schema = generateSchemaModule({
-				...modules,
-				relational: modules.relational,
-				implicitModels: modules.implicitModels,
-				implicitRelational: modules.implicitRelational,
-			})
 		}
 
 		for (const module of flattenModules(modules)) {
