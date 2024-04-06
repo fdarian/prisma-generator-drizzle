@@ -94,12 +94,16 @@ generatorHandler({
 			writeModule(basePath, module)
 		}
 
-		const formatter = options.generator.config.formatter
-		if (formatter === 'prettier') {
-			execSync(`prettier --write ${basePath}`, { stdio: 'inherit' })
-		}
+		handleFormatting(options, basePath)
 	},
 })
+
+function handleFormatting(options: GeneratorOptions, basePath: string) {
+	const formatter = options.generator.config.formatter
+	if (formatter === 'prettier') {
+		execSync(`prettier --write ${basePath}`, { stdio: 'inherit' })
+	}
+}
 
 export function reduceImports(imports: ImportValue[]) {
 	type Plan = { toReduce: NamedImport[]; skipped: ImportValue[] }
