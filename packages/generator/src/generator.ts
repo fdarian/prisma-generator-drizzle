@@ -66,6 +66,7 @@ generatorHandler({
 		fs.mkdirSync(basePath, { recursive: true })
 
 		const modules: GeneratedModules = {
+			extras: adapter.extraModules,
 			enums: (options.dmmf.datamodel.enums ?? []).map((prismaEnum) =>
 				createModule({
 					name: getEnumModuleName(prismaEnum),
@@ -219,6 +220,7 @@ type RelationalModule = NonNullable<ReturnType<typeof createRelationalModule>>
 // #region Generated Modules
 
 type GeneratedModules = {
+	extras?: Module[]
 	enums: Module[]
 	models: ModelModule[]
 	relational?: RelationalModule[]
