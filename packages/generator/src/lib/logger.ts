@@ -1,9 +1,9 @@
 import { logger as baseLogger } from '@prisma/sdk'
 import { GENERATOR_NAME } from 'src/constants'
-import { getGeneratorContext } from '~/shared/generator-context'
+import { getGenerator } from '~/shared/generator-context'
 
 function isVerbose() {
-	return getGeneratorContext().config.verbose
+	return getGenerator().config.verbose
 }
 
 function log(message: string) {

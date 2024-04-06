@@ -25,7 +25,7 @@ import type { Module } from './lib/syntaxes/module'
 import {
 	isRelationalQueryEnabled,
 	initializeGenerator,
-	getGeneratorContext,
+	getGenerator,
 } from './shared/generator-context'
 import {
 	generateRelationalModules,
@@ -85,7 +85,7 @@ generatorHandler({
 })
 
 function handleFormatting(options: GeneratorOptions) {
-	const generator = getGeneratorContext()
+	const generator = getGenerator()
 	if (generator.config.formatter == null) return
 
 	execSync(`prettier --write ${generator.outputBasePath}`, { stdio: 'inherit' })
@@ -127,7 +127,7 @@ export function reduceImports(imports: ImportValue[]) {
 }
 
 function writeModules(modules: GeneratedModules) {
-	const basePath = getGeneratorContext().outputBasePath
+	const basePath = getGenerator().outputBasePath
 
 	fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 	fs.mkdirSync(basePath, { recursive: true })
