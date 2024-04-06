@@ -50,11 +50,6 @@ generatorHandler({
 
 		logger.log('Generating drizzle schema...')
 
-		if (options.datasources.length === 0)
-			throw new Error('No datasource specified')
-		if (options.datasources.length > 1)
-			throw new Error('Only one datasource is supported')
-
 		const adapter = await getAdapter(options)
 		const ctx: Context = {
 			adapter,
@@ -149,7 +144,13 @@ function writeModule(basePath: string, module: Module) {
  * be called before initialization (`onGenerate`)
  */
 async function getAdapter(options: GeneratorOptions) {
-	switch (options.datasources[0].provider) {
+	if (options.datasources.length === 0)
+		throw new Error('No datasource specified')
+	if (options.datasources.length > 1)
+		throw new Error('Only one datasource is supported')
+
+	const provider = options.datasources[0].provider
+	switch (provider) {
 		case 'cockroachdb': // CockroahDB should be postgres compatible
 		case 'postgres':
 		case 'postgresql': {
@@ -165,9 +166,7 @@ async function getAdapter(options: GeneratorOptions) {
 			return mod.sqliteAdapter
 		}
 		default:
-			throw new Error(
-				`Connector ${options.datasources[0].provider} is not supported`
-			)
+			throw new Error(`Connector ${provider} is not supported`)
 	}
 }
 
