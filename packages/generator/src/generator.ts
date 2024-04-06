@@ -17,7 +17,6 @@ import {
 	type ModelModule,
 	createModelModule,
 } from './lib/adapter/modules/createModelModule'
-import { isRelationalQueryEnabled } from './lib/config'
 import type { Context } from './lib/context'
 import { logger } from './lib/logger'
 import { getEnumModuleName } from './lib/prisma-helpers/enums'
@@ -28,7 +27,10 @@ import {
 	namedImport,
 } from './lib/syntaxes/imports'
 import { type Module, createModule } from './lib/syntaxes/module'
-import { setGeneratorContext } from './shared/generator-context'
+import {
+	isRelationalQueryEnabled,
+	setGeneratorContext,
+} from './shared/generator-context'
 
 const { version } = require('../package.json')
 
@@ -54,7 +56,6 @@ generatorHandler({
 		const adapter = await getAdapter(options)
 		const ctx: Context = {
 			adapter,
-			config: options.generator.config,
 			datamodel: options.dmmf.datamodel,
 		}
 
@@ -93,7 +94,7 @@ generatorHandler({
 			return modelModule
 		})
 
-		if (isRelationalQueryEnabled(options.generator.config)) {
+		if (isRelationalQueryEnabled()) {
 			const relationalModules = modelModules.flatMap((modelModule) => {
 				const creation = logger.createTask()
 

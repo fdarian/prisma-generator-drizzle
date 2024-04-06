@@ -44,8 +44,8 @@ function getRelationField(ctx: GenerateTableRelationsInput) {
 		const { implicit, opts, referenceModelVarName } = !field.isList
 			? getOneToOneOrManyRelation(field, ctx)
 			: opposingIsList(field, ctx)
-			  ? getManyToManyRelation(field, ctx)
-			  : getManyToOneRelation(field)
+				? getManyToManyRelation(field, ctx)
+				: getManyToOneRelation(field)
 
 		const relFunc = field.isList ? 'helpers.many' : 'helpers.one'
 
@@ -157,11 +157,11 @@ function createRelationOpts(input: {
 	relationName?: string
 	to?: {
 		modelVarName: string
-		fieldNames: string[]
+		fieldNames: readonly string[]
 	}
 	from?: {
 		modelVarName: string
-		fieldNames: string[]
+		fieldNames: readonly string[]
 	}
 }) {
 	const { relationName, from, to } = input
