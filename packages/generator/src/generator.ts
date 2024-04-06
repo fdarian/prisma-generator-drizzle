@@ -12,11 +12,12 @@ import { isEmpty } from 'lodash'
 import { GENERATOR_NAME } from './constants'
 import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
 import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
+import { generateEnumModules } from './lib/adapter/modules/enums'
 import {
 	type ModelModule,
 	createModelModule,
-} from './lib/adapter/modules/createModelModule'
-import { generateEnumModules } from './lib/adapter/modules/enums'
+	generateModelModules,
+} from './lib/adapter/modules/model'
 import type { Context } from './lib/context'
 import { logger } from './lib/logger'
 import { isRelationField } from './lib/prisma-helpers/field'
@@ -67,9 +68,7 @@ generatorHandler({
 		const modules: GeneratedModules = {
 			extras: adapter.extraModules,
 			enums: generateEnumModules(options, adapter),
-			models: options.dmmf.datamodel.models.map((model) =>
-				createModelModule({ model, ctx })
-			),
+			models: generateModelModules(options, ctx),
 		}
 
 		if (isRelationalQueryEnabled()) {
@@ -82,7 +81,7 @@ generatorHandler({
 			modules.implicitModels = modules.relational
 				.flatMap((module) => module.implicit)
 				.reduce(deduplicateModels, [] as DMMF.Model[])
-				.map((model) => createModelModule({ model, ctx }))
+				.map(createModelModule(ctx))
 
 			modules.implicitRelational = modules.implicitModels.flatMap(
 				(modelModule) => {
