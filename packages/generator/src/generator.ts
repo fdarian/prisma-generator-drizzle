@@ -65,51 +65,43 @@ generatorHandler({
 		fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
 		fs.mkdirSync(basePath, { recursive: true })
 
-		for (const module of adapter.extraModules ?? []) {
-			writeModule(basePath, module)
-		}
+		const modulesToWrite: Module[] = []
 
-		for (const prismaEnum of options.dmmf.datamodel.enums ?? []) {
-			const enumModule = createModule({
+		const enumModules = (options.dmmf.datamodel.enums ?? []).map((prismaEnum) =>
+			createModule({
 				name: getEnumModuleName(prismaEnum),
 				declarations: [generateEnumDeclaration(adapter, prismaEnum)],
 			})
-			writeModule(basePath, enumModule)
-		}
+		)
+		modulesToWrite.push(...enumModules)
 
-		const modelModules = options.dmmf.datamodel.models.map((model) => {
-			const modelModule = createModelModule({ model, ctx })
-			writeModule(basePath, modelModule)
-
-			return modelModule
-		})
+		const modelModules = options.dmmf.datamodel.models.map((model) =>
+			createModelModule({ model, ctx })
+		)
+		modulesToWrite.push(...modelModules)
 
 		if (isRelationalQueryEnabled()) {
 			const relationalModules = modelModules.flatMap((modelModule) => {
 				const relationalModule = createRelationalModule({ ctx, modelModule })
 				if (relationalModule == null) return []
-
-				writeModule(basePath, relationalModule)
 				return relationalModule
 			})
+			modulesToWrite.push(...relationalModules)
 
 			const implicitModelModules = relationalModules
 				.flatMap((module) => module.implicit)
 				.reduce(deduplicateModels, [] as DMMF.Model[])
-				.map((model) => {
-					const modelModule = createModelModule({ model, ctx })
-					writeModule(basePath, modelModule)
-					return modelModule
-				})
+				.map((model) => createModelModule({ model, ctx }))
+			modulesToWrite.push(...implicitModelModules)
+
 			const implicitRelationalModules = implicitModelModules.flatMap(
 				(modelModule) => {
 					const relationalModule = createRelationalModule({ ctx, modelModule })
 					if (relationalModule == null) return []
-
-					writeModule(basePath, relationalModule)
 					return relationalModule
 				}
 			)
+			modulesToWrite.push(...implicitRelationalModules)
 
 			const schemaModule = createModule({
 				name: 'schema',
@@ -122,7 +114,11 @@ generatorHandler({
 					]),
 				],
 			})
-			writeModule(basePath, schemaModule)
+			modulesToWrite.push(schemaModule)
+		}
+
+		for (const module of modulesToWrite) {
+			writeModule(basePath, module)
 		}
 
 		const formatter = options.generator.config.formatter
