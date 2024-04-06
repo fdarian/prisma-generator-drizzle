@@ -66,44 +66,30 @@ generatorHandler({
 		fs.mkdirSync(basePath, { recursive: true })
 
 		for (const module of adapter.extraModules ?? []) {
-			const moduleCreation = logger.createTask()
 			writeModule(basePath, module)
-			moduleCreation.end(`◟ ${module.name}.ts`)
 		}
 
 		for (const prismaEnum of options.dmmf.datamodel.enums ?? []) {
-			const enumCreation = logger.createTask()
-
 			const enumModule = createModule({
 				name: getEnumModuleName(prismaEnum),
 				declarations: [generateEnumDeclaration(adapter, prismaEnum)],
 			})
 			writeModule(basePath, enumModule)
-
-			enumCreation.end(`◟ ${enumModule.name}.ts`)
 		}
 
 		const modelModules = options.dmmf.datamodel.models.map((model) => {
-			const modelCreation = logger.createTask()
-
 			const modelModule = createModelModule({ model, ctx })
 			writeModule(basePath, modelModule)
-
-			modelCreation.end(`◟ ${modelModule.name}.ts`)
 
 			return modelModule
 		})
 
 		if (isRelationalQueryEnabled()) {
 			const relationalModules = modelModules.flatMap((modelModule) => {
-				const creation = logger.createTask()
-
 				const relationalModule = createRelationalModule({ ctx, modelModule })
 				if (relationalModule == null) return []
 
 				writeModule(basePath, relationalModule)
-
-				creation.end(`◟ ${relationalModule.name}.ts`)
 				return relationalModule
 			})
 
@@ -111,24 +97,16 @@ generatorHandler({
 				.flatMap((module) => module.implicit)
 				.reduce(deduplicateModels, [] as DMMF.Model[])
 				.map((model) => {
-					const modelCreation = logger.createTask()
-
 					const modelModule = createModelModule({ model, ctx })
 					writeModule(basePath, modelModule)
-
-					modelCreation.end(`◟ ${modelModule.name}.ts`)
 					return modelModule
 				})
 			const implicitRelationalModules = implicitModelModules.flatMap(
 				(modelModule) => {
-					const creation = logger.createTask()
-
 					const relationalModule = createRelationalModule({ ctx, modelModule })
 					if (relationalModule == null) return []
 
 					writeModule(basePath, relationalModule)
-
-					creation.end(`◟ ${relationalModule.name}.ts`)
 					return relationalModule
 				}
 			)
