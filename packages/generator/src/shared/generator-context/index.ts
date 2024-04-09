@@ -8,10 +8,6 @@ type Output = {
 }
 
 type Generator = {
-	/**
-	 * @deprecated use `output.basePath` instead
-	 */
-	outputBasePath: string
 	moduleResolution?: string
 	output: Output
 	//
@@ -29,7 +25,6 @@ export function initializeGenerator(options: GeneratorOptions) {
 
 	const context: Generator = {
 		moduleResolution: config.moduleResolution ?? resolveModuleResolution(),
-		outputBasePath: output.path,
 		output,
 		//
 		dmmf: options.dmmf,
