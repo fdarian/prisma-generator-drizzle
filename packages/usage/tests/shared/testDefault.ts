@@ -44,7 +44,9 @@ export function testDefault({ db, schema, provider }: TestContext) {
 				'1.123'
 			)
 			expect(result.float, 'Invalid float').toBe(1.123)
-			expect(result.bytes.toString(), 'Invalid bytes').toBe('hello world')
+			expect(Buffer.from(result.bytes).toString('utf-8'), 'Invalid bytes').toBe(
+				'hello world'
+			)
 
 			if (provider === 'postgres') {
 				expect(validateUuid(result.pgUuid)).toBe(true)
