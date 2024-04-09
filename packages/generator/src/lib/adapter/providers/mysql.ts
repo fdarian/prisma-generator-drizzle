@@ -1,9 +1,10 @@
 import { camelCase, kebabCase } from 'lodash'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
+import { createModule } from '~/lib/syntaxes/module'
+import { getGenerator } from '~/shared/generator-context'
 import { createAdapter } from '../adapter'
 import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
-import { createModule } from '~/lib/syntaxes/module'
 
 const coreModule = 'drizzle-orm/mysql-core'
 
@@ -96,7 +97,7 @@ export const mysqlAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['datetime'], coreModule)],
-				func: `datetime('${getDbName(field)}', { mode: 'date', fsp: 3 })`,
+				func: `datetime('${getDbName(field)}', { mode: '${getGenerator().dateMode}', fsp: 3 })`, // biome-ignore format: keep one line
 				// https://github.com/drizzle-team/drizzle-orm/issues/921
 				onDefault: (field) => {
 					if (

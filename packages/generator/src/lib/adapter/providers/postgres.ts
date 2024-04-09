@@ -1,6 +1,8 @@
 import { camelCase, kebabCase } from 'lodash'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
+import { createModule } from '~/lib/syntaxes/module'
+import { getGenerator } from '~/shared/generator-context'
 import { createAdapter } from '../adapter'
 import {
 	type CreateFieldInput,
@@ -8,7 +10,6 @@ import {
 	hasDefault,
 	isDefaultFunc,
 } from '../fields/createField'
-import { createModule } from '~/lib/syntaxes/module'
 
 const coreModule = 'drizzle-orm/pg-core'
 
@@ -104,9 +105,7 @@ export const postgresAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['timestamp'], coreModule)],
-				func: `timestamp('${getDbName(
-					field
-				)}', { mode: 'date', precision: 3 })`,
+				func: `timestamp('${getDbName(field)}', { mode: '${getGenerator().dateMode}', precision: 3 })`, // biome-ignore format: keep one line
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#decimal
@@ -132,7 +131,7 @@ export const postgresAdapter = createAdapter({
 				isDefaultFunc(field) &&
 				field.default.name === 'autoincrement'
 					? // https://arc.net/l/quote/mpimqrfn
-					  'serial'
+						'serial'
 					: 'integer'
 
 			return createField({
