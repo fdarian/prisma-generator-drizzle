@@ -2,37 +2,53 @@ import type { GeneratorOptions } from '@prisma/generator-helper'
 import { type Config, parseConfig } from '~/lib/config'
 import { resolveModuleResolution } from './module-resolution'
 
-type GeneratorContext = {
+type Generator = {
+	outputBasePath: string
 	moduleResolution?: string
+	//
+	dmmf: GeneratorOptions['dmmf']
 	config: Config
 }
 
-let generatorContext_: GeneratorContext | undefined
+let generator_: Generator | undefined
 
-export function setGeneratorContext(options: GeneratorOptions) {
+// #region initialization
+
+export function initializeGenerator(options: GeneratorOptions) {
 	const config = parseConfig(options.generator.config)
 
-	const context: GeneratorContext = {
+	const context: Generator = {
 		moduleResolution: config.moduleResolution ?? resolveModuleResolution(),
+		outputBasePath: getBasePath(options),
+		//
+		dmmf: options.dmmf,
 		config,
 	}
-	generatorContext_ = context
+	generator_ = context
 
 	return context
 }
 
-export function getGeneratorContext() {
-	if (generatorContext_ == null) {
+function getBasePath(options: GeneratorOptions) {
+	const basePath = options.generator.output?.value
+	if (!basePath) throw new Error('No output path specified')
+	return basePath
+}
+
+// #endregion
+
+export function getGenerator() {
+	if (generator_ == null) {
 		throw new Error('Generator context not set')
 	}
 
-	return generatorContext_
+	return generator_
 }
 
 export function isRelationalQueryEnabled() {
-	return getGeneratorContext().config.relationalQuery
+	return getGenerator().config.relationalQuery
 }
 
 export function getModuleResolution() {
-	return getGeneratorContext().config.moduleResolution
+	return getGenerator().config.moduleResolution
 }

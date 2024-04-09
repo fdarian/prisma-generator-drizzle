@@ -8,29 +8,32 @@ import {
 } from '@prisma/generator-helper'
 import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
-import { isEmpty } from 'lodash'
 import { GENERATOR_NAME } from './constants'
-import { generateEnumDeclaration } from './lib/adapter/declarations/generateEnumDeclaration'
-import { generateSchemaDeclaration } from './lib/adapter/declarations/generateSchemaDeclaration'
-import { generateTableRelationsDeclaration } from './lib/adapter/declarations/generateTableRelationsDeclaration'
+import { generateEnumModules } from './lib/adapter/modules/enums'
 import {
 	type ModelModule,
-	createModelModule,
-} from './lib/adapter/modules/createModelModule'
-import type { Context } from './lib/context'
+	generateModelModules,
+} from './lib/adapter/modules/model'
 import { logger } from './lib/logger'
-import { getEnumModuleName } from './lib/prisma-helpers/enums'
-import { isRelationField } from './lib/prisma-helpers/field'
 import {
 	type ImportValue,
 	type NamedImport,
 	namedImport,
 } from './lib/syntaxes/imports'
-import { type Module, createModule } from './lib/syntaxes/module'
+import type { Module } from './lib/syntaxes/module'
 import {
 	isRelationalQueryEnabled,
-	setGeneratorContext,
+	initializeGenerator,
+	getGenerator,
 } from './shared/generator-context'
+import {
+	generateRelationalModules,
+	type RelationalModule,
+} from './lib/adapter/modules/relational'
+import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
+import { generateImplicitModules } from './lib/adapter/modules/relational'
+import type { RelationalModuleSet } from './lib/adapter/modules/relational'
+import { generateSchemaModules as generateSchemaModule } from './lib/adapter/modules/relational'
 
 const { version } = require('../package.json')
 
@@ -43,84 +46,45 @@ generatorHandler({
 		}
 	},
 	onGenerate: async (options: GeneratorOptions) => {
-		setGeneratorContext(options)
-		logger.applyConfig(options)
+		initializeGenerator(options)
 
 		logger.log('Generating drizzle schema...')
 
-		if (options.datasources.length === 0)
-			throw new Error('No datasource specified')
-		if (options.datasources.length > 1)
-			throw new Error('Only one datasource is supported')
-
 		const adapter = await getAdapter(options)
-		const ctx: Context = {
-			adapter,
-			datamodel: options.dmmf.datamodel,
-		}
-
-		const basePath = options.generator.output?.value
-		if (!basePath) throw new Error('No output path specified')
-
-		fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
-		fs.mkdirSync(basePath, { recursive: true })
 
 		const modules: GeneratedModules = {
 			extras: adapter.extraModules,
-			enums: (options.dmmf.datamodel.enums ?? []).map((prismaEnum) =>
-				createModule({
-					name: getEnumModuleName(prismaEnum),
-					declarations: [generateEnumDeclaration(adapter, prismaEnum)],
-				})
-			),
-			models: options.dmmf.datamodel.models.map((model) =>
-				createModelModule({ model, ctx })
-			),
+			enums: generateEnumModules(adapter),
+			models: generateModelModules(adapter),
 		}
 
 		if (isRelationalQueryEnabled()) {
-			modules.relational = modules.models.flatMap((modelModule) => {
-				const relationalModule = createRelationalModule({ ctx, modelModule })
-				if (relationalModule == null) return []
-				return relationalModule
+			const relational = generateRelationalModules(modules.models)
+			const implicit = generateImplicitModules(adapter, relational)
+			const schema = generateSchemaModule({
+				...modules,
+				relational: relational,
+				implicitModels: implicit.models,
+				implicitRelational: implicit.relational,
 			})
 
-			modules.implicitModels = modules.relational
-				.flatMap((module) => module.implicit)
-				.reduce(deduplicateModels, [] as DMMF.Model[])
-				.map((model) => createModelModule({ model, ctx }))
-
-			modules.implicitRelational = modules.implicitModels.flatMap(
-				(modelModule) => {
-					const relationalModule = createRelationalModule({ ctx, modelModule })
-					if (relationalModule == null) return []
-					return relationalModule
-				}
-			)
-
-			modules.schema = createModule({
-				name: 'schema',
-				declarations: [
-					generateSchemaDeclaration([
-						...modules.models,
-						...modules.relational,
-						...modules.implicitModels,
-						...modules.implicitRelational,
-					]),
-				],
-			})
+			modules.schema = schema
+			modules.relational = relational
+			modules.implicitModels = implicit.models
+			modules.implicitRelational = implicit.relational
 		}
 
-		for (const module of flattenModules(modules)) {
-			writeModule(basePath, module)
-		}
-
-		const formatter = options.generator.config.formatter
-		if (formatter === 'prettier') {
-			execSync(`prettier --write ${basePath}`, { stdio: 'inherit' })
-		}
+		writeModules(modules)
+		handleFormatting()
 	},
 })
+
+function handleFormatting() {
+	const generator = getGenerator()
+	if (generator.config.formatter == null) return
+
+	execSync(`prettier --write ${generator.outputBasePath}`, { stdio: 'inherit' })
+}
 
 export function reduceImports(imports: ImportValue[]) {
 	type Plan = { toReduce: NamedImport[]; skipped: ImportValue[] }
@@ -157,9 +121,16 @@ export function reduceImports(imports: ImportValue[]) {
 	]
 }
 
-function writeModule(basePath: string, module: Module) {
-	const writeLocation = path.join(basePath, `${module.name}.ts`)
-	fs.writeFileSync(writeLocation, module.code)
+function writeModules(modules: GeneratedModules) {
+	const basePath = getGenerator().outputBasePath
+
+	fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
+	fs.mkdirSync(basePath, { recursive: true })
+
+	for (const module of flattenModules(modules)) {
+		const writeLocation = path.join(basePath, `${module.name}.ts`)
+		fs.writeFileSync(writeLocation, module.code)
+	}
 }
 
 /**
@@ -167,7 +138,13 @@ function writeModule(basePath: string, module: Module) {
  * be called before initialization (`onGenerate`)
  */
 async function getAdapter(options: GeneratorOptions) {
-	switch (options.datasources[0].provider) {
+	if (options.datasources.length === 0)
+		throw new Error('No datasource specified')
+	if (options.datasources.length > 1)
+		throw new Error('Only one datasource is supported')
+
+	const provider = options.datasources[0].provider
+	switch (provider) {
 		case 'cockroachdb': // CockroahDB should be postgres compatible
 		case 'postgres':
 		case 'postgresql': {
@@ -183,51 +160,22 @@ async function getAdapter(options: GeneratorOptions) {
 			return mod.sqliteAdapter
 		}
 		default:
-			throw new Error(
-				`Connector ${options.datasources[0].provider} is not supported`
-			)
+			throw new Error(`Connector ${provider} is not supported`)
 	}
 }
 
-function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
+export function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
 	if (accum.some(({ name }) => name === model.name)) return accum
 	return [...accum, model]
 }
 
-function createRelationalModule(input: {
-	modelModule: ModelModule
-	ctx: Context
-}) {
-	const { model } = input.modelModule
-
-	const relationalFields = model.fields.filter(isRelationField)
-	if (isEmpty(relationalFields)) return undefined
-
-	const declaration = generateTableRelationsDeclaration({
-		fields: relationalFields,
-		modelModule: input.modelModule,
-		datamodel: input.ctx.datamodel,
-	})
-	return createModule({
-		name: `${input.modelModule.name}-relations`,
-		declarations: [declaration],
-		implicit: declaration.implicit,
-	})
-}
-
-type RelationalModule = NonNullable<ReturnType<typeof createRelationalModule>>
-
-// #region Generated Modules
-
-type GeneratedModules = {
-	extras?: Module[]
-	enums: Module[]
-	models: ModelModule[]
-	relational?: RelationalModule[]
-	implicitModels?: ModelModule[]
-	implicitRelational?: Module[]
-	schema?: Module
-}
+export type GeneratedModules = BaseGeneratedModules &
+	Partial<RelationalModuleSet> & {
+		relational?: RelationalModule[]
+		implicitModels?: ModelModule[]
+		implicitRelational?: Module[]
+		schema?: Module
+	}
 export function flattenModules(modules: GeneratedModules) {
 	const { schema, ...rest } = modules
 	return [

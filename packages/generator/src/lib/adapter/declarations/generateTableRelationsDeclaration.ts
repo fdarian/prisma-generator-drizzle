@@ -10,7 +10,7 @@ import {
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
 import { namedImport } from '../../syntaxes/imports'
-import type { ModelModule } from '../modules/createModelModule'
+import type { ModelModule } from '../modules/model'
 
 type GenerateTableRelationsInput = {
 	fields: PrismaRelationField[]
