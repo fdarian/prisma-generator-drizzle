@@ -58,11 +58,6 @@ function getOutputConfig(options: GeneratorOptions): Output {
 	}
 }
 
-function getParent(basePath: string) {
-	const paths = basePath.split('/')
-	return paths.length === 1 ? ['./'] : paths.slice(0, -1)
-}
-
 // #endregion
 
 export function getGenerator() {
