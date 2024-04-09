@@ -49,7 +49,7 @@ prisma generate
 
 > **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
 
-**prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for the Prisma client. 
+**prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for the Prisma client.
 
 - [Setup drizzle-kit](#setting-up-drizzle-kit)
 - [Setup relational query](#setting-up-relational-query)
@@ -75,7 +75,7 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 
 _* It will find the closest tsconfig from the current working directory. Note that [extends](https://www.typescriptlang.org/tsconfig#extends) is not supported_
 
-_*Does not work with sqlite_
+_**Does not work with sqlite_
 
 ### Setting up [relational query](https://orm.drizzle.team/docs/rqb)
 

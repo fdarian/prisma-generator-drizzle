@@ -75,7 +75,7 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 
 _* It will find the closest tsconfig from the current working directory. Note that [extends](https://www.typescriptlang.org/tsconfig#extends) is not supported_
 
-_*Does not work with sqlite_
+_**Does not work with sqlite_
 
 ### Setting up [relational query](https://orm.drizzle.team/docs/rqb)
 
