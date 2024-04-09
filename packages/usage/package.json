@@ -8,9 +8,9 @@
 		"start": "bun run src/index.ts",
 		"test": "bun test --preload tests/setup.ts",
 		"generate": "prisma generate",
-		"pushreset:postgres": "DATABASE_URL=$PG_DATABASE_URL bun prisma db push --schema prisma/schema.prisma --force-reset --accept-data-loss",
-		"pushreset:sqlite": "DATABASE_URL=$MYSQL_DATABASE_URL bun prisma db push --schema prisma/mysql/schema.prisma --force-reset --accept-data-loss",
-		"pushreset:mysql": "bun prisma db push --schema prisma/sqlite/schema.prisma --force-reset --accept-data-loss",
+		"pushreset:postgres": "bun prisma db push --schema prisma/schema.prisma --force-reset --accept-data-loss",
+		"pushreset:mysql": "bun prisma db push --schema prisma/mysql/schema.prisma --force-reset --accept-data-loss",
+		"pushreset:sqlite": "bun prisma db push --schema prisma/sqlite/schema.prisma --force-reset --accept-data-loss",
 		"clone:sqlite": "bun run scripts/cloneSqlite.ts",
 		"clone:mysql": "bun run scripts/cloneMysql.ts"
 	},
