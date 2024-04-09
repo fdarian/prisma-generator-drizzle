@@ -7,6 +7,7 @@ import {
 	object,
 	optional,
 	safeParse,
+	union,
 } from 'valibot'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
 import { BooleanInStr, withDefault } from './valibot-schema'
@@ -16,6 +17,10 @@ const Config = object({
 	moduleResolution: optional(ModuleResolution),
 	verbose: optional(BooleanInStr),
 	formatter: optional(literal('prettier')),
+	dateMode: withDefault(
+		optional(union([literal('string'), literal('date')])),
+		'date'
+	),
 })
 export type Config = Output<typeof Config>
 
