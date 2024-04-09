@@ -2,9 +2,14 @@ import type { GeneratorOptions } from '@prisma/generator-helper'
 import { type Config, parseConfig } from '~/lib/config'
 import { resolveModuleResolution } from './module-resolution'
 
+type Output = {
+	isSingleFile: boolean
+	path: string
+}
+
 type Generator = {
-	outputBasePath: string
 	moduleResolution?: string
+	output: Output
 	//
 	dmmf: GeneratorOptions['dmmf']
 	config: Config
@@ -16,10 +21,11 @@ let generator_: Generator | undefined
 
 export function initializeGenerator(options: GeneratorOptions) {
 	const config = parseConfig(options.generator.config)
+	const output = getOutputConfig(options)
 
 	const context: Generator = {
 		moduleResolution: config.moduleResolution ?? resolveModuleResolution(),
-		outputBasePath: getBasePath(options),
+		output,
 		//
 		dmmf: options.dmmf,
 		config,
@@ -29,10 +35,22 @@ export function initializeGenerator(options: GeneratorOptions) {
 	return context
 }
 
-function getBasePath(options: GeneratorOptions) {
+function getOutputConfig(options: GeneratorOptions): Output {
 	const basePath = options.generator.output?.value
 	if (!basePath) throw new Error('No output path specified')
-	return basePath
+
+	const isSingleFile = basePath.endsWith('.ts')
+	if (isSingleFile) {
+		return {
+			isSingleFile: true,
+			path: basePath,
+		}
+	}
+
+	return {
+		isSingleFile: false,
+		path: basePath,
+	}
 }
 
 // #endregion

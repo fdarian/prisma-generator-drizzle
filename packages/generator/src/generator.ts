@@ -14,26 +14,26 @@ import {
 	type ModelModule,
 	generateModelModules,
 } from './lib/adapter/modules/model'
+import {
+	type RelationalModule,
+	generateRelationalModules,
+} from './lib/adapter/modules/relational'
+import { generateImplicitModules } from './lib/adapter/modules/relational'
+import type { RelationalModuleSet } from './lib/adapter/modules/relational'
+import { generateSchemaModules as generateSchemaModule } from './lib/adapter/modules/relational'
+import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
 import { logger } from './lib/logger'
 import {
 	type ImportValue,
 	type NamedImport,
 	namedImport,
 } from './lib/syntaxes/imports'
-import type { Module } from './lib/syntaxes/module'
+import { type Module, createModule } from './lib/syntaxes/module'
 import {
-	isRelationalQueryEnabled,
-	initializeGenerator,
 	getGenerator,
+	initializeGenerator,
+	isRelationalQueryEnabled,
 } from './shared/generator-context'
-import {
-	generateRelationalModules,
-	type RelationalModule,
-} from './lib/adapter/modules/relational'
-import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
-import { generateImplicitModules } from './lib/adapter/modules/relational'
-import type { RelationalModuleSet } from './lib/adapter/modules/relational'
-import { generateSchemaModules as generateSchemaModule } from './lib/adapter/modules/relational'
 
 const { version } = require('../package.json')
 
@@ -60,18 +60,21 @@ generatorHandler({
 
 		if (isRelationalQueryEnabled()) {
 			const relational = generateRelationalModules(modules.models)
-			const implicit = generateImplicitModules(adapter, relational)
-			const schema = generateSchemaModule({
-				...modules,
-				relational: relational,
-				implicitModels: implicit.models,
-				implicitRelational: implicit.relational,
-			})
-
-			modules.schema = schema
 			modules.relational = relational
+
+			const implicit = generateImplicitModules(adapter, relational)
 			modules.implicitModels = implicit.models
 			modules.implicitRelational = implicit.relational
+
+			if (!getGenerator().output.isSingleFile) {
+				const schema = generateSchemaModule({
+					...modules,
+					relational: relational,
+					implicitModels: implicit.models,
+					implicitRelational: implicit.relational,
+				})
+				modules.schema = schema
+			}
 		}
 
 		writeModules(modules)
@@ -122,15 +125,60 @@ export function reduceImports(imports: ImportValue[]) {
 }
 
 function writeModules(modules: GeneratedModules) {
-	const basePath = getGenerator().outputBasePath
+	const outputPath = getGenerator().output.path
 
-	fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
-	fs.mkdirSync(basePath, { recursive: true })
+	if (getGenerator().output.isSingleFile) {
+		if (hasSubFolder(outputPath)) {
+			fs.mkdirSync(getParentPath(outputPath), { recursive: true })
+		}
+
+		fs.writeFileSync(outputPath, createDrizzleModule(modules).code)
+		return
+	}
+
+	fs.existsSync(outputPath) && fs.rmSync(outputPath, { recursive: true })
+	fs.mkdirSync(outputPath, { recursive: true })
 
 	for (const module of flattenModules(modules)) {
-		const writeLocation = path.join(basePath, `${module.name}.ts`)
+		const writeLocation = path.join(outputPath, `${module.name}.ts`)
 		fs.writeFileSync(writeLocation, module.code)
 	}
+}
+
+function getParentPath(output: string) {
+	return output.split('/').slice(0, -1).join('/')
+}
+
+function hasSubFolder(output: string) {
+	return output.split('/').length > 1
+}
+
+/**
+ * A single file output module where it contains
+ * all schema definitions and its relations
+ */
+function createDrizzleModule(modules: GeneratedModules) {
+	return createModule({
+		name: getSingleOutputFileName(),
+		declarations: flattenModules(modules).flatMap((module) =>
+			module.declarations.map((declaration) => {
+				return {
+					...declaration,
+					imports: declaration.imports.filter(
+						(i) => !i.module.startsWith('./')
+					),
+				}
+			})
+		),
+	})
+}
+
+function getSingleOutputFileName() {
+	const lastSegment = getGenerator().output.path.split('/').at(-1)
+	if (lastSegment == null) {
+		throw new Error('Last segment is undefined')
+	}
+	return lastSegment.replace('.ts', '')
 }
 
 /**

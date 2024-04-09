@@ -3,14 +3,13 @@ import {
 	type Output,
 	type SchemaIssues,
 	flatten,
+	literal,
 	object,
 	optional,
 	safeParse,
-	literal,
 } from 'valibot'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
-import { withDefault } from './valibot-schema'
-import { BooleanInStr } from './valibot-schema'
+import { BooleanInStr, withDefault } from './valibot-schema'
 
 const Config = object({
 	relationalQuery: withDefault(optional(BooleanInStr), true),
