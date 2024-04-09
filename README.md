@@ -66,12 +66,16 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 | Key             | Description                       | Default     | Example     |
 | --------------- | --------------------------------- | ----------- | ----------- |
 | output          | Change the output                 | "./drizzle" | "../models" |
+|    | Generate single output file                 |  | "drizzle.ts" |
 | formatter       | Run prettier after generation     | -           | "prettier"  |
 | relationalQuery | Flag to generate relational query | true        | false       |
 | moduleResolution         | Specify the [module resolution](https://www.typescriptlang.org/tsconfig#moduleResolution) that will affect the import style | _*auto_           | nodenext        |
 | verbose         | Flag to enable verbose logging    | -           | true        |
+| **dateMode | Change the generated mode for date | "date" ||
 
 _* It will find the closest tsconfig from the current working directory. Note that [extends](https://www.typescriptlang.org/tsconfig#extends) is not supported_
+
+_*Does not work with sqlite_
 
 ### Setting up [relational query](https://orm.drizzle.team/docs/rqb)
 
