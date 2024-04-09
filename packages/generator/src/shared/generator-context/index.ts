@@ -10,6 +10,7 @@ type Output = {
 type Generator = {
 	moduleResolution?: string
 	output: Output
+	dateMode: Config['dateMode']
 	//
 	dmmf: GeneratorOptions['dmmf']
 	config: Config
@@ -26,6 +27,7 @@ export function initializeGenerator(options: GeneratorOptions) {
 	const context: Generator = {
 		moduleResolution: config.moduleResolution ?? resolveModuleResolution(),
 		output,
+		dateMode: config.dateMode,
 		//
 		dmmf: options.dmmf,
 		config,
