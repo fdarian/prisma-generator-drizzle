@@ -128,6 +128,10 @@ function writeModules(modules: GeneratedModules) {
 	const outputPath = getGenerator().output.path
 
 	if (getGenerator().output.isSingleFile) {
+		if (hasSubFolder(outputPath)) {
+			fs.mkdirSync(getParentPath(outputPath), { recursive: true })
+		}
+
 		fs.writeFileSync(outputPath, createDrizzleModule(modules).code)
 		return
 	}
@@ -139,6 +143,14 @@ function writeModules(modules: GeneratedModules) {
 		const writeLocation = path.join(outputPath, `${module.name}.ts`)
 		fs.writeFileSync(writeLocation, module.code)
 	}
+}
+
+function getParentPath(output: string) {
+	return output.split('/').slice(0, -1).join('/')
+}
+
+function hasSubFolder(output: string) {
+	return output.split('/').length > 1
 }
 
 /**
