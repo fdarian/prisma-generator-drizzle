@@ -7,3 +7,6 @@ prisma/mysql/schema.prisma
 prisma/sqlite/schema.prisma
 prisma/sqlite/test.db
 prisma/sqlite/test.db-journal
+
+# Generated on-the-fly
+.temp
