@@ -96,6 +96,10 @@ function handleFormatting() {
 				stdio: 'inherit',
 			})
 			break
+		default:
+			execSync(`${generator.config.formatter} ${generator.output.path}`, {
+				stdio: 'inherit',
+			})
 	}
 }
 
