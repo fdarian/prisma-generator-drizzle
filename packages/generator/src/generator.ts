@@ -85,8 +85,18 @@ generatorHandler({
 function handleFormatting() {
 	const generator = getGenerator()
 	if (generator.config.formatter == null) return
-
-	execSync(`prettier --write ${generator.output.path}`, { stdio: 'inherit' })
+	switch (generator.config.formatter) {
+		case 'prettier':
+			execSync(`prettier --write ${generator.output.path}`, {
+				stdio: 'inherit',
+			})
+			break
+		case 'biome':
+			execSync(`biome format --write ${generator.output.path}`, {
+				stdio: 'inherit',
+			})
+			break
+	}
 }
 
 export function reduceImports(imports: ImportValue[]) {
