@@ -2,7 +2,7 @@ import { camelCase, kebabCase } from 'lodash'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
-import { getGenerator } from '~/shared/generator-context'
+import { getDateMode } from '~/shared/date-mode'
 import { createAdapter } from '../adapter'
 import {
 	type CreateFieldInput,
@@ -105,7 +105,7 @@ export const postgresAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['timestamp'], coreModule)],
-				func: `timestamp('${getDbName(field)}', { mode: '${getGenerator().dateMode}', precision: 3 })`, // biome-ignore format: keep one line
+				func: `timestamp('${getDbName(field)}', { mode: '${getDateMode(field)}', precision: 3 })`, // biome-ignore format: keep one line
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#decimal

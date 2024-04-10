@@ -1,7 +1,7 @@
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
-import { getGenerator } from '~/shared/generator-context'
+import { getDateMode } from '~/shared/date-mode'
 import { createAdapter } from '../adapter'
 import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
 
@@ -100,7 +100,7 @@ export const sqliteAdapter = createAdapter({
 		// Prisma: https://arc.net/l/quote/grwnsumx
 		// Drizzle: https://arc.net/l/quote/fpupjigo
 		DateTime(field) {
-			if (getGenerator().dateMode !== 'date') {
+			if (getDateMode(field) !== 'date') {
 				throw new Error('Only dateMode `date` is supported for sqlite')
 			}
 
