@@ -4,11 +4,32 @@ on:
   push:
     branches: ['main']
   pull_request:
-    branches: ['main']
+    branches: ['*']
 
 jobs:
-  build:
+  static:
+    name: ʦ Static analysis
     runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: 📥 Install deps
+        run: bun install
+
+      - name: 🔎 Run checks
+        run: bunx turbo check
+
+  test:
+    name: ⚡ Test
+    runs-on: ubuntu-latest
+
+    env:
+      PG_DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/testdb
+      MYSQL_DATABASE_URL: mysql://root:mysql@0.0.0.0:3306/testdb
 
     services:
       mysql:
@@ -39,17 +60,14 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v4
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v1
-      - name: Install turbo globally
-        run: bun -g add turbo
-      - name: Install packages
+      - name: ⎔ Setup bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: 📥 Install deps
         run: bun install
 
-      - name: Set environment variables
-        run: |
-          echo "PG_DATABASE_URL=postgres://postgres:postgres@0.0.0.0:5432/testdb" >> $GITHUB_ENV
-          echo "MYSQL_DATABASE_URL=mysql://root:mysql@0.0.0.0:3306/testdb" >> $GITHUB_ENV
-      - name: Test
-        run: turbo test
+      - name: 🧪 Test
+        run: bunx turbo test

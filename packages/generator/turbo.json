@@ -1,0 +1,11 @@
+{
+	"extends": ["//"],
+	"$schema": "https://turbo.build/schema.json",
+	"pipeline": {
+		"check:biome": {},
+		"check:type": {},
+		"check": {
+			"dependsOn": ["check:biome", "check:type"]
+		}
+	}
+}

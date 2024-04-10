@@ -13,6 +13,8 @@
 	"scripts": {
 		"start": "node dist/bin.js",
 		"dev": "tsup src/generator.ts src/bin.ts --watch",
+		"check:biome": "biome ci .",
+		"check:type": "tsc --noEmit",
 		"build": "tsup src/generator.ts src/bin.ts --clean",
 		"prepack": "bun run build",
 		"test": "bun test"
