@@ -1,7 +1,7 @@
 {
 	"$schema": "https://biomejs.dev/schemas/1.6.0/schema.json",
 	"files": {
-		"ignore": ["**/dist", "packages/usages/prisma/**"]
+		"ignore": ["**/dist", "packages/usages/prisma/**", "strip-json-comments.ts"]
 	},
 	"organizeImports": {
 		"enabled": true
