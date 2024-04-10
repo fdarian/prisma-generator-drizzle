@@ -7,6 +7,7 @@ import {
 	object,
 	optional,
 	safeParse,
+	union,
 } from 'valibot'
 import { DateMode } from '~/shared/date-mode'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
@@ -16,7 +17,7 @@ const Config = object({
 	relationalQuery: withDefault(optional(BooleanInStr), true),
 	moduleResolution: optional(ModuleResolution),
 	verbose: optional(BooleanInStr),
-	formatter: optional(literal('prettier')),
+	formatter: optional(union([literal('prettier'), literal('biome')])),
 	dateMode: optional(DateMode),
 })
 export type Config = Output<typeof Config>
