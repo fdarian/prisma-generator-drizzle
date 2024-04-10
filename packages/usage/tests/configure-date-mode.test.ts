@@ -36,7 +36,7 @@ test('global config', async () => {
 	)
 })
 
-test.only('field-level config', async () => {
+test('field-level config', async () => {
 	const temp = await tempHandler.prepare()
 
 	await Bun.write(
