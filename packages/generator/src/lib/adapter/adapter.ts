@@ -6,7 +6,7 @@ import type { ImportValue } from '../syntaxes/imports'
 import type { Module } from '../syntaxes/module'
 import type { FieldFunc } from './fields/createField'
 
-type ParsableField = PrismaScalarField | PrismaEnumField
+export type ParsableField = PrismaScalarField | PrismaEnumField
 
 type DeclarationFunc = { imports: ImportValue[]; func: string }
 
