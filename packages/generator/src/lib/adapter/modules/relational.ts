@@ -1,14 +1,14 @@
-import { isEmpty } from 'lodash'
-import { isRelationField } from '~/lib/prisma-helpers/field'
-import { createModule, type Module } from '~/lib/syntaxes/module'
-import { generateTableRelationsDeclaration } from '../declarations/generateTableRelationsDeclaration'
-import { createModelModule, type ModelModule } from './model'
-import type { BaseGeneratedModules } from './sets/base-generated-modules'
-import { deduplicateModels } from '~/generator'
 import type { DMMF } from '@prisma/generator-helper'
-import { generateSchemaDeclaration } from '../declarations/generateSchemaDeclaration'
+import { isEmpty } from 'lodash'
+import { deduplicateModels } from '~/generator'
+import { isRelationField } from '~/lib/prisma-helpers/field'
+import { type Module, createModule } from '~/lib/syntaxes/module'
 import { getGenerator } from '~/shared/generator-context'
+import { generateSchemaDeclaration } from '../declarations/generateSchemaDeclaration'
+import { generateTableRelationsDeclaration } from '../declarations/generateTableRelationsDeclaration'
 import type { Adapter } from '../types'
+import { type ModelModule, createModelModule } from './model'
+import type { BaseGeneratedModules } from './sets/base-generated-modules'
 
 export type RelationalModuleSet = {
 	relational: RelationalModule[]

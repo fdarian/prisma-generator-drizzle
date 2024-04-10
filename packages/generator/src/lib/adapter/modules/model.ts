@@ -1,8 +1,8 @@
 import type { DMMF } from '@prisma/generator-helper'
+import { getGenerator } from '~/shared/generator-context'
 import { getModelModuleName } from '../../prisma-helpers/model'
 import { createModule } from '../../syntaxes/module'
 import { generateTableDeclaration } from '../declarations/generateTableDeclaration'
-import { getGenerator } from '~/shared/generator-context'
 import type { Adapter } from '../types'
 
 export function generateModelModules(adapter: Adapter) {
