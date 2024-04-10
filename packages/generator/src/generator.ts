@@ -86,7 +86,7 @@ function handleFormatting() {
 	const generator = getGenerator()
 	if (generator.config.formatter == null) return
 
-	execSync(`prettier --write ${generator.outputBasePath}`, { stdio: 'inherit' })
+	execSync(`prettier --write ${generator.output.path}`, { stdio: 'inherit' })
 }
 
 export function reduceImports(imports: ImportValue[]) {
