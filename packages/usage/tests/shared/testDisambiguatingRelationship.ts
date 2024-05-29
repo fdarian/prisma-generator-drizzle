@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { inArray } from 'drizzle-orm'
-import { matchesId, shouldReturnOne, throwIfnull } from 'tests/utils/query'
+import { matchesId, throwIfnull } from 'tests/utils/query'
 import type { TestContext } from 'tests/utils/types'
 
 export function testDisambiguatingRelationship(ctx: TestContext) {
@@ -197,19 +197,17 @@ export function testDisambiguatingRelationship(ctx: TestContext) {
 			// --
 
 			async function prepareCurrency(ctx: TestContext) {
-				return ctx.db
+				const currency = { code: createId() }
+				await ctx.db
 					.insert(ctx.schema.disambiguatingCurrencies)
-					.values({ code: createId() })
-					.returning()
-					.then(shouldReturnOne)
+					.values(currency)
+				return currency
 			}
 
 			async function prepareCountry(ctx: TestContext) {
-				return ctx.db
-					.insert(ctx.schema.disambiguatingCountries)
-					.values({ id: createId() })
-					.returning()
-					.then(shouldReturnOne)
+				const country = { id: createId() }
+				await ctx.db.insert(ctx.schema.disambiguatingCountries).values(country)
+				return country
 			}
 
 			async function prepareRelation(
