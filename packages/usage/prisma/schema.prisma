@@ -186,3 +186,17 @@ model Disambiguating_Sale {
 }
 
 // #endregion
+
+// #region https://github.com/farreldarian/prisma-generator-drizzle/issues/55
+
+model Disambiguating_Country {
+  id         String                    @id @default(cuid())
+  currencies Disambiguating_Currency[]
+}
+
+model Disambiguating_Currency {
+  code      String                   @id @unique
+  countries Disambiguating_Country[]
+}
+
+// #endregion

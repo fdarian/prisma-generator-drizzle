@@ -1,9 +1,10 @@
 import { createId } from '@paralleldrive/cuid2'
 import { inArray } from 'drizzle-orm'
-import { throwIfnull } from 'tests/utils/query'
+import { matchesId, throwIfnull } from 'tests/utils/query'
 import type { TestContext } from 'tests/utils/types'
 
-export function testDisambiguatingRelationship({ db, schema }: TestContext) {
+export function testDisambiguatingRelationship(ctx: TestContext) {
+	const { db, schema } = ctx
 	const taxReceiver = { id: createId() }
 	const merchant = { id: createId() }
 	const customer = { id: createId() }
@@ -181,6 +182,72 @@ export function testDisambiguatingRelationship({ db, schema }: TestContext) {
 				payment: paymentTransfer,
 				tax: taxTransfer,
 			})
+		})
+
+		// https://github.com/farreldarian/prisma-generator-drizzle/issues/55
+		test('implicit with pk other than `id`', async () => {
+			const country = await prepareCountry(ctx)
+			const currency = await prepareCurrency(ctx)
+			await prepareRelation(ctx, { country, currency })
+
+			const result = await fetchCountryWithCurrencies(ctx, country.id)
+
+			expect(result).toStrictEqual({ currencies: [{ code: currency.code }] })
+
+			// --
+
+			async function prepareCurrency(ctx: TestContext) {
+				const currency = { code: createId() }
+				await ctx.db
+					.insert(ctx.schema.disambiguatingCurrencies)
+					.values(currency)
+				return currency
+			}
+
+			async function prepareCountry(ctx: TestContext) {
+				const country = { id: createId() }
+				await ctx.db.insert(ctx.schema.disambiguatingCountries).values(country)
+				return country
+			}
+
+			async function prepareRelation(
+				ctx: TestContext,
+				args: { country: { id: string }; currency: { code: string } }
+			) {
+				await ctx.db
+					.insert(ctx.schema.disambiguatingCountriesToDisambiguatingCurrencies)
+					.values({
+						A: args.country.id,
+						B: args.currency.code,
+					})
+			}
+
+			async function fetchCountryWithCurrencies(
+				ctx: TestContext,
+				countryId: string
+			) {
+				return ctx.db.query.disambiguatingCountries
+					.findFirst({
+						where: matchesId(countryId),
+						with: {
+							currencies: {
+								with: {
+									disambiguatingCurrency: {
+										columns: {
+											code: true,
+										},
+									},
+								},
+							},
+						},
+					})
+					.then(throwIfnull)
+					.then((result) => ({
+						currencies: result.currencies.map(
+							(currency) => currency.disambiguatingCurrency
+						),
+					}))
+			}
 		})
 	})
 }

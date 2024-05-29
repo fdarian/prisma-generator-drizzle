@@ -74,7 +74,7 @@ function getManyToManyRelation(
 	ctx: GenerateTableRelationsInput
 ) {
 	const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
-	const joinTable = createImplicitJoinTable(field.relationName, [
+	const joinTable = createImplicitJoinTable(ctx, field.relationName, [
 		ctx.modelModule.model,
 		opposingModel,
 	])
@@ -189,6 +189,7 @@ function createRelationOpts(input: {
  * @param models Two models having a many-to-many relationship
  */
 function createImplicitJoinTable(
+	ctx: GenerateTableRelationsInput,
 	baseName: string,
 	models: [DMMF.Model, DMMF.Model]
 ) {
@@ -227,7 +228,7 @@ function createImplicitJoinTable(
 				type: pair[0],
 				// relationName: `${baseName}_A`,
 				relationFromFields: ['A'],
-				relationToFields: ['id'],
+				relationToFields: [findModelPrimaryKey(ctx.datamodel, pair[0]).name],
 				isGenerated: false,
 				isUpdatedAt: false,
 			},
@@ -256,7 +257,7 @@ function createImplicitJoinTable(
 				type: pair[1],
 				// relationName: `${baseName}_B`,
 				relationFromFields: ['B'],
-				relationToFields: ['id'],
+				relationToFields: [findModelPrimaryKey(ctx.datamodel, pair[1]).name],
 				isGenerated: false,
 				isUpdatedAt: false,
 			},
@@ -268,6 +269,15 @@ function createImplicitJoinTable(
 	} satisfies DMMF.Model
 
 	return { varName, baseName, model, pair }
+}
+
+function findModelPrimaryKey(datamodel: DMMF.Datamodel, modelName: string) {
+	const model = datamodel.models.find((model) => model.name === modelName)
+	if (model == null) throw new Error(`Model ${modelName} not found`)
+	const pkField = model.fields.find((field) => field.isId)
+	if (pkField == null)
+		throw new Error(`Primary key not found in model ${modelName}`)
+	return pkField
 }
 
 function findOpposingRelationModel(
