@@ -125,6 +125,8 @@ model Field {
   stringList String[] // -mysql -sqlite
   bytes      Bytes?
   json       Json? // -sqlite
+  /// drizzle.type ../custom-types::CustomJson
+  cusomJsonList   Json[] // -sqlite
   enum       Enum? // -sqlite
 }
 

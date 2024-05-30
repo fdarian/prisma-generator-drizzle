@@ -71,7 +71,7 @@ function getCustomType(field: DMMF.Field) {
 	const [module, type] = splits
 	return {
 		imports: namedImport([type], module),
-		code: `.$type<${type}>()`,
+		code: `.$type<${type}${field.isList ? '[]' : ''}>()`,
 	}
 }
 
