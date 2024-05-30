@@ -70,3 +70,7 @@ export function isRelationalQueryEnabled() {
 export function getModuleResolution() {
 	return getGenerator().config.moduleResolution
 }
+
+export function getVerbatimModuleSyntax() {
+	return getGenerator().config.verbatimModuleSyntax
+}
