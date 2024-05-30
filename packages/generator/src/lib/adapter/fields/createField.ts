@@ -69,8 +69,9 @@ function getCustomType(field: DMMF.Field) {
 		throw new Error(`Invalid type definition: ${field.documentation}`)
 
 	const [module, type] = splits
+
 	return {
-		imports: namedImport([type], module),
+		imports: namedImport([type], module, true),
 		code: `.$type<${type}>()`,
 	}
 }

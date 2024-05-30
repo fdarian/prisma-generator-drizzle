@@ -7,6 +7,9 @@ import {
 	optional,
 	safeParse,
 	string,
+	union,
+	literal,
+	transform,
 } from 'valibot'
 import { DateMode } from '~/shared/date-mode'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
@@ -15,6 +18,7 @@ import { BooleanInStr, withDefault } from './valibot-schema'
 const Config = object({
 	relationalQuery: withDefault(optional(BooleanInStr), true),
 	moduleResolution: optional(ModuleResolution),
+	verbatimModuleSyntax: transform(optional(union([literal('true'), literal('false')])), val => val === 'true'),
 	verbose: optional(BooleanInStr),
 	formatter: optional(string()),
 	dateMode: optional(DateMode),
