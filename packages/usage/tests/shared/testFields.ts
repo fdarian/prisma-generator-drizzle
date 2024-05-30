@@ -22,12 +22,12 @@ export function testFields({ db, schema, provider }: TestContext) {
 		let data = input as Return
 
 		if (provider === 'sqlite') {
-			const { enum: _, json, stringList, ...rest } = data
+			const { enum: _, json, stringList, cusomJsonList, ...rest } = data
 			data = rest as Return
 		}
 
 		if (provider === 'mysql') {
-			const { stringList, ...rest } = data
+			const { stringList, cusomJsonList, ...rest } = data
 			data = rest as Return
 		}
 
@@ -51,6 +51,7 @@ export function testFields({ db, schema, provider }: TestContext) {
 				bytes: Buffer.from('hello world'),
 				enum: 'A',
 				stringList: ['John', 'Doe'],
+				cusomJsonList: [{ foo: "bar" }]
 			})
 			// --
 
@@ -75,6 +76,9 @@ export function testFields({ db, schema, provider }: TestContext) {
 				boolean: true,
 				float: 0.123,
 				stringList: [],
+				cusomJsonList: [
+					{ foo: "bar" },
+				]
 			})
 			// --
 
