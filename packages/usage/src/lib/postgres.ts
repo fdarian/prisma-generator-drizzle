@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import { schema } from 'prisma/drizzle/schema'
-import { object, parse, string, url } from 'valibot'
+import { url, object, parse, string } from 'valibot'
 
 const env = parse(
 	object({
