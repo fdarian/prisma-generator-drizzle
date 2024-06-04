@@ -144,16 +144,18 @@ export function reduceImports(imports: ImportValue[]) {
 	]
 }
 
-type ModuleKey = string & { _type: 'ModuleKey' }
+const TYPE_PREFIX = '_$type_'
+type ModuleKey = `_${string}_${string}`
 function getModuleKey(import_: ImportValue) {
-	if (import_.isTypeImport) return `$type${import_.module}` as ModuleKey
+	if (import_.isTypeImport)
+		return `${TYPE_PREFIX}${import_.module}` as ModuleKey
 	return import_.module as ModuleKey
 }
 function isTypeModuleKey(name: ModuleKey) {
-	return name.includes('$type')
+	return name.includes(TYPE_PREFIX)
 }
 function parseModuleKey(name: ModuleKey) {
-	return name.replace('$type', '')
+	return name.replace(TYPE_PREFIX, '')
 }
 
 function writeModules(modules: GeneratedModules) {
