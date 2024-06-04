@@ -133,7 +133,13 @@ export function reduceImports(imports: ImportValue[]) {
 				return accum.set(getModuleKey(import_), imports)
 			}),
 			(map) => Array.from(map),
-			map(([key, names]) => namedImport(Array.from(names), parseModuleKey(key)))
+			map(([key, names]) =>
+				namedImport(
+					Array.from(names),
+					parseModuleKey(key),
+					isTypeModuleKey(key)
+				)
+			)
 		),
 	]
 }
@@ -142,6 +148,9 @@ type ModuleKey = string & { _type: 'ModuleKey' }
 function getModuleKey(import_: ImportValue) {
 	if (import_.isTypeImport) return `$type${import_.module}` as ModuleKey
 	return import_.module as ModuleKey
+}
+function isTypeModuleKey(name: ModuleKey) {
+	return name.includes('$type')
 }
 function parseModuleKey(name: ModuleKey) {
 	return name.replace('$type', '')
