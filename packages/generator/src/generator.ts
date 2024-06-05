@@ -85,21 +85,30 @@ generatorHandler({
 function handleFormatting() {
 	const generator = getGenerator()
 	if (generator.config.formatter == null) return
-	switch (generator.config.formatter) {
-		case 'prettier':
-			execSync(`prettier --write ${generator.output.path}`, {
-				stdio: 'inherit',
-			})
-			break
-		case 'biome':
-			execSync(`biome format --write ${generator.output.path}`, {
-				stdio: 'inherit',
-			})
-			break
-		default:
-			execSync(`${generator.config.formatter} ${generator.output.path}`, {
-				stdio: 'inherit',
-			})
+
+	try {
+		switch (generator.config.formatter) {
+			case 'prettier':
+				execSync(`prettier --write ${generator.output.path}`, {
+					stdio: 'inherit',
+				})
+				break
+			case 'biome':
+				execSync(`biome format --write ${generator.output.path}`, {
+					stdio: 'inherit',
+				})
+				break
+			default:
+				execSync(`${generator.config.formatter} ${generator.output.path}`, {
+					stdio: 'inherit',
+				})
+		}
+	} catch (e) {
+		if (generator.config.abortOnFailedFormatting) {
+			throw e
+		}
+
+		logger.log('Failed to format the generated schema')
 	}
 }
 
