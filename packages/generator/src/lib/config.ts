@@ -17,6 +17,7 @@ const Config = object({
 	moduleResolution: optional(ModuleResolution),
 	verbose: optional(BooleanInStr),
 	formatter: optional(string()),
+	abortOnFailedFormatting: withDefault(optional(BooleanInStr), true),
 	dateMode: optional(DateMode),
 })
 export type Config = Output<typeof Config>
