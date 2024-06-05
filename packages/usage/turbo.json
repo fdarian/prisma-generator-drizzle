@@ -17,6 +17,7 @@
 		},
 		"test": {
 			"cache": false,
+			"env": ["PG_DATABASE_URL", "MYSQL_DATABASE_URL"],
 			"dependsOn": [
 				"^build",
 				"pushreset:postgres",
