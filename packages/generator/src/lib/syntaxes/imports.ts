@@ -30,7 +30,7 @@ export function defaultImportValue(
 		isTypeImport,
 		render() {
 			// biome-ignore format: off
-			return `import ${isTypeImport ? 'type' : ''} ${name} from '${renderImportPath(path)}';`
+			return `import ${isTypeImport ? 'type ' : ''}${name} from '${renderImportPath(path)}';`
 		},
 	}
 }
