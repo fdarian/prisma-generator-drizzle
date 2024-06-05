@@ -122,20 +122,40 @@ export function reduceImports(imports: ImportValue[]) {
 		...plan.skipped,
 		...pipe(
 			plan.toReduce,
-			reduce(new Map<string, Set<string>>(), (accum, command) => {
-				if (command.type !== 'namedImport') return accum
+			reduce(new Map<ModuleKey, Set<string>>(), (accum, import_) => {
+				if (import_.type !== 'namedImport') return accum
 
-				const imports = new Set(accum.get(command.module))
-				for (const name of command.names) {
+				const imports = new Set(accum.get(getModuleKey(import_)))
+				for (const name of import_.names) {
 					imports.add(name)
 				}
 
-				return accum.set(command.module, imports)
+				return accum.set(getModuleKey(import_), imports)
 			}),
 			(map) => Array.from(map),
-			map(([path, names]) => namedImport(Array.from(names), path))
+			map(([key, names]) =>
+				namedImport(
+					Array.from(names),
+					parseModuleKey(key),
+					isTypeModuleKey(key)
+				)
+			)
 		),
 	]
+}
+
+const TYPE_PREFIX = '_$type_'
+type ModuleKey = `_${string}_${string}`
+function getModuleKey(import_: ImportValue) {
+	if (import_.isTypeImport)
+		return `${TYPE_PREFIX}${import_.module}` as ModuleKey
+	return import_.module as ModuleKey
+}
+function isTypeModuleKey(name: ModuleKey) {
+	return name.includes(TYPE_PREFIX)
+}
+function parseModuleKey(name: ModuleKey) {
+	return name.replace(TYPE_PREFIX, '')
 }
 
 function writeModules(modules: GeneratedModules) {
