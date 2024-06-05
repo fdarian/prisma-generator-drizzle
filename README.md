@@ -1,5 +1,7 @@
 # prisma-generator-drizzle
 
+[![Test](https://github.com/farreldarian/prisma-generator-drizzle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/farreldarian/prisma-generator-drizzle/actions/workflows/test.yml)
+
 **prisma-generator-drizzle** is a [Prisma](https://www.prisma.io/) generator that lets you generate a [Drizzle](https://orm.drizzle.team/) schema. It is specifically designed for (existing) projects that are using Prisma and want to migrate to Drizzle, or for projects that want to use both Prisma and Drizzle together.
 
 In this version, the focus is still on the query and mutation capabilities of the generated Drizzle schema.
