@@ -12,7 +12,7 @@ export function namedImport(
 		isTypeImport,
 		render() {
 			// biome-ignore format: off
-			return `import ${isTypeImport ? 'type' : ''} { ${names.join( ', ')} } from '${renderImportPath(path)}';`
+			return `import ${isTypeImport ? 'type ' : ''}{ ${names.join( ', ')} } from '${renderImportPath(path)}';`
 		},
 	}
 }
