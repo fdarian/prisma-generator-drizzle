@@ -1,4 +1,4 @@
-import { coerce, literal, union } from 'valibot'
+import { coerce, picklist } from 'valibot'
 import {
 	type BaseSchema,
 	type OptionalSchema,
@@ -14,9 +14,9 @@ export function withDefault<Schema extends OptionalSchema<BaseSchema>>(
 }
 
 export const BooleanInStr = transform(
-	coerce(union([literal('true'), literal('false')]), (value) => {
+	coerce(picklist(['true', 'false']), (value) => {
 		if (typeof value !== 'string') return value
-		return value.toLowerCase() === 'true'
+		return value.toLowerCase()
 	}),
 	(value) => value === 'true'
 )
