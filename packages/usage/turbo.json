@@ -3,11 +3,13 @@
 	"extends": ["//"],
 	"tasks": {
 		"pushreset:postgres": {
-			"cache": false
+			"cache": false,
+			"env": ["PG_DATABASE_URL"]
 		},
 		"pushreset:mysql": {
 			"cache": false,
-			"dependsOn": ["clone:mysql"]
+			"dependsOn": ["clone:mysql"],
+			"env": ["MYSQL_DATABASE_URL"]
 		},
 		"pushreset:sqlite": {
 			"cache": false,
