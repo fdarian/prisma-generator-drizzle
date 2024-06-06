@@ -1,8 +1,8 @@
 import type { GeneratorOptions } from '@prisma/generator-helper'
 import {
-	flatten,
 	type InferIssue,
 	type InferOutput,
+	flatten,
 	object,
 	optional,
 	safeParse,
@@ -22,7 +22,10 @@ const Config = object({
 })
 export type Config = InferOutput<typeof Config>
 
-type ConfigSchemaIssues = [InferIssue<typeof Config>, ...InferIssue<typeof Config>[]]
+type ConfigSchemaIssues = [
+	InferIssue<typeof Config>,
+	...InferIssue<typeof Config>[],
+]
 
 export function parseConfig(config: GeneratorOptions['generator']['config']) {
 	const parsing = safeParse(Config, config)
@@ -31,7 +34,9 @@ export function parseConfig(config: GeneratorOptions['generator']['config']) {
 }
 
 class ConfigError extends Error {
-	constructor(issues: [InferIssue<typeof Config>, ...InferIssue<typeof Config>[]]) {
+	constructor(
+		issues: [InferIssue<typeof Config>, ...InferIssue<typeof Config>[]]
+	) {
 		super(`[prisma-generator-drizzle] Invalid Config:\n${formatError(issues)}`)
 		this.name = 'ConfigError'
 	}
