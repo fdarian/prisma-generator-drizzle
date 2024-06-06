@@ -1,11 +1,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { brand, object, parse, string, transform } from 'valibot'
+import { brand, object, parse, pipe, string, toLowerCase } from 'valibot'
 import stripJsonComments from '~/lib/strip-json-comments'
 
-export const ModuleResolution = brand(
-	transform(string(), (value) => value.toLowerCase()),
-	'ModuleResolution'
+export const ModuleResolution = pipe(
+	string(),
+	toLowerCase(),
+	brand('ModuleResolution')
 )
 
 export function resolveModuleResolution() {

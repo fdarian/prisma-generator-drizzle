@@ -1,8 +1,8 @@
 import type { GeneratorOptions } from '@prisma/generator-helper'
 import {
-	type Output,
-	type SchemaIssues,
 	flatten,
+	type InferIssue,
+	type InferOutput,
 	object,
 	optional,
 	safeParse,
@@ -10,17 +10,19 @@ import {
 } from 'valibot'
 import { DateMode } from '~/shared/date-mode'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
-import { BooleanInStr, withDefault } from './valibot-schema'
+import { BooleanInStr } from './valibot-schema'
 
 const Config = object({
-	relationalQuery: withDefault(optional(BooleanInStr), true),
+	relationalQuery: optional(BooleanInStr, true),
 	moduleResolution: optional(ModuleResolution),
 	verbose: optional(BooleanInStr),
 	formatter: optional(string()),
-	abortOnFailedFormatting: withDefault(optional(BooleanInStr), true),
+	abortOnFailedFormatting: optional(BooleanInStr, true),
 	dateMode: optional(DateMode),
 })
-export type Config = Output<typeof Config>
+export type Config = InferOutput<typeof Config>
+
+type ConfigSchemaIssues = [InferIssue<typeof Config>, ...InferIssue<typeof Config>[]]
 
 export function parseConfig(config: GeneratorOptions['generator']['config']) {
 	const parsing = safeParse(Config, config)
@@ -29,13 +31,13 @@ export function parseConfig(config: GeneratorOptions['generator']['config']) {
 }
 
 class ConfigError extends Error {
-	constructor(issues: SchemaIssues) {
+	constructor(issues: [InferIssue<typeof Config>, ...InferIssue<typeof Config>[]]) {
 		super(`[prisma-generator-drizzle] Invalid Config:\n${formatError(issues)}`)
 		this.name = 'ConfigError'
 	}
 }
 
-function formatError(issues: SchemaIssues) {
+function formatError(issues: ConfigSchemaIssues) {
 	let message = ''
 
 	const flattened = flatten(issues)
@@ -43,7 +45,7 @@ function formatError(issues: SchemaIssues) {
 		message += `\n- ${flattened.root}`
 	}
 
-	for (const [key, issues] of Object.entries(flattened.nested)) {
+	for (const [key, issues] of Object.entries(flattened.nested ?? {})) {
 		message += `\n- ${key}: ${issues}`
 	}
 

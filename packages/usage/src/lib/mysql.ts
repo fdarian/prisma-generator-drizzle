@@ -1,11 +1,11 @@
 import { drizzle } from 'drizzle-orm/mysql2'
 import mysql from 'mysql2/promise'
 import { schema } from 'prisma/mysql/drizzle/schema'
-import { url, object, parse, string } from 'valibot'
+import { url, object, parse, string, pipe } from 'valibot'
 
 const env = parse(
 	object({
-		MYSQL_DATABASE_URL: string([url()]),
+		MYSQL_DATABASE_URL: pipe(string(), url()),
 	}),
 	process.env
 )

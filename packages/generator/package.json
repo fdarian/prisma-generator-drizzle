@@ -26,7 +26,7 @@
 		"fp-ts": "^2.16.2",
 		"lodash": "^4.17.21",
 		"pluralize": "^8.0.0",
-		"valibot": "^0.30.0"
+		"valibot": "^v0.31.0-rc.12"
 	},
 	"devDependencies": {
 		"@types/lodash": "^4.14.202",

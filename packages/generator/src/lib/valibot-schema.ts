@@ -1,22 +1,13 @@
-import { coerce, picklist } from 'valibot'
+import { boolean, pipe, string, union } from 'valibot'
 import {
-	type BaseSchema,
-	type OptionalSchema,
-	type Output,
 	transform,
 } from 'valibot'
 
-export function withDefault<Schema extends OptionalSchema<BaseSchema>>(
-	schema: Schema,
-	value: Output<Schema['wrapped']>
-) {
-	return transform(schema, (val) => val ?? value)
-}
+export const BooleanInStr = pipe(
+	union([string(), boolean()]),
+	transform(value => {
+		if (typeof value === 'string') return value.toLowerCase() === 'true';
 
-export const BooleanInStr = transform(
-	coerce(picklist(['true', 'false']), (value) => {
-		if (typeof value !== 'string') return value
-		return value.toLowerCase()
-	}),
-	(value) => value === 'true'
+		return value;
+	})
 )
