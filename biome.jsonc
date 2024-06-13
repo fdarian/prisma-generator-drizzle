@@ -3,9 +3,11 @@
 	"files": {
 		"ignore": [
 			"**/dist",
-			"packages/usages/prisma/**",
+			"strip-json-comments.ts",
+			// Generated
 			"**/.temp",
-			"strip-json-comments.ts"
+			"packages/usage/prisma/**",
+			"!packages/usage/prisma/schema.prisma"
 		]
 	},
 	"organizeImports": {
