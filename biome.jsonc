@@ -2,6 +2,7 @@
 	"$schema": "node_modules/@biomejs/biome/configuration_schema.json",
 	"files": {
 		"ignore": [
+			".turbo",
 			"**/dist",
 			"strip-json-comments.ts",
 			// Generated
