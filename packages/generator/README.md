@@ -140,7 +140,7 @@ model User {
 ```
 
 ```ts
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'node:crypto'
 ...
 
 export const users = pgTable('User', {
