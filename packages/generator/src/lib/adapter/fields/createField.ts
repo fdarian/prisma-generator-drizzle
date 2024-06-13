@@ -16,7 +16,9 @@ export type DefineImport = {
 export interface CreateFieldInput {
 	field: DMMF.Field
 	imports?: ImportValue[]
-	func: string | (<T>(opts?: T) => string)
+	func:
+		| string
+		| (<T extends Partial<Record<string, unknown>>>(opts: T) => string)
 	onDefault?: (
 		field: FieldWithDefault
 	) => { code: string; imports?: ImportValue[] } | undefined
@@ -41,7 +43,7 @@ export function createField(input: CreateFieldInput) {
 		)
 	}
 
-	let func = `${typeof input.func === 'string' ? input.func : input.func(custom?.field)}`
+	let func = `${typeof input.func === 'string' ? input.func : input.func(custom?.field ?? {})}`
 
 	// .type<...>()
 	if (custom?.$type) {
