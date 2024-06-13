@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/mysql2'
 import mysql from 'mysql2/promise'
 import { schema } from 'prisma/mysql/drizzle/schema'
-import { url, object, parse, string, pipe } from 'valibot'
+import { url, object, parse, pipe, string } from 'valibot'
 
 const env = parse(
 	object({
