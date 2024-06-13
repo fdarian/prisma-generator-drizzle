@@ -272,7 +272,7 @@ export function flattenModules(modules: GeneratedModules) {
 	return [
 		schema,
 		...Object.values(rest) //
-			.flatMap((mod) => mod), //
+			.flat(), //
 	].filter((module): module is Module => module != null)
 }
 
