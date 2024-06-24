@@ -7,7 +7,8 @@ This example demonstrates how to use [Drizzle ORM](https://orm.drizzle.team/) wi
 1. Install dependencies:
 
 ```bash
-npm install drizzle-orm@beta prisma prisma-generator-drizzle
+bun add drizzle-orm@beta 
+bun add -D prisma prisma-generator-drizzle
 ```
 
 2. Generate Drizzle schema
