@@ -1,6 +1,6 @@
 {
 	"name": "prisma-generator-drizzle-root",
-	"workspaces": ["packages/*"],
+	"workspaces": ["packages/*", "examples/*"],
 	"devDependencies": {
 		"@biomejs/biome": "^1.8.2",
 		"lefthook": "^1.6.16"
