@@ -1,8 +1,11 @@
 # prisma-generator-drizzle
 
+[![Test](https://github.com/farreldarian/prisma-generator-drizzle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/farreldarian/prisma-generator-drizzle/actions/workflows/test.yml)
+
 **prisma-generator-drizzle** is a [Prisma](https://www.prisma.io/) generator that lets you generate a [Drizzle](https://orm.drizzle.team/) schema. It is specifically designed for (existing) projects that are using Prisma and want to migrate to Drizzle, or for projects that want to use both Prisma and Drizzle together.
 
 In this version, the focus is still on the query and mutation capabilities of the generated Drizzle schema.
+
 
 ## Features
 
@@ -16,6 +19,14 @@ https://github.com/farreldarian/prisma-generator-drizzle/assets/62016900/35b5713
 _\*Only supports default scalar for now and more constraints will be added in future_
 
 > This project is still considered as experimental, but you can safely use it for production. Follow the progress on [v1](https://github.com/farreldarian/prisma-generator-drizzle/issues/1).
+
+
+### Get started
+- [Installation](#installation)
+- [Usages](#usages)
+- [Configuration](#configuration)
+- [Example](#example) 
+- [Gotchas](#gotchas)
 
 ## Installation
 
@@ -71,6 +82,7 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 | relationalQuery | Flag to generate relational query | true        | false       |
 | moduleResolution         | Specify the [module resolution](https://www.typescriptlang.org/tsconfig#moduleResolution) that will affect the import style | _*auto_           | nodenext        |
 | verbose         | Flag to enable verbose logging    | -           | true        |
+| abortOnFailedFormatting | Flag to throw exception when formatting fails | true | false |
 | **dateMode | Change the generated mode for date | "date" ||
 
 _* It will find the closest tsconfig from the current working directory. Note that [extends](https://www.typescriptlang.org/tsconfig#extends) is not supported_
@@ -102,6 +114,8 @@ export default defineConfig({
 ```
 
 ### Generate [`.$defaultFn()`](https://arc.net/l/quote/cmywscsv) Custom Default Initializer
+
+> ⚠️ DEPRECATED , will be replace by `drizzle.custom` directive
 
 Add `/// drizzle.default <module>::<named-function-import>` directive above the field definition to generate a custom default initializer.
 
@@ -153,6 +167,9 @@ export const users = pgTable('User', {
 
 ### Generate [`.$type<..>()`](https://orm.drizzle.team/docs/column-types/mysql#customizing-column-data-type) Type Customization
 
+
+> ⚠️ DEPRECATED , will be replace by `drizzle.custom` directive
+
 Add `/// drizzle.type <module>::<named-import>` directive above the field definition.
 
 ```prisma
@@ -194,6 +211,11 @@ export const users = pgTable('User', {
   ...
 })
 ```
+
+## Example
+1. [with-drizzle-prisma](../../examples/with-drizzle-prisma/): using drizzle's prisma extension
+
+
 ## Gotchas
 ### Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'.
 
