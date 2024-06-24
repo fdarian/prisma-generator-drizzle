@@ -28,8 +28,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PG_DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/testdb
-      MYSQL_DATABASE_URL: mysql://root:mysql@0.0.0.0:3306/testdb
+      VITE_PG_DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/testdb
+      VITE_MYSQL_DATABASE_URL: mysql://root:mysql@0.0.0.0:3306/testdb
 
     services:
       mysql:
