@@ -6,6 +6,7 @@
 
 In this version, the focus is still on the query and mutation capabilities of the generated Drizzle schema.
 
+
 ## Features
 
 https://github.com/farreldarian/prisma-generator-drizzle/assets/62016900/35b57135-614e-4e07-920b-9e9a487eb6cb
@@ -18,6 +19,14 @@ https://github.com/farreldarian/prisma-generator-drizzle/assets/62016900/35b5713
 _\*Only supports default scalar for now and more constraints will be added in future_
 
 > This project is still considered as experimental, but you can safely use it for production. Follow the progress on [v1](https://github.com/farreldarian/prisma-generator-drizzle/issues/1).
+
+
+### Get started
+- [Installation](#installation)
+- [Usages](#usages)
+- [Configuration](#configuration)
+- [Example](#example) 
+- [Gotchas](#gotchas)
 
 ## Installation
 
@@ -106,6 +115,8 @@ export default defineConfig({
 
 ### Generate [`.$defaultFn()`](https://arc.net/l/quote/cmywscsv) Custom Default Initializer
 
+> ⚠️ DEPRECATED , will be replace by `drizzle.custom` directive
+
 Add `/// drizzle.default <module>::<named-function-import>` directive above the field definition to generate a custom default initializer.
 
 > NOTE: This will override any `@default(...)` attribute from the schema.
@@ -156,6 +167,9 @@ export const users = pgTable('User', {
 
 ### Generate [`.$type<..>()`](https://orm.drizzle.team/docs/column-types/mysql#customizing-column-data-type) Type Customization
 
+
+> ⚠️ DEPRECATED , will be replace by `drizzle.custom` directive
+
 Add `/// drizzle.type <module>::<named-import>` directive above the field definition.
 
 ```prisma
@@ -197,6 +211,11 @@ export const users = pgTable('User', {
   ...
 })
 ```
+
+## Example
+1. [with-drizzle-prisma](./examples/with-drizzle-prisma/): using drizzle's prisma extension
+
+
 ## Gotchas
 ### Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'.
 
