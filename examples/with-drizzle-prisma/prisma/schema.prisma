@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator drizzle {
+  provider = "prisma-generator-drizzle"
+  output   = "./drizzle.ts"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+}

@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# With Drizzle ORM and Prisma Extension
+
+This example demonstrates how to use [Drizzle ORM](https://orm.drizzle.team/) with the [Prisma](https://www.prisma.io/) extension in a Next.js project.
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install drizzle-orm@beta prisma prisma-generator-drizzle
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Generate Drizzle schema
+```bash
+bun prisma generate
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Define the Drizzle instance with Prisma extension:
+```ts
+// infra/db.ts
+import { PrismaClient } from '@prisma/client'
+import { drizzle } from 'drizzle-orm/prisma/pg'
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+export const db = new PrismaClient().$extends(drizzle())
+```
+
+4. Use the Drizzle schema for querying and mutations:
+```ts
+import { db } from '~/infra/db'
+import { users } from './<path-to-generated-drizzle>';
+
+await db.$drizzle.insert(users).values({ email: 'john@doe.com', name: 'John' });
+const result = await prisma.$drizzle.select().from(users);
+```
 
 ## Learn More
+To learn more about Drizzle ORM and Prisma, check out the following resources:
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- [Drizzle ORM Documentation](https://orm.drizzle.team/docs/overview)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Prisma and Drizzle Integration Guide](https://orm.drizzle.team/docs/prisma)
