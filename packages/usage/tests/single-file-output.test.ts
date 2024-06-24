@@ -1,5 +1,5 @@
+import { execSync } from 'node:child_process'
 import fs from 'node:fs'
-import { $ } from 'bun'
 import { createTempHandler } from './utils/temp'
 
 const tempHandler = createTempHandler()
@@ -11,7 +11,7 @@ afterAll(() => {
 test('generates drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, 'drizzle.ts')
-	await $`bun prisma generate --schema .temp/${temp.name}/schema.prisma`.quiet()
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/drizzle.ts`)).toBe(true)
 })
@@ -19,7 +19,7 @@ test('generates drizzle.ts', async () => {
 test('generates ./drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, './drizzle.ts')
-	await $`bun prisma generate --schema .temp/${temp.name}/schema.prisma`.quiet()
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/drizzle.ts`)).toBe(true)
 })
@@ -27,7 +27,7 @@ test('generates ./drizzle.ts', async () => {
 test('generates sub/drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, 'sub/drizzle.ts')
-	await $`bun prisma generate --schema .temp/${temp.name}/schema.prisma`.quiet()
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/sub/drizzle.ts`)).toBe(true)
 })
@@ -35,7 +35,7 @@ test('generates sub/drizzle.ts', async () => {
 test('generates ./sub/drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, './sub/drizzle.ts')
-	await $`bun prisma generate --schema .temp/${temp.name}/schema.prisma`.quiet()
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/sub/drizzle.ts`)).toBe(true)
 })
@@ -43,7 +43,7 @@ test('generates ./sub/drizzle.ts', async () => {
 test('generates ./sub/multi/drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, './sub/multi/drizzle.ts')
-	await $`bun prisma generate --schema .temp/${temp.name}/schema.prisma`.quiet()
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/sub/multi/drizzle.ts`)).toBe(true)
 })
