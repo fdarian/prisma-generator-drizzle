@@ -35,6 +35,7 @@
 		"bun-types": "^1.0.30",
 		"prisma": "5.15.0",
 		"prisma-generator-drizzle": "workspace:*",
-		"typescript": "5.4.2"
+		"typescript": "5.4.2",
+		"vitest": "^1.6.0"
 	}
 }

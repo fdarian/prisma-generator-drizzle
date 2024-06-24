@@ -5,7 +5,7 @@ const TARGET_PATH = './prisma/sqlite/schema.prisma'
 
 const schema = (await Bun.file(BASE_PATH).text())
 	.replace('postgresql', 'sqlite')
-	.replace('env("PG_DATABASE_URL")', '"file:./test.db"')
+	.replace('env("VITE_PG_DATABASE_URL")', '"file:./test.db"')
 	.replace(/(\/\/ start -sqlite\n)[\s\S]*?(\n\/\/ end -sqlite)/g, '')
 	.replace(/^.*-sqlite.*/gm, '')
 

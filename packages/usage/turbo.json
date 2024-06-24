@@ -4,12 +4,12 @@
 	"tasks": {
 		"pushreset:postgres": {
 			"cache": false,
-			"env": ["PG_DATABASE_URL"]
+			"env": ["VITE_PG_DATABASE_URL"]
 		},
 		"pushreset:mysql": {
 			"cache": false,
 			"dependsOn": ["clone:mysql"],
-			"env": ["MYSQL_DATABASE_URL"]
+			"env": ["VITE_MYSQL_DATABASE_URL"]
 		},
 		"pushreset:sqlite": {
 			"cache": false,
@@ -17,7 +17,7 @@
 		},
 		"test": {
 			"cache": false,
-			"env": ["PG_DATABASE_URL", "MYSQL_DATABASE_URL"],
+			"env": ["VITE_PG_DATABASE_URL", "VITE_MYSQL_DATABASE_URL"],
 			"dependsOn": [
 				"^build",
 				"pushreset:postgres",

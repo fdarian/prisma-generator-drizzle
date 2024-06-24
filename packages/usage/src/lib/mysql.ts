@@ -5,11 +5,11 @@ import { url, object, parse, pipe, string } from 'valibot'
 
 const env = parse(
 	object({
-		MYSQL_DATABASE_URL: pipe(string(), url()),
+		VITE_MYSQL_DATABASE_URL: pipe(string(), url()),
 	}),
 	process.env
 )
 
-const connection = await mysql.createConnection(env.MYSQL_DATABASE_URL)
+const connection = await mysql.createConnection(env.VITE_MYSQL_DATABASE_URL)
 
 export const db = drizzle(connection, { schema, mode: 'default' })
