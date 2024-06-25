@@ -41,6 +41,6 @@
 		"type": "git",
 		"url": "https://github.com/fdarian/prisma-generator-drizzle"
 	},
-	"author": "Farrel Darian <contact@farreldarian.com>",
+	"author": "Farrel Darian <contact@fdarian.com>",
 	"keywords": ["prisma", "drizzle", "generator"]
 }
