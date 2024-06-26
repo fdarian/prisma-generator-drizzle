@@ -25,7 +25,7 @@ export function getCustomDirective(field: DMMF.Field) {
 const ImportSchema = v.object({
 	name: v.union([v.array(v.string()), v.string()]),
 	module: v.string(),
-	type: v.boolean(),
+	type: v.optional(v.boolean()),
 })
 
 const DirectiveSchema = v.object({
