@@ -1,7 +1,12 @@
 import type { DMMF } from '@prisma/generator-helper'
 import { getDirective } from '~/lib/directive'
-import { type ImportValue, namedImport } from '~/lib/syntaxes/imports'
+import {
+	type ImportValue,
+	defaultImportValue,
+	namedImport,
+} from '~/lib/syntaxes/imports'
 import type { MakeRequired, ModifyType, Prettify } from '~/lib/types/utils'
+import { getCustomDirective } from './directives/custom'
 
 export type DefineImport = {
 	module: string
@@ -27,28 +32,52 @@ export function createField(input: CreateFieldInput) {
 
 	let func = `${input.func}`
 
-	// .type<...>()
-	const customType = getCustomType(field)
-	if (customType) {
-		imports = imports.concat(customType.imports)
-		func += customType.code
+	const custom = getCustomDirective(field)
+	if (custom?.imports) {
+		imports = imports.concat(
+			custom.imports.map((def) =>
+				def.name.type === 'default-import'
+					? defaultImportValue(def.name.name, def.module, def.type ?? false)
+					: namedImport(def.name.names, def.module, def.type ?? false)
+			)
+		)
 	}
 
-	const customDefault = getCustomDefault(field)
-	if (customDefault) {
-		imports = imports.concat(customDefault.imports)
-		func += customDefault.code
-	} else if (field.hasDefaultValue) {
-		const _field = field as FieldWithDefault
-		const def = input.onDefault?.(_field) ?? onDefault(_field)
-		if (def) {
-			imports = imports.concat(def.imports ?? [])
-			func += def.code
+	// .type<...>()
+	if (custom?.$type) {
+		func += `.$type<${custom.$type}>()`
+	} else {
+		// Legacy `drizzle.type` directive
+		const customType = getCustomType(field)
+		if (customType) {
+			imports = imports.concat(customType.imports)
+			func += customType.code
+		}
+	}
+
+	let hasDefaultFn = false
+	if (custom?.default) {
+		hasDefaultFn = true
+		func += `.$defaultFn(${custom.default})`
+	} else {
+		// Legacy `drizzle.default` directive
+		const customDefault = getCustomDefault(field)
+		if (customDefault) {
+			hasDefaultFn = true
+			imports = imports.concat(customDefault.imports)
+			func += customDefault.code
+		} else if (field.hasDefaultValue) {
+			const _field = field as FieldWithDefault
+			const def = input.onDefault?.(_field) ?? onDefault(_field)
+			if (def) {
+				imports = imports.concat(def.imports ?? [])
+				func += def.code
+			}
 		}
 	}
 
 	if (field.isId) func += input.onPrimaryKey?.(field) ?? '.primaryKey()'
-	else if (field.isRequired || field.hasDefaultValue || !!customDefault)
+	else if (field.isRequired || field.hasDefaultValue || hasDefaultFn)
 		func += '.notNull()'
 
 	return {
