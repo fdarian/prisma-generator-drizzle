@@ -35,7 +35,7 @@ export function createField(input: CreateFieldInput) {
 				namedImport(
 					typeof def.name === 'string' ? [def.name] : def.name,
 					def.module,
-					def.type ?? false
+					def.$type ?? false
 				)
 			)
 		)
