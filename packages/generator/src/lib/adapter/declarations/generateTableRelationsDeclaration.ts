@@ -137,19 +137,26 @@ function getOneToOneOrManyRelation(
 
 	return createRelation({
 		referenceModelVarName: getModelVarName(field.type),
-		opts: holdsForeignKey({ field, model: ctx.modelModule.model })
-			? createRelationOpts({
-					relationName: field.relationName,
-					from: {
-						modelVarName: getModelVarName(ctx.modelModule.model),
-						fieldNames: opposingField.relationToFields,
-					},
-					to: {
-						modelVarName: getModelVarName(field.type),
-						fieldNames: opposingField.relationFromFields,
-					},
-				})
-			: undefined,
+		opts:
+			holdsForeignKey({ field, model: ctx.modelModule.model }) ||
+			// ⚠️ This is a workaround for the following issue since this case isn't common
+			// https://github.com/fdarian/prisma-generator-drizzle/issues/69#issuecomment-2187174021
+			hasMultipleDisambiguatingRelations({
+				field,
+				model: ctx.modelModule.model,
+			})
+				? createRelationOpts({
+						relationName: field.relationName,
+						from: {
+							modelVarName: getModelVarName(ctx.modelModule.model),
+							fieldNames: opposingField.relationToFields,
+						},
+						to: {
+							modelVarName: getModelVarName(field.type),
+							fieldNames: opposingField.relationFromFields,
+						},
+					})
+				: undefined,
 	})
 }
 
@@ -331,4 +338,22 @@ function opposingIsList(
 ) {
 	const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
 	return findOpposingRelationField(field, opposingModel).isList
+}
+
+function hasMultipleDisambiguatingRelations(args: {
+	field: PrismaRelationField
+	model: DMMF.Model
+}): boolean {
+	let count = 0
+	for (const field of args.model.fields) {
+		if (
+			field.type === args.field.type &&
+			isRelationField(field) &&
+			!hasReference(field)
+		) {
+			count++
+		}
+		if (count > 1) return true
+	}
+	return false
 }
