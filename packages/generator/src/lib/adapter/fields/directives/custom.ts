@@ -1,5 +1,6 @@
 import type { DMMF } from '@prisma/generator-helper'
 import * as v from 'valibot'
+import getErrorMessage from '~/lib/error-message'
 
 const DIRECTIVE = 'drizzle.custom'
 
@@ -9,17 +10,9 @@ export function getCustomDirective(field: DMMF.Field) {
 		return
 	}
 
-	const jsonParsing = safe(() =>
-		JSON.parse(directiveInput.replace(DIRECTIVE, ''))
-	)
-	if (!jsonParsing.ok)
-		throw new Error(`Invalid ${DIRECTIVE} JSON shape\n\n${jsonParsing.error}`)
-
-	const schemaParsing = v.safeParse(DirectiveSchema, jsonParsing.value)
-	if (!schemaParsing.success)
-		throw new InvalidDirectiveShapeError(schemaParsing.issues)
-
-	return schemaParsing.output
+	const parsing = v.safeParse(DirectiveSchema, parseJson(directiveInput))
+	if (!parsing.success) throw new InvalidDirectiveShapeError(parsing.issues)
+	return parsing.output
 }
 
 const ImportSchema = v.object({
@@ -42,19 +35,12 @@ class InvalidDirectiveShapeError extends Error {
 	}
 }
 
-/**
- * Executes a function safely and returns the result or any error that occurred.
- *
- * @template T - The type of the value returned by the function.
- * @param {() => T} func - The function to execute safely.
- * @returns {{ ok: true; value: T } | { ok: false; error: Error }} - An object containing either the result of the function or an error.
- */
-function safe<T>(
-	func: () => T
-): { ok: true; value: T } | { ok: false; error: Error } {
+function parseJson(directiveInput: string) {
 	try {
-		return { ok: true, value: func() } as const
-	} catch (error) {
-		return { ok: false, error: error as Error } as const
+		return JSON.parse(directiveInput.replace(DIRECTIVE, ''))
+	} catch (err) {
+		throw new Error(
+			`Invalid ${DIRECTIVE} JSON shape\n\n${getErrorMessage(err)}`
+		)
 	}
 }
