@@ -1,6 +1,10 @@
 import type { DMMF } from '@prisma/generator-helper'
 import { getDirective } from '~/lib/directive'
-import { type ImportValue, namedImport } from '~/lib/syntaxes/imports'
+import {
+	type ImportValue,
+	defaultImportValue,
+	namedImport,
+} from '~/lib/syntaxes/imports'
 import type { MakeRequired, ModifyType, Prettify } from '~/lib/types/utils'
 import { getCustomDirective } from './directives/custom'
 
@@ -32,11 +36,9 @@ export function createField(input: CreateFieldInput) {
 	if (custom?.imports) {
 		imports = imports.concat(
 			custom.imports.map((def) =>
-				namedImport(
-					typeof def.name === 'string' ? [def.name] : def.name,
-					def.module,
-					def.type ?? false
-				)
+				def.name.type === 'default-import'
+					? defaultImportValue(def.name.name, def.module, def.type ?? false)
+					: namedImport(def.name.names, def.module, def.type ?? false)
 			)
 		)
 	}

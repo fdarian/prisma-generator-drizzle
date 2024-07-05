@@ -15,11 +15,24 @@ export function getCustomDirective(field: DMMF.Field) {
 	return parsing.output
 }
 
+const NamedImportSchema = v.pipe(
+	v.array(v.string()),
+	v.transform((names) => ({
+		type: 'named-import' as const,
+		names,
+	}))
+)
+
+const DefaultImportSchema = v.pipe(
+	v.string(),
+	v.transform((name) => ({
+		type: 'default-import' as const,
+		name,
+	}))
+)
+
 const ImportSchema = v.object({
-	name: v.union([
-		v.array(v.string()), // Named import
-		v.string(), // Default import
-	]),
+	name: v.union([NamedImportSchema, DefaultImportSchema]),
 	/** e.g. "drizzle-orm" or "../my-type" */
 	module: v.string(),
 	/** Marks the import as a type import */
