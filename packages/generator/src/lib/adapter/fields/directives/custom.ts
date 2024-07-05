@@ -16,8 +16,13 @@ export function getCustomDirective(field: DMMF.Field) {
 }
 
 const ImportSchema = v.object({
-	name: v.union([v.array(v.string()), v.string()]),
+	name: v.union([
+		v.array(v.string()), // Named import
+		v.string(), // Default import
+	]),
+	/** e.g. "drizzle-orm" or "../my-type" */
 	module: v.string(),
+	/** Marks the import as a type import */
 	type: v.optional(v.boolean()),
 })
 
