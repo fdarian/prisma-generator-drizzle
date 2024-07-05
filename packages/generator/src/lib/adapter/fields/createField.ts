@@ -42,31 +42,40 @@ export function createField(input: CreateFieldInput) {
 	}
 
 	// .type<...>()
-	const customType = getCustomType(field)
 	if (custom?.$type) {
 		func += `.$type<${custom.$type}>()`
-	} else if (customType) {
-		imports = imports.concat(customType.imports)
-		func += customType.code
+	} else {
+		// Legacy `drizzle.type` directive
+		const customType = getCustomType(field)
+		if (customType) {
+			imports = imports.concat(customType.imports)
+			func += customType.code
+		}
 	}
 
-	const customDefault = getCustomDefault(field)
+	let hasDefaultFn = false
 	if (custom?.default) {
+		hasDefaultFn = true
 		func += `.$defaultFn(${custom.default})`
-	} else if (customDefault) {
-		imports = imports.concat(customDefault.imports)
-		func += customDefault.code
-	} else if (field.hasDefaultValue) {
-		const _field = field as FieldWithDefault
-		const def = input.onDefault?.(_field) ?? onDefault(_field)
-		if (def) {
-			imports = imports.concat(def.imports ?? [])
-			func += def.code
+	} else {
+		// Legacy `drizzle.default` directive
+		const customDefault = getCustomDefault(field)
+		if (customDefault) {
+			hasDefaultFn = true
+			imports = imports.concat(customDefault.imports)
+			func += customDefault.code
+		} else if (field.hasDefaultValue) {
+			const _field = field as FieldWithDefault
+			const def = input.onDefault?.(_field) ?? onDefault(_field)
+			if (def) {
+				imports = imports.concat(def.imports ?? [])
+				func += def.code
+			}
 		}
 	}
 
 	if (field.isId) func += input.onPrimaryKey?.(field) ?? '.primaryKey()'
-	else if (field.isRequired || field.hasDefaultValue || !!customDefault)
+	else if (field.isRequired || field.hasDefaultValue || hasDefaultFn)
 		func += '.notNull()'
 
 	return {
