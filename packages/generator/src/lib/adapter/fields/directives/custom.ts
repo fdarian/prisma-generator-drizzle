@@ -58,7 +58,7 @@ function parseJson(directiveInput: string) {
 		return JSON.parse(directiveInput.replace(DIRECTIVE, ''))
 	} catch (err) {
 		throw new Error(
-			`Invalid ${DIRECTIVE} JSON shape\n\n${getErrorMessage(err)}`
+			`Invalid ${DIRECTIVE} JSON shape\n\n— Error:\n${getErrorMessage(err)}\n—\n\n— Your Input\n${directiveInput}\n—`
 		)
 	}
 }
