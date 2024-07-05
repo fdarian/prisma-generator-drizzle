@@ -97,25 +97,36 @@ function createRelation(input: {
 	}
 }
 
+function holdsForeignKey(args: {
+	field: PrismaRelationField
+	model: DMMF.Model
+}) {
+	const { field, model } = args
+	return model.fields.some((f) =>
+		field.relationFromFields.some((from) => f.name === from)
+	)
+}
+
 function getOneToOneOrManyRelation(
 	field: PrismaRelationField,
 	ctx: GenerateTableRelationsInput
 ) {
 	if (hasReference(field)) {
-		const opts = createRelationOpts({
-			relationName: field.relationName,
-			from: {
-				modelVarName: getModelVarName(ctx.modelModule.model),
-				fieldNames: field.relationFromFields,
-			},
-			to: {
-				modelVarName: getModelVarName(field.type),
-				fieldNames: field.relationToFields,
-			},
-		})
 		return createRelation({
 			referenceModelVarName: getModelVarName(field.type),
-			opts,
+			opts: holdsForeignKey({ field, model: ctx.modelModule.model })
+				? createRelationOpts({
+						relationName: field.relationName,
+						from: {
+							modelVarName: getModelVarName(ctx.modelModule.model),
+							fieldNames: field.relationFromFields,
+						},
+						to: {
+							modelVarName: getModelVarName(field.type),
+							fieldNames: field.relationToFields,
+						},
+					})
+				: undefined,
 		})
 	}
 
@@ -123,21 +134,29 @@ function getOneToOneOrManyRelation(
 
 	const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
 	const opposingField = findOpposingRelationField(field, opposingModel)
-	const opts = createRelationOpts({
-		relationName: field.relationName,
-		from: {
-			modelVarName: getModelVarName(ctx.modelModule.model),
-			fieldNames: opposingField.relationToFields,
-		},
-		to: {
-			modelVarName: getModelVarName(field.type),
-			fieldNames: opposingField.relationFromFields,
-		},
-	})
 
 	return createRelation({
 		referenceModelVarName: getModelVarName(field.type),
-		opts,
+		opts:
+			holdsForeignKey({ field, model: ctx.modelModule.model }) ||
+			// ⚠️ This is a workaround for the following issue since this case isn't common
+			// https://github.com/fdarian/prisma-generator-drizzle/issues/69#issuecomment-2187174021
+			hasMultipleDisambiguatingRelations({
+				field,
+				model: ctx.modelModule.model,
+			})
+				? createRelationOpts({
+						relationName: field.relationName,
+						from: {
+							modelVarName: getModelVarName(ctx.modelModule.model),
+							fieldNames: opposingField.relationToFields,
+						},
+						to: {
+							modelVarName: getModelVarName(field.type),
+							fieldNames: opposingField.relationFromFields,
+						},
+					})
+				: undefined,
 	})
 }
 
@@ -319,4 +338,22 @@ function opposingIsList(
 ) {
 	const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
 	return findOpposingRelationField(field, opposingModel).isList
+}
+
+function hasMultipleDisambiguatingRelations(args: {
+	field: PrismaRelationField
+	model: DMMF.Model
+}): boolean {
+	let count = 0
+	for (const field of args.model.fields) {
+		if (
+			field.type === args.field.type &&
+			isRelationField(field) &&
+			!hasReference(field)
+		) {
+			count++
+		}
+		if (count > 1) return true
+	}
+	return false
 }
