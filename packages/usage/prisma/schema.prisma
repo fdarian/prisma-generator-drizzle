@@ -205,7 +205,7 @@ model FieldCustomization {
   id        Int    @id @default(autoincrement())
   /// drizzle.custom {
   ///   "imports": [{ "name": ["SomeBigInt"], "module": "~/tests/shared/testFieldCustomization", "type": true }],
-  ///   "type": "SomeBigInt",
+  ///   "$type": "SomeBigInt",
   ///   "default": "() => 1n"
   /// }
   allFields BigInt
