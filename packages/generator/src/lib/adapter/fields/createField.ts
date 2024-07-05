@@ -35,7 +35,7 @@ export function createField(input: CreateFieldInput) {
 				namedImport(
 					typeof def.name === 'string' ? [def.name] : def.name,
 					def.module,
-					def.$type ?? false
+					def.type ?? false
 				)
 			)
 		)
@@ -43,8 +43,8 @@ export function createField(input: CreateFieldInput) {
 
 	// .type<...>()
 	const customType = getCustomType(field)
-	if (custom?.type) {
-		func += `.$type<${custom.type}>()`
+	if (custom?.$type) {
+		func += `.$type<${custom.$type}>()`
 	} else if (customType) {
 		imports = imports.concat(customType.imports)
 		func += customType.code
