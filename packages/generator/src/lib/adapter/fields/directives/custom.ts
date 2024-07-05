@@ -11,7 +11,11 @@ export function getCustomDirective(field: DMMF.Field) {
 	}
 
 	const parsing = v.safeParse(DirectiveSchema, parseJson(directiveInput))
-	if (!parsing.success) throw new InvalidDirectiveShapeError(parsing.issues)
+	if (!parsing.success)
+		throw new InvalidDirectiveShapeError({
+			input: directiveInput,
+			issues: parsing.issues,
+		})
 	return parsing.output
 }
 
@@ -46,9 +50,12 @@ const DirectiveSchema = v.object({
 })
 
 class InvalidDirectiveShapeError extends Error {
-	constructor(issues: [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]]) {
+	constructor(args: {
+		input: string
+		issues: [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]]
+	}) {
 		super(
-			`Invalid ${DIRECTIVE} definition:\n\n${JSON.stringify(v.flatten(issues), null, 2)}`
+			`Invalid ${DIRECTIVE} definition:\n\n— Error:${JSON.stringify(v.flatten(args.issues), null, 2)}\n—\n\n— Your Input\n${args.input}\n—`
 		)
 	}
 }
