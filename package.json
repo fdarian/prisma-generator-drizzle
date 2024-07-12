@@ -5,5 +5,8 @@
 		"@biomejs/biome": "^1.8.2",
 		"lefthook": "^1.6.16"
 	},
-	"packageManager": "bun@1.1.10"
+	"packageManager": "bun@1.1.18",
+	"dependencies": {
+		"turbo": "^2.0.6"
+	}
 }
