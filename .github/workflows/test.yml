@@ -13,6 +13,11 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
+        
+      - node: ⎔ Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
 
       - name: ⎔ Setup bun
         uses: oven-sh/setup-bun@v1
