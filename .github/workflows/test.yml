@@ -14,8 +14,8 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
         
-      - node: ⎔ Setup node
-        uses: actions/setup-node@v3
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
 
