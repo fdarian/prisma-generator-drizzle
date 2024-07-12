@@ -1,4 +1,5 @@
 import type { DMMF } from '@prisma/generator-helper'
+import type { SchemaField } from './schema/schema-field'
 
 export type PrismaFieldType =
 	| 'BigInt'
@@ -36,16 +37,15 @@ export interface PrismaRelationField
 export interface PrismaObjectField extends Omit<DMMF.Field, 'kind'> {
 	kind: 'object'
 }
-type PrismaField = PrismaScalarField | PrismaEnumField | PrismaObjectField
 
-export function isKind<TKind extends PrismaField['kind']>(kind: TKind) {
-	return (field: DMMF.Field): field is Extract<PrismaField, { kind: TKind }> =>
+export function isKind<TKind extends SchemaField['kind']>(kind: TKind) {
+	return (
+		field: SchemaField
+	): field is Extract<SchemaField['kind'], { kind: TKind }> =>
 		field.kind === kind
 }
 
-export function isRelationField(
-	field: DMMF.Field
-): field is PrismaRelationField {
+export function isRelationField(field: DMMF.Field) {
 	return (
 		field.kind === 'object' &&
 		field.relationFromFields != null &&

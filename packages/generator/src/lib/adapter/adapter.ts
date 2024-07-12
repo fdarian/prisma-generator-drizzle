@@ -1,12 +1,8 @@
-import type {
-	PrismaEnumField,
-	PrismaScalarField,
-} from '../prisma-helpers/field'
+import type {} from '../prisma-helpers/field'
+import type { SchemaField } from '../prisma-helpers/schema/schema-field'
 import type { ImportValue } from '../syntaxes/imports'
 import type { Module } from '../syntaxes/module'
 import type { FieldFunc } from './fields/createField'
-
-export type ParsableField = PrismaScalarField | PrismaEnumField
 
 type DeclarationFunc = { imports: ImportValue[]; func: string }
 
@@ -17,16 +13,13 @@ export function createAdapter<TName extends string>(impl: {
 		table: (name: string, fields: FieldFunc[]) => DeclarationFunc
 	}
 	fields: Partial<
-		Record<
-			PrismaScalarField['type'] | 'enum',
-			(field: ParsableField) => FieldFunc
-		>
+		Record<SchemaField['type'] | 'enum', (field: SchemaField) => FieldFunc>
 	>
 	extraModules?: Module[]
 }) {
 	return {
 		...impl,
-		parseField(field: ParsableField) {
+		parseField(field: SchemaField) {
 			const fieldType = field.kind === 'enum' ? 'enum' : field.type
 			const fieldFunc =
 				fieldType in impl.fields ? impl.fields[fieldType] : undefined

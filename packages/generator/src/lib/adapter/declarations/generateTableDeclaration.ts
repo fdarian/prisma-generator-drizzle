@@ -1,19 +1,20 @@
-import type { DMMF } from '@prisma/generator-helper'
 import { or } from 'fp-ts/lib/Refinement'
 import { pipe } from 'fp-ts/lib/function'
 import { isKind } from '~/lib/prisma-helpers/field'
-import { getDbName } from '~/lib/prisma-helpers/getDbName'
-import { getModelVarName } from '~/lib/prisma-helpers/model'
+import {
+	type SchemaModel,
+	getModelFields,
+} from '~/lib/prisma-helpers/schema/schema-model'
 import type { Adapter } from '../types'
 
-export function generateTableDeclaration(adapter: Adapter, model: DMMF.Model) {
-	const fields = model.fields
+export function generateTableDeclaration(adapter: Adapter, model: SchemaModel) {
+	const fields = getModelFields(model)
 		.filter(pipe(isKind('scalar'), or(isKind('enum'))))
 		.map(adapter.parseField)
-	const name = getModelVarName(model)
+	const name = model.getVarName()
 
 	const tableDeclaration = adapter.getDeclarationFunc.table(
-		getDbName(model),
+		model.getDbName(),
 		fields
 	)
 

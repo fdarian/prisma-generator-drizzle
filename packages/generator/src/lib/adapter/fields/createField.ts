@@ -1,11 +1,15 @@
 import type { DMMF } from '@prisma/generator-helper'
 import { getDirective } from '~/lib/directive'
+import type {
+	SchemaField,
+	SchemaFieldWithDefault,
+} from '~/lib/prisma-helpers/schema/schema-field'
 import {
 	type ImportValue,
 	defaultImportValue,
 	namedImport,
 } from '~/lib/syntaxes/imports'
-import type { MakeRequired, ModifyType, Prettify } from '~/lib/types/utils'
+import type { ModifyType, Prettify } from '~/lib/types/utils'
 import { getCustomDirective } from './directives/custom'
 
 export type DefineImport = {
@@ -14,7 +18,7 @@ export type DefineImport = {
 }
 
 export interface CreateFieldInput {
-	field: DMMF.Field
+	field: SchemaField
 	imports?: ImportValue[]
 	func:
 		| string
@@ -22,7 +26,7 @@ export interface CreateFieldInput {
 	onDefault?: (
 		field: FieldWithDefault
 	) => { code: string; imports?: ImportValue[] } | undefined
-	onPrimaryKey?: (field: DMMF.Field) => string | undefined
+	onPrimaryKey?: (field: SchemaField) => string | undefined
 }
 
 export type FieldFunc = ReturnType<typeof createField>
@@ -90,7 +94,7 @@ export function createField(input: CreateFieldInput) {
 	}
 }
 
-function getCustomType(field: DMMF.Field) {
+function getCustomType(field: SchemaField) {
 	const directive = getDirective(field, 'drizzle.type')
 	if (directive == null) return
 
@@ -107,7 +111,7 @@ function getCustomType(field: DMMF.Field) {
 	}
 }
 
-function getCustomDefault(field: DMMF.Field) {
+function getCustomDefault(field: SchemaField) {
 	const directive = getDirective(field, 'drizzle.default')
 	if (directive == null) return
 
@@ -138,11 +142,11 @@ function getCustomDefault(field: DMMF.Field) {
 }
 
 // #region onDefault
-export type FieldWithDefault = Prettify<MakeRequired<DMMF.Field, 'default'>>
-
-export function hasDefault(field: DMMF.Field): field is FieldWithDefault {
-	return field.hasDefaultValue
-}
+export type FieldWithDefault = ModifyType<
+	SchemaFieldWithDefault,
+	'isRelationField',
+	boolean | undefined // Remove this after removing `DMMF` usages
+>
 
 function isDefaultScalar(
 	field: FieldWithDefault
