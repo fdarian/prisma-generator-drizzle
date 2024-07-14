@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"start": "bun run src/index.ts",
-		"test": "bun vitest run",
+		"test": "bun vitest run --allowOnly",
 		"generate": "prisma generate",
 		"pushreset:postgres": "bun prisma db push --schema prisma/schema.prisma --force-reset --accept-data-loss",
 		"pushreset:mysql": "bun prisma db push --schema prisma/mysql/schema.prisma --force-reset --accept-data-loss",
