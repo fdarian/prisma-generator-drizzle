@@ -253,6 +253,24 @@ export const users = pgTable('User', {
 > **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
 
 
+### Postgres
+  1. String [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L73)
+  2. Boolean [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L89)
+  3. Int [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L129) 
+  4. BigInt [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L73)
+  5. Float [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L121)
+  6. Decimal [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L113)
+  7. JSON [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L145)
+  8. Bytes [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L97)  
+
+  #### Unsupported:
+  1. Unsupported (🏗️ soon)
+
+### MySQL
+  > todo docs
+### SQLite
+  > todo docs
+
 
 ## Examples
 1. [with-drizzle-prisma](./examples/with-drizzle-prisma/): using drizzle's prisma extension
