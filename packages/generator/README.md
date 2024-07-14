@@ -106,7 +106,7 @@ export default defineConfig({
 
 These syntaxes might change in the future, we encourage your feedback.
 
-We will make sure to keep the syntaxes backwards compatible.
+We will make sure to keep the syntaxes compatible with future versions.
 
 ### Customize field with `drizzle.custom` 
 
