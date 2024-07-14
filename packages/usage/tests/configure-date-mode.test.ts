@@ -1,6 +1,5 @@
 import { execSync } from 'node:child_process'
 import * as fs from 'node:fs'
-import path from 'node:path'
 import { type TempDirectory, createTempHandler } from './utils/temp'
 
 const tempHandler = createTempHandler()
@@ -9,8 +8,7 @@ afterAll(async () => {
 	await tempHandler.cleanup()
 })
 
-// biome-ignore lint/suspicious/noFocusedTests: temp
-test.only('global config', async () => {
+test('global config', async () => {
 	const temp = await tempHandler.prepare()
 
 	fs.writeFileSync(
@@ -31,17 +29,7 @@ test.only('global config', async () => {
 			date DateTime 
 		}`
 	)
-
-	console.log('Files in generator/dist')
-	for (const file of fs.readdirSync(
-		path.resolve(__filename, '../../../generator/dist')
-	)) {
-		console.log(file)
-	}
-
-	console.log(`Generating ${getSchemaPath(temp)}`)
 	execSync(`bun prisma generate --schema ${getSchemaPath(temp)}`)
-	console.log(`Generated ${getSchemaPath(temp)}`)
 
 	const output = fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
 	expect(output).toContain(
