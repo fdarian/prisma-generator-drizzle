@@ -21,7 +21,7 @@ test.only('global config', async () => {
 		}
 
 		generator drizzle { 
-			provider = "prisma-generator-drizzle"
+			provider = "bunx prisma-generator-drizzle"
 			dateMode = "string"
 			output = "drizzle.ts" 
 		} 
