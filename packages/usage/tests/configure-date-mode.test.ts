@@ -48,7 +48,7 @@ test('field-level config', async () => {
 		}
 
 		generator drizzle { 
-			provider = "prisma-generator-drizzle"
+			provider = "bunx prisma-generator-drizzle"
 			output = "drizzle.ts" 
 		} 
 
