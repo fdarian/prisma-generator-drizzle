@@ -1,4 +1,3 @@
-import type {} from '../prisma-helpers/field'
 import type { SchemaField } from '../prisma-helpers/schema/schema-field'
 import type { ImportValue } from '../syntaxes/imports'
 import type { Module } from '../syntaxes/module'
