@@ -2,33 +2,24 @@
 
 [![Test](https://github.com/farreldarian/prisma-generator-drizzle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/farreldarian/prisma-generator-drizzle/actions/workflows/test.yml)
 
-**prisma-generator-drizzle** is a [Prisma](https://www.prisma.io/) generator that lets you generate a [Drizzle](https://orm.drizzle.team/) schema. It is specifically designed for (existing) projects that are using Prisma and want to migrate to Drizzle, or for projects that want to use both Prisma and Drizzle together.
+**prisma-generator-drizzle** is a [Prisma](https://www.prisma.io/) generator that allows you to generate [Drizzle](https://orm.drizzle.team/) schema definitions from Prisma schema. It provides 1:1 functionality mapping, allowing you to use Drizzle as a drop-in replacement for querying and mutating your database. 
 
-In this version, the focus is still on the query and mutation capabilities of the generated Drizzle schema.
+This tool is ideal for projects transitioning from Prisma to Drizzle, or for those wanting to use both Prisma and Drizzle together. Leveraging the DX of Prisma for defining your schema while still getting the performance benefits and flexibility of Drizzle.
 
-
-## Features
+### Features
 
 https://github.com/farreldarian/prisma-generator-drizzle/assets/62016900/35b57135-614e-4e07-920b-9e9a487eb6cb
 
-- 🤝 1:1 Prisma to Drizzle schema generation
-- ✨ Compatible with all \*scalars, enums, and \*constraints
-- 📦 Supports drizzle relational query
-- 🚀 Generates drizzle-specific features like the `.$type<..>()` method
+- 🤝 **Compatibility**: 1:1 Prisma to Drizzle schema generation*
+- ✅ **Relational Query Support**: Generates relational query definitions.  
+- 📦 **Cutomizability**: Includes tools for customizing drizzle-specific features.
 
 _\*Only supports default scalar for now and more constraints will be added in future_
 
-> This project is still considered as experimental, but you can safely use it for production. Follow the progress on [v1](https://github.com/farreldarian/prisma-generator-drizzle/issues/1).
+> Note: This project is still considered experimental, but you can safely use it for production. Follow the progress on [v1](https://github.com/farreldarian/prisma-generator-drizzle/issues/1).
 
 
-### Get started
-- [Installation](#installation)
-- [Usages](#usages)
-- [Configuration](#configuration)
-- [Example](#example) 
-- [Gotchas](#gotchas)
-
-## Installation
+## Getting started
 
 ### 1. Install the package
 
@@ -42,9 +33,8 @@ npm install drizzle-orm
 ```prisma
 generator drizzle {
   provider = "prisma-generator-drizzle"
-
-  // Specify the output directory
-  // output = "./lib/drizzle/models"
+  // Specify the output file (or directory)
+  output = "./infra/database/drizzle.ts"
 }
 ```
 
@@ -56,16 +46,27 @@ generator drizzle {
 prisma generate
 ```
 
-## Usages
 
-> **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
+### Learn More
+- [Compatibility](#compatibility)
+- [Usages](#usages)
+- [Example](#example) 
+- [Gotchas](#gotchas)
+
+## Compatibility
 
 **prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for the Prisma client.
 
+> **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
+
+
+## Usages
+
+Setting up drizzle:
 - [Setup drizzle-kit](#setting-up-drizzle-kit)
 - [Setup relational query](#setting-up-relational-query)
 
-In addition to the Prisma features, you can also generate Drizzle-specific features:
+Generate Drizzle-specific features:
 
 > Directive syntax is still experimental, feel free to suggest a better approach.
 
@@ -76,9 +77,9 @@ In addition to the Prisma features, you can also generate Drizzle-specific featu
 
 | Key             | Description                       | Default     | Example     |
 | --------------- | --------------------------------- | ----------- | ----------- |
-| output          | Change the output                 | "./drizzle" | "../models" |
+| output          | Generate output directory                 | "./drizzle" | "../models" |
 |    | Generate single output file                 |  | "drizzle.ts" |
-| formatter       | Run prettier after generation     | -           | "prettier"  |
+| formatter       | Run formatter after generation     | -           | "prettier"  |
 | relationalQuery | Flag to generate relational query | true        | false       |
 | moduleResolution         | Specify the [module resolution](https://www.typescriptlang.org/tsconfig#moduleResolution) that will affect the import style | _*auto_           | nodenext        |
 | verbose         | Flag to enable verbose logging    | -           | true        |
@@ -112,6 +113,8 @@ export default defineConfig({
   schema: './prisma/drizzle/*',
 })
 ```
+
+## Experimental
 
 ### Generate [`.$defaultFn()`](https://arc.net/l/quote/cmywscsv) Custom Default Initializer
 
@@ -213,7 +216,7 @@ export const users = pgTable('User', {
 ```
 
 ## Example
-1. [with-drizzle-prisma](../../examples/with-drizzle-prisma/): using drizzle's prisma extension
+1. [with-drizzle-prisma](./examples/with-drizzle-prisma/): using drizzle's prisma extension
 
 
 ## Gotchas
