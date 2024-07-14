@@ -119,9 +119,9 @@ Available options:
 ```prisma
 model Table {
   /// drizzle.custom {
-  ///   "imports": [{ "name": ["SomeBigInt"], "module": "~/tests/shared/testFieldCustomization", "type": true }],
-  ///   "$type": "SomeBigInt",
-  ///   "default": "() => 1n",
+  ///   "imports": [{ "name": ["UserId"], "module": "~/models/user", "type": true }],
+  ///   "$type": "UserId",
+  ///   "default": "() => 1",
   ///   "field": { "mode": "number" }
   /// }
   column BigInt
