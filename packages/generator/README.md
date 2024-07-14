@@ -50,28 +50,16 @@ prisma generate
 ### Learn More
 - [Compatibility](#compatibility)
 - [Usages](#usages)
-- [Example](#example) 
+  - [configuration](#configuration)
+  - [drizzle-kit](#setting-up-drizzle-kit)
+  - [relational query](#setting-up-relational-query)
+- [Experimental](#experimental)
+  - [Customize field with `drizzle.custom`](#customize-field-with-drizzlecustom)
+- [Compatibility](#compatibility)
+- [Examples](#examples) 
 - [Gotchas](#gotchas)
 
-## Compatibility
-
-**prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for the Prisma client.
-
-> **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
-
-
 ## Usages
-
-Setting up drizzle:
-- [Setup drizzle-kit](#setting-up-drizzle-kit)
-- [Setup relational query](#setting-up-relational-query)
-
-Generate Drizzle-specific features:
-
-> Directive syntax is still experimental, feel free to suggest a better approach.
-
-1. [Generate `.$defaultFn<..>()`](#generate-defaultfn-custom-default-initializer)
-2. [Generate `.$type<..>()`](#generate-type-type-customization)
 
 ### Configuration
 
@@ -116,9 +104,50 @@ export default defineConfig({
 
 ## Experimental
 
+These syntaxes might change in the future, we encourage your feedback.
+
+We will make sure to keep the syntaxes backwards compatible.
+
+### Customize field with `drizzle.custom` 
+
+Customize the generated field definition using `drizzle.custom` directive in a json format.
+
+This will override any built-in mapping such as `@default(...)` or `@db.*` modifiers.
+
+Available options:
+
+```prisma
+model Table {
+  /// drizzle.custom {
+  ///   "imports": [{ "name": ["SomeBigInt"], "module": "~/tests/shared/testFieldCustomization", "type": true }],
+  ///   "$type": "SomeBigInt",
+  ///   "default": "() => 1n",
+  ///   "field": { "mode": "number" }
+  /// }
+  column BigInt
+}
+```
+
+1. `imports`: Specify the import path for the custom code.
+
+   Array of imports that will be added to each schema file.
+
+   - named import: `[{ "name": ["<exported-names>"], "module": "<path-or-module>>" }, ...]`
+   - default import: `[{ "name": "<exported-default>", "module": "<path-or-module>>" }, ...]` 
+   - type import: `[{ ..., "type": true }, ...]`
+
+   [[definition]](https://github.com/fdarian/prisma-generator-drizzle/blob/e25318bf38ad4d20bb3da4c64f0e1b275d4b007f/packages/generator/src/lib/adapter/fields/directives/custom.ts#L38)
+  
+
+2. `$type`: Specify the type to use for the field.
+3. `default`: Specify the default value for the field.
+4. 🏗️ `field`: Specify the field options.
+
+> NOTE: All options are optional. Items marked with 🏗️ are incomplete
+
 ### Generate [`.$defaultFn()`](https://arc.net/l/quote/cmywscsv) Custom Default Initializer
 
-> ⚠️ DEPRECATED , will be replace by `drizzle.custom` directive
+> ⚠️ This may potentially be removed and replaced by `drizzle.custom` directive
 
 Add `/// drizzle.default <module>::<named-function-import>` directive above the field definition to generate a custom default initializer.
 
@@ -171,7 +200,8 @@ export const users = pgTable('User', {
 ### Generate [`.$type<..>()`](https://orm.drizzle.team/docs/column-types/mysql#customizing-column-data-type) Type Customization
 
 
-> ⚠️ DEPRECATED , will be replace by `drizzle.custom` directive
+> ⚠️ This may potentially be removed and replaced by `drizzle.custom` directive
+
 
 Add `/// drizzle.type <module>::<named-import>` directive above the field definition.
 
@@ -215,7 +245,16 @@ export const users = pgTable('User', {
 })
 ```
 
-## Example
+
+## Compatibility
+
+**prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for the Prisma client.
+
+> **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
+
+
+
+## Examples
 1. [with-drizzle-prisma](./examples/with-drizzle-prisma/): using drizzle's prisma extension
 
 
