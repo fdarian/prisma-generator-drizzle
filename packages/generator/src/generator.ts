@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
+import { createPrismaSchemaBuilder } from '@mrleebo/prisma-ast'
 import {
 	type DMMF,
 	type GeneratorOptions,
@@ -23,6 +24,7 @@ import type { RelationalModuleSet } from './lib/adapter/modules/relational'
 import { generateSchemaModules as generateSchemaModule } from './lib/adapter/modules/relational'
 import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
 import { logger } from './lib/logger'
+import { createSchema } from './lib/prisma-helpers/schema/schema'
 import {
 	type ImportValue,
 	type NamedImport,
@@ -46,6 +48,11 @@ generatorHandler({
 		}
 	},
 	onGenerate: async (options: GeneratorOptions) => {
+		const schema = createSchema({
+			astSchema: createPrismaSchemaBuilder(options.datamodel).getSchema(),
+			dmmf: options.dmmf,
+		})
+
 		initializeGenerator(options)
 
 		logger.log('Generating drizzle schema...')
@@ -55,14 +62,14 @@ generatorHandler({
 		const modules: GeneratedModules = {
 			extras: adapter.extraModules,
 			enums: generateEnumModules(adapter),
-			models: generateModelModules(adapter),
+			models: generateModelModules(adapter, schema),
 		}
 
 		if (isRelationalQueryEnabled()) {
-			const relational = generateRelationalModules(modules.models)
+			const relational = generateRelationalModules(schema, modules.models)
 			modules.relational = relational
 
-			const implicit = generateImplicitModules(adapter, relational)
+			const implicit = generateImplicitModules(adapter, schema, relational)
 			modules.implicitModels = implicit.models
 			modules.implicitRelational = implicit.relational
 

@@ -7,7 +7,6 @@ import { createAdapter } from '../adapter'
 import {
 	type CreateFieldInput,
 	createField as baseCreateField,
-	hasDefault,
 	isDefaultFunc,
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
@@ -73,7 +72,7 @@ export const postgresAdapter = createAdapter({
 		// https://orm.drizzle.team/docs/column-types/pg/#bigint
 		BigInt(field) {
 			const func =
-				hasDefault(field) &&
+				field.hasDefaultValue &&
 				isDefaultFunc(field) &&
 				field.default.name === 'autoincrement'
 					? 'bigserial'
@@ -129,7 +128,7 @@ export const postgresAdapter = createAdapter({
 		// https://orm.drizzle.team/docs/column-types/pg/#integer
 		Int(field) {
 			const func =
-				hasDefault(field) &&
+				field.hasDefaultValue &&
 				isDefaultFunc(field) &&
 				field.default.name === 'autoincrement'
 					? // https://arc.net/l/quote/mpimqrfn

@@ -3,7 +3,7 @@ import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
 import { getDateMode } from '~/shared/date-mode'
 import { createAdapter } from '../adapter'
-import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
+import { createField, isDefaultFunc } from '../fields/createField'
 
 const coreModule = 'drizzle-orm/sqlite-core'
 
@@ -139,7 +139,7 @@ export const sqliteAdapter = createAdapter({
 				func: `integer('${getDbName(field)}', { mode: 'number' })`,
 				onPrimaryKey(field) {
 					if (
-						hasDefault(field) &&
+						field.hasDefaultValue &&
 						isDefaultFunc(field) &&
 						field.default.name === 'autoincrement'
 					)

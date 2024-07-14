@@ -1,4 +1,4 @@
-import type { DMMF } from '@prisma/generator-helper'
+import type { SchemaField } from './prisma-helpers/schema/schema-field'
 
 /**
  * e.g.
@@ -9,7 +9,7 @@ import type { DMMF } from '@prisma/generator-helper'
  * - Input: drizzle.type viem::Address
  * - Returns: viem:Address
  */
-export function getDirective(field: DMMF.Field, directive: string) {
+export function getDirective(field: SchemaField, directive: string) {
 	if (field.documentation == null) return
 
 	return field.documentation

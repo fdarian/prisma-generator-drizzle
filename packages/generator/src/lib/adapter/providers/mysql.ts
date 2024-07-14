@@ -4,7 +4,7 @@ import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
 import { getDateMode } from '~/shared/date-mode'
 import { createAdapter } from '../adapter'
-import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
+import { createField, isDefaultFunc } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
 
 const coreModule = 'drizzle-orm/mysql-core'
@@ -103,7 +103,7 @@ export const mysqlAdapter = createAdapter({
 				// https://github.com/drizzle-team/drizzle-orm/issues/921
 				onDefault: (field) => {
 					if (
-						hasDefault(field) &&
+						field.hasDefaultValue &&
 						isDefaultFunc(field) &&
 						field.default.name === 'now'
 					) {

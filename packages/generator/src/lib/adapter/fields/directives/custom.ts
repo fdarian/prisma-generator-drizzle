@@ -1,10 +1,10 @@
-import type { DMMF } from '@prisma/generator-helper'
 import * as v from 'valibot'
 import getErrorMessage from '~/lib/error-message'
+import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 
 const DIRECTIVE = 'drizzle.custom'
 
-export function getCustomDirective(field: DMMF.Field) {
+export function getCustomDirective(field: SchemaField) {
 	const directiveInput = field.documentation
 	if (directiveInput == null || !directiveInput.startsWith(DIRECTIVE)) {
 		return

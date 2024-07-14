@@ -1,9 +1,12 @@
 import type { DMMF } from '@prisma/generator-helper'
 import { isEmpty } from 'lodash'
 import { deduplicateModels } from '~/generator'
-import { isRelationField } from '~/lib/prisma-helpers/field'
+import type { Schema } from '~/lib/prisma-helpers/schema/schema'
+import {
+	createSchemaModel,
+	getModelFields,
+} from '~/lib/prisma-helpers/schema/schema-model'
 import { type Module, createModule } from '~/lib/syntaxes/module'
-import { getGenerator } from '~/shared/generator-context'
 import { generateSchemaDeclaration } from '../declarations/generateSchemaDeclaration'
 import { generateTableRelationsDeclaration } from '../declarations/generateTableRelationsDeclaration'
 import type { Adapter } from '../types'
@@ -16,24 +19,32 @@ export type RelationalModuleSet = {
 	implicitRelational: Module[]
 }
 
-export function generateRelationalModules(modelModules: ModelModule[]) {
+export function generateRelationalModules(
+	schema: Schema,
+	modelModules: ModelModule[]
+) {
 	return modelModules.flatMap((modelModule) => {
-		const relationalModule = createRelationalModule(modelModule)
+		const relationalModule = createRelationalModule(schema, modelModule)
 		if (relationalModule == null) return []
 		return relationalModule
 	})
 }
 
-export function createRelationalModule(modelModule: ModelModule) {
+export function createRelationalModule(
+	schema: Schema,
+	modelModule: ModelModule
+) {
 	const { model } = modelModule
 
-	const relationalFields = model.fields.filter(isRelationField)
+	const relationalFields = getModelFields(model).filter(
+		(field) => field.isRelationField === true
+	)
 	if (isEmpty(relationalFields)) return undefined
 
 	const declaration = generateTableRelationsDeclaration({
 		fields: relationalFields,
 		modelModule: modelModule,
-		datamodel: getGenerator().dmmf.datamodel,
+		schema,
 	})
 	return createModule({
 		name: `${modelModule.name}-relations`,
@@ -48,15 +59,18 @@ export type RelationalModule = NonNullable<
 
 export function generateImplicitModules(
 	adapter: Adapter,
+	schema: Schema,
 	relationalModules: RelationalModule[]
 ) {
 	const models = relationalModules
 		.flatMap((module) => module.implicit)
 		.reduce(deduplicateModels, [] as DMMF.Model[])
-		.map(createModelModule(adapter))
+		.map((dmmfModel) => {
+			return createModelModule(adapter, createSchemaModel({ dmmfModel }))
+		})
 
 	const relational = models.flatMap((modelModule) => {
-		const relationalModule = createRelationalModule(modelModule)
+		const relationalModule = createRelationalModule(schema, modelModule)
 		if (relationalModule == null) return []
 		return relationalModule
 	})
