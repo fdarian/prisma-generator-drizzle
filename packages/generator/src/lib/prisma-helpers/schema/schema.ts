@@ -8,9 +8,7 @@ export function createSchema(args: {
 	}
 }) {
 	return {
-		/** @deprecated this will be hidden */
 		ast: args.astSchema,
-		/** @deprecated this will be hidden */
 		dmmf: args.dmmf,
 	}
 }

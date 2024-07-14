@@ -13,9 +13,7 @@ export function createSchemaModel(args: {
 	const { astModel, dmmfModel } = args
 
 	return {
-		/** @deprecated this will be hidden */
 		ast: astModel,
-		/** @deprecated this will be hidden */
 		dmmf: dmmfModel,
 		getDbName() {
 			return getDbName(dmmfModel)
