@@ -16,8 +16,7 @@
 		"check:biome": "biome ci .",
 		"check:type": "tsc --noEmit",
 		"build": "tsup src/generator.ts src/bin.ts --clean",
-		"prepack": "bun run build",
-		"test": "bun test"
+		"prepack": "bun run build"
 	},
 	"dependencies": {
 		"@mrleebo/prisma-ast": "^0.12.0",
