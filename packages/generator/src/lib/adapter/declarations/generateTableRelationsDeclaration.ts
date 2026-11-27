@@ -229,6 +229,7 @@ function createImplicitJoinTable(
 	const model = {
 		name: name,
 		dbName: `_${baseName}`,
+		schema: null,
 		fields: [
 			{
 				name: 'A',
