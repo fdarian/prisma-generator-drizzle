@@ -219,10 +219,12 @@ function createImplicitJoinTable(
 	baseName: string,
 	models: [SchemaModel, SchemaModel]
 ) {
-	// Prisma assigns column A/B by sorting the model names (not the mapped db names)
-	const [modelA, modelB] = [...models].sort((a, b) =>
+	/** Prisma assigns column A/B by sorting the model names (not the mapped db names), by byte order rather than locale */
+	const sorted = [...models].sort((a, b) =>
 		a.dmmf.name < b.dmmf.name ? -1 : a.dmmf.name > b.dmmf.name ? 1 : 0
 	)
+	const modelA = sorted[0]
+	const modelB = sorted[1]
 	const pair = [modelA.dmmf.name, modelB.dmmf.name]
 
 	// Custom varName following drizzle's convention

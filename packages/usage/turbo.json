@@ -2,7 +2,9 @@
 	"$schema": "https://turbo.build/schema.json",
 	"extends": ["//"],
 	"tasks": {
-		"generate": {},
+		"generate": {
+			"env": ["VITE_PG_DATABASE_URL"]
+		},
 		"pushreset:postgres": {
 			"cache": false,
 			"dependsOn": ["^build"],

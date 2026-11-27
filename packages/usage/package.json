@@ -16,7 +16,6 @@
 	},
 	"dependencies": {
 		"@paralleldrive/cuid2": "^2.2.2",
-		"@prisma/client": "7.10.1",
 		"better-sqlite3": "^13.2.0",
 		"date-fns": "^3.3.1",
 		"decimal.js": "^10.4.3",
