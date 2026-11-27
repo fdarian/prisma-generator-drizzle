@@ -88,10 +88,9 @@ export function testDefault({ db, schema, provider }: TestContext) {
 		describe('autoincrement', () => {
 			test('int', async () => {
 				const refs = [createId(), createId()]
-				await db.transaction(async (tx) => {
-					await tx.insert(schema.autoIncrements).values({ ref: refs[0] })
-					await tx.insert(schema.autoIncrements).values({ ref: refs[1] })
-				})
+				// better-sqlite3 transactions can't take an async function
+				await db.insert(schema.autoIncrements).values({ ref: refs[0] })
+				await db.insert(schema.autoIncrements).values({ ref: refs[1] })
 				// --
 
 				const result1 = await db.query.autoIncrements
