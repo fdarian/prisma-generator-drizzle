@@ -15,7 +15,6 @@ test('global config', async () => {
 		getSchemaPath(temp),
 		`datasource db {
 			provider = "postgresql"
-			url      = env("VITE_PG_DATABASE_URL")
 		}
 
 		generator drizzle { 
@@ -44,7 +43,6 @@ test('field-level config', async () => {
 		getSchemaPath(temp),
 		`datasource db {
 			provider = "postgresql"
-			url      = env("VITE_PG_DATABASE_URL")
 		}
 
 		generator drizzle { 
