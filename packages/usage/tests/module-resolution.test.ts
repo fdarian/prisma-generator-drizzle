@@ -11,26 +11,55 @@ afterAll(async () => {
 
 test('auto-detects moduleResolution from the tsconfig.json', async () => {
 	const temp = await tempHandler.prepare()
-	writeTsConfig(temp.basePath, 'NodeNext')
+	writeTsConfig(temp.basePath, { moduleResolution: 'NodeNext' })
 	writeSchema(temp.basePath, '')
 
 	generate(temp.basePath)
 
-	expect(readSchemaModule(temp.basePath)).toContain("from './users.js'")
-	expect(readSchemaModule(temp.basePath)).toContain(
+	expect(readModule(temp.basePath, 'schema')).toContain("from './users.js'")
+	expect(readModule(temp.basePath, 'schema')).toContain(
 		"from './posts-relations.js'"
 	)
+	expect(readModule(temp.basePath, 'posts-relations')).toContain(
+		"from './users.js'"
+	)
+})
+
+test('infers moduleResolution from the tsconfig.json module', async () => {
+	const temp = await tempHandler.prepare()
+	writeTsConfig(temp.basePath, { module: 'NodeNext' })
+	writeSchema(temp.basePath, '')
+
+	generate(temp.basePath)
+
+	expect(readModule(temp.basePath, 'schema')).toContain("from './users.js'")
+	expect(readModule(temp.basePath, 'posts-relations')).toContain(
+		"from './users.js'"
+	)
+})
+
+test('does not append .js to custom imports that already have an extension', async () => {
+	const temp = await tempHandler.prepare()
+	writeTsConfig(temp.basePath, { moduleResolution: 'NodeNext' })
+	writeSchema(temp.basePath, '')
+
+	generate(temp.basePath)
+
+	const posts = readModule(temp.basePath, 'posts')
+	expect(posts.split("'../my-type.js'")).toHaveLength(2)
+	expect(posts).not.toContain('.js.js')
 })
 
 test('config moduleResolution wins over the tsconfig.json', async () => {
 	const temp = await tempHandler.prepare()
-	writeTsConfig(temp.basePath, 'NodeNext')
+	writeTsConfig(temp.basePath, { moduleResolution: 'NodeNext' })
 	writeSchema(temp.basePath, 'moduleResolution = "node"')
 
 	generate(temp.basePath)
 
-	expect(readSchemaModule(temp.basePath)).toContain("from './users'")
-	expect(readSchemaModule(temp.basePath)).not.toContain('.js')
+	expect(readModule(temp.basePath, 'schema')).toContain("from './users'")
+	expect(readModule(temp.basePath, 'schema')).not.toContain('.js')
+	expect(readModule(temp.basePath, 'posts-relations')).not.toContain('.js')
 })
 
 test('node16 config adds .js extensions', async () => {
@@ -39,7 +68,7 @@ test('node16 config adds .js extensions', async () => {
 
 	generate(temp.basePath)
 
-	expect(readSchemaModule(temp.basePath)).toContain("from './users.js'")
+	expect(readModule(temp.basePath, 'schema')).toContain("from './users.js'")
 })
 
 function generate(basePath: string) {
@@ -49,14 +78,17 @@ function generate(basePath: string) {
 	})
 }
 
-function readSchemaModule(basePath: string) {
-	return fs.readFileSync(`${basePath}/drizzle/schema.ts`, 'utf-8')
+function readModule(basePath: string, name: string) {
+	return fs.readFileSync(`${basePath}/drizzle/${name}.ts`, 'utf-8')
 }
 
-function writeTsConfig(basePath: string, moduleResolution: string) {
+function writeTsConfig(
+	basePath: string,
+	compilerOptions: { module?: string; moduleResolution?: string }
+) {
 	fs.writeFileSync(
 		`${basePath}/tsconfig.json`,
-		JSON.stringify({ compilerOptions: { moduleResolution } })
+		JSON.stringify({ compilerOptions })
 	)
 }
 
@@ -82,6 +114,8 @@ function writeSchema(basePath: string, generatorConfig: string) {
 		model Post {
 			id Int @id
 			authorId Int
+			/// drizzle.custom { "imports": [{ "name": ["MyType"], "module": "../my-type.js", "type": true }], "$type": "MyType" }
+			title String
 			author User @relation(fields: [authorId], references: [id])
 		}`
 	)

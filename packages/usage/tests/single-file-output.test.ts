@@ -76,6 +76,12 @@ test('exports a schema containing tables and relations', async () => {
 		model User {
 			id Int @id
 			posts Post[]
+			tags Tag[]
+		}
+
+		model Tag {
+			id Int @id
+			users User[]
 		}
 
 		model Post {
@@ -97,6 +103,10 @@ test('exports a schema containing tables and relations', async () => {
 	expect(Object.keys(generated.schema).sort()).toEqual([
 		'posts',
 		'postsRelations',
+		'tags',
+		'tagsRelations',
+		'tagsToUsers',
+		'tagsToUsersRelations',
 		'users',
 		'usersRelations',
 	])
