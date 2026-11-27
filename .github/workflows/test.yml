@@ -79,8 +79,8 @@ jobs:
       - name: 📥 Install deps
         run: bun install
 
-      - name: 🏗️ Build workspace packages
-        run: bunx turbo build
+      - name: 🏗️ Build generator
+        run: bunx turbo build --filter=prisma-generator-drizzle
 
       - name: 🔗 Link workspace bins
         # The first install ran before packages/generator/dist existed, so bun skipped linking its bin
