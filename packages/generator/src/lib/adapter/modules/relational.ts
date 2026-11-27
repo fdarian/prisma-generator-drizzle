@@ -6,8 +6,12 @@ import {
 	createSchemaModel,
 	getModelFields,
 } from '~/lib/prisma-helpers/schema/schema-model'
-import { type Module, createModule } from '~/lib/syntaxes/module'
-import { generateSchemaDeclaration } from '../declarations/generateSchemaDeclaration'
+import { createModule } from '~/lib/syntaxes/module'
+import { getGenerator } from '~/shared/generator-context'
+import {
+	generateSchemaDeclaration,
+	generateSingleFileSchemaDeclaration,
+} from '../declarations/generateSchemaDeclaration'
 import { generateTableRelationsDeclaration } from '../declarations/generateTableRelationsDeclaration'
 import type { Adapter } from '../types'
 import { type ModelModule, createModelModule } from './model'
@@ -16,7 +20,7 @@ import type { BaseGeneratedModules } from './sets/base-generated-modules'
 export type RelationalModuleSet = {
 	relational: RelationalModule[]
 	implicitModels: ModelModule[]
-	implicitRelational: Module[]
+	implicitRelational: RelationalModule[]
 }
 
 export function generateRelationalModules(
@@ -48,6 +52,7 @@ export function createRelationalModule(
 	})
 	return createModule({
 		name: `${modelModule.name}-relations`,
+		relationsVar: declaration,
 		declarations: [declaration],
 		implicit: declaration.implicit,
 	})
@@ -83,12 +88,21 @@ export function generateSchemaModules(
 	return createModule({
 		name: 'schema',
 		declarations: [
-			generateSchemaDeclaration([
-				...modules.models,
-				...modules.relational,
-				...modules.implicitModels,
-				...modules.implicitRelational,
-			]),
+			getGenerator().output.isSingleFile
+				? generateSingleFileSchemaDeclaration([
+						...[...modules.models, ...modules.implicitModels].map(
+							(m) => m.tableVar.name
+						),
+						...[...modules.relational, ...modules.implicitRelational].map(
+							(m) => m.relationsVar.name
+						),
+					])
+				: generateSchemaDeclaration([
+						...modules.models,
+						...modules.relational,
+						...modules.implicitModels,
+						...modules.implicitRelational,
+					]),
 		],
 	})
 }

@@ -73,15 +73,12 @@ generatorHandler({
 			modules.implicitModels = implicit.models
 			modules.implicitRelational = implicit.relational
 
-			if (!getGenerator().output.isSingleFile) {
-				const schema = generateSchemaModule({
-					...modules,
-					relational: relational,
-					implicitModels: implicit.models,
-					implicitRelational: implicit.relational,
-				})
-				modules.schema = schema
-			}
+			modules.schema = generateSchemaModule({
+				...modules,
+				relational: relational,
+				implicitModels: implicit.models,
+				implicitRelational: implicit.relational,
+			})
 		}
 
 		writeModules(modules)
@@ -271,15 +268,16 @@ export type GeneratedModules = BaseGeneratedModules &
 	Partial<RelationalModuleSet> & {
 		relational?: RelationalModule[]
 		implicitModels?: ModelModule[]
-		implicitRelational?: Module[]
+		implicitRelational?: RelationalModule[]
 		schema?: Module
 	}
 export function flattenModules(modules: GeneratedModules) {
 	const { schema, ...rest } = modules
 	return [
-		schema,
 		...Object.values(rest) //
 			.flat(), //
+		// Single-file output needs the schema after the declarations it references
+		schema,
 	].filter((module): module is Module => module != null)
 }
 

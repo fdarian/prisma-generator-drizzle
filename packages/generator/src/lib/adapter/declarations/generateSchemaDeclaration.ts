@@ -12,3 +12,10 @@ export function generateSchemaDeclaration(models: Module[]) {
 			.join(', ')} };`,
 	}
 }
+
+export function generateSingleFileSchemaDeclaration(varNames: string[]) {
+	return {
+		imports: [],
+		code: `export const schema = { ${varNames.join(', ')} };`,
+	}
+}

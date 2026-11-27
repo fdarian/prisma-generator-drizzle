@@ -25,6 +25,7 @@ export function generateTableRelationsDeclaration(
 	input: GenerateTableRelationsInput
 ) {
 	const { tableVar } = input.modelModule
+	const name = `${tableVar.name}Relations`
 	const _fields = input.fields.map(getRelationField(input))
 
 	const func = `relations(${tableVar.name}, (helpers) => ({ ${_fields
@@ -32,13 +33,14 @@ export function generateTableRelationsDeclaration(
 		.join(', ')} }))`
 
 	return {
+		name,
 		imports: [
 			namedImport(['relations'], 'drizzle-orm'),
 			namedImport([tableVar.name], `./${input.modelModule.name}`),
 			..._fields.flatMap((field) => field.imports),
 		],
 		implicit: _fields.flatMap((field) => field.implicit),
-		code: `export const ${tableVar.name}Relations = ${func};`,
+		code: `export const ${name} = ${func};`,
 	}
 }
 
