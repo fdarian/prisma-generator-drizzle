@@ -1,5 +1,8 @@
 {
 	"name": "prisma-generator-drizzle-root",
+	"engines": {
+		"node": ">=22.18"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.8.2",
 		"lefthook": "^1.6.16",

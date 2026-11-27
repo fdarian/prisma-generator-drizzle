@@ -12,6 +12,6 @@ allowBuilds:
 
 # @prisma/generator's types import @prisma/dmmf but only list it as a devDependency
 packageExtensions:
-  '@prisma/generator':
+  '@prisma/generator@7.10.1':
     dependencies:
       '@prisma/dmmf': 7.10.1
