@@ -2,19 +2,22 @@
 	"$schema": "https://turbo.build/schema.json",
 	"extends": ["//"],
 	"tasks": {
-		"generate": {},
+		"generate": {
+			"env": ["VITE_PG_DATABASE_URL"]
+		},
 		"pushreset:postgres": {
 			"cache": false,
+			"dependsOn": ["^build"],
 			"env": ["VITE_PG_DATABASE_URL"]
 		},
 		"pushreset:mysql": {
 			"cache": false,
-			"dependsOn": ["clone:mysql"],
+			"dependsOn": ["clone:mysql", "^build"],
 			"env": ["VITE_MYSQL_DATABASE_URL"]
 		},
 		"pushreset:sqlite": {
 			"cache": false,
-			"dependsOn": ["clone:sqlite"]
+			"dependsOn": ["clone:sqlite", "^build"]
 		},
 		"test": {
 			"cache": false,

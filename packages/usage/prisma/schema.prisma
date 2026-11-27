@@ -4,7 +4,6 @@ generator drizzle {
 
 datasource db {
   provider = "postgresql"
-  url      = env("VITE_PG_DATABASE_URL")
 }
 
 model SelfReference {
@@ -40,6 +39,21 @@ model Post {
 model Category {
   id    String @id
   posts Post[] @relation("CustomCategoryToPost")
+}
+
+// With @@map where the mapped table name order is the reverse of the model name order
+model MappedArticle {
+  id   String      @id
+  tags MappedTag[]
+
+  @@map("z_articles")
+}
+
+model MappedTag {
+  id       String          @id
+  articles MappedArticle[]
+
+  @@map("a_tags")
 }
 
 // #endregion

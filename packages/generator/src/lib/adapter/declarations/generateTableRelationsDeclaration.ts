@@ -82,7 +82,7 @@ function getManyToManyRelation(
 		)
 
 	const opposingModel = findOpposingRelationModel(field, ctx.schema)
-	const joinTable = createImplicitJoinTable(ctx, field.relationName, [
+	const joinTable = createImplicitJoinTable(field.relationName, [
 		ctx.modelModule.model,
 		opposingModel,
 	])
@@ -216,11 +216,16 @@ function createRelationOpts(input: {
  * @param models Two models having a many-to-many relationship
  */
 function createImplicitJoinTable(
-	ctx: GenerateTableRelationsInput,
 	baseName: string,
 	models: [SchemaModel, SchemaModel]
 ) {
-	const pair = models.map((model) => model.getDbName()).sort()
+	/** Prisma assigns column A/B by sorting the model names (not the mapped db names), by byte order rather than locale */
+	const sorted = [...models].sort((a, b) =>
+		a.dmmf.name < b.dmmf.name ? -1 : a.dmmf.name > b.dmmf.name ? 1 : 0
+	)
+	const modelA = sorted[0]
+	const modelB = sorted[1]
+	const pair = [modelA.dmmf.name, modelB.dmmf.name]
 
 	// Custom varName following drizzle's convention
 	const name = pipe(pair, map(pluralize), (names) => names.join('To'))
@@ -229,6 +234,7 @@ function createImplicitJoinTable(
 	const model = {
 		name: name,
 		dbName: `_${baseName}`,
+		schema: null,
 		fields: [
 			{
 				name: 'A',
@@ -255,7 +261,7 @@ function createImplicitJoinTable(
 				type: pair[0],
 				// relationName: `${baseName}_A`,
 				relationFromFields: ['A'],
-				relationToFields: [findModelPrimaryKey(ctx.schema, pair[0]).name],
+				relationToFields: [findModelPrimaryKey(modelA).name],
 				isGenerated: false,
 				isUpdatedAt: false,
 			},
@@ -284,7 +290,7 @@ function createImplicitJoinTable(
 				type: pair[1],
 				// relationName: `${baseName}_B`,
 				relationFromFields: ['B'],
-				relationToFields: [findModelPrimaryKey(ctx.schema, pair[1]).name],
+				relationToFields: [findModelPrimaryKey(modelB).name],
 				isGenerated: false,
 				isUpdatedAt: false,
 			},
@@ -295,17 +301,13 @@ function createImplicitJoinTable(
 		isGenerated: false,
 	} satisfies DMMF.Model
 
-	return { varName, baseName, model, pair }
+	return { varName, baseName, model }
 }
 
-function findModelPrimaryKey(schema: Schema, modelName: string) {
-	const model = schema.dmmf.datamodel.models.find(
-		(model) => model.name === modelName
-	)
-	if (model == null) throw new Error(`Model ${modelName} not found`)
-	const pkField = model.fields.find((field) => field.isId)
+function findModelPrimaryKey(model: SchemaModel) {
+	const pkField = model.dmmf.fields.find((field) => field.isId)
 	if (pkField == null)
-		throw new Error(`Primary key not found in model ${modelName}`)
+		throw new Error(`Primary key not found in model ${model.dmmf.name}`)
 	return pkField
 }
 
