@@ -94,7 +94,7 @@ export function createField(input: CreateFieldInput) {
 	}
 }
 
-function getCustomType(field: SchemaField) {
+export function getCustomType(field: SchemaField) {
 	const directive = getDirective(field, 'drizzle.type')
 	if (directive == null) return
 
@@ -111,7 +111,7 @@ function getCustomType(field: SchemaField) {
 	}
 }
 
-function getCustomDefault(field: SchemaField) {
+export function getCustomDefault(field: SchemaField) {
 	const directive = getDirective(field, 'drizzle.default')
 	if (directive == null) return
 
