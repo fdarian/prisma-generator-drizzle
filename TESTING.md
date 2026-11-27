@@ -4,8 +4,8 @@
 
 ### On using Vitest
 
-- Although this project uses bun for the package manager, Vitest is used for testing solely because of its [typechecking capabilities](https://vitest.dev/guide/testing-types).
+- Vitest is used for testing mainly because of its [typechecking capabilities](https://vitest.dev/guide/testing-types).
 
-- When running Vitest using Bun (`bun vitest run`), there are still `node` calls occurring in the background. Therefore, ensure that you specify `bunx prisma-generator-drizzle` when building the Prisma schema.
+- The Prisma schema in `packages/usage` references the generator as `prisma-generator-drizzle`, which resolves through `node_modules/.bin` on `PATH`. Run it through pnpm (`pnpm test`, `pnpm exec prisma generate`) so that the workspace bin is found.
 
-- We're considering a full migration to `pnpm` + `vitest` in the future for the sake of consistency.
+- The generator must be built before `prisma generate` runs, since the schema executes its `dist/bin.js`. `pnpm turbo test` from the repo root handles this. Otherwise, run `pnpm turbo build --filter=prisma-generator-drizzle` before `pnpm test` in `packages/usage`.

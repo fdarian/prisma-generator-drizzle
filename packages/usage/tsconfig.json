@@ -11,6 +11,6 @@
 			"~/tests/*": ["./tests/*"]
 		},
 		"moduleResolution": "Node",
-		"types": ["vitest/globals", "bun-types"]
+		"types": ["vitest/globals"]
 	}
 }

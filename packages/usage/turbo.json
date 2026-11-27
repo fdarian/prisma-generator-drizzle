@@ -3,6 +3,7 @@
 	"extends": ["//"],
 	"tasks": {
 		"generate": {
+			"dependsOn": ["^build"],
 			"env": ["VITE_PG_DATABASE_URL"]
 		},
 		"pushreset:postgres": {

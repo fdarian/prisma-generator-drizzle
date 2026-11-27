@@ -6,13 +6,13 @@
 	"type": "module",
 	"scripts": {
 		"start": "bun run src/index.ts",
-		"test": "bun vitest run",
+		"test": "vitest run",
 		"generate": "prisma generate --config prisma.config.ts",
-		"pushreset:postgres": "bun prisma db push --config prisma.config.ts --force-reset --accept-data-loss && bun prisma generate --config prisma.config.ts",
-		"pushreset:mysql": "bun prisma db push --config prisma.mysql.config.ts --force-reset --accept-data-loss && bun prisma generate --config prisma.mysql.config.ts",
-		"pushreset:sqlite": "bun prisma db push --config prisma.sqlite.config.ts --force-reset --accept-data-loss && bun prisma generate --config prisma.sqlite.config.ts",
-		"clone:sqlite": "bun run scripts/cloneSqlite.ts",
-		"clone:mysql": "bun run scripts/cloneMysql.ts"
+		"pushreset:postgres": "prisma db push --config prisma.config.ts --force-reset --accept-data-loss && prisma generate --config prisma.config.ts",
+		"pushreset:mysql": "prisma db push --config prisma.mysql.config.ts --force-reset --accept-data-loss && prisma generate --config prisma.mysql.config.ts",
+		"pushreset:sqlite": "prisma db push --config prisma.sqlite.config.ts --force-reset --accept-data-loss && prisma generate --config prisma.sqlite.config.ts",
+		"clone:sqlite": "node scripts/cloneSqlite.ts",
+		"clone:mysql": "node scripts/cloneMysql.ts"
 	},
 	"dependencies": {
 		"@paralleldrive/cuid2": "^2.2.2",
@@ -31,7 +31,6 @@
 		"@types/node": "20.11.25",
 		"@types/pg": "^8.11.2",
 		"@types/uuid": "^9.0.8",
-		"bun-types": "^1.0.30",
 		"prisma": "7.10.1",
 		"prisma-generator-drizzle": "workspace:*",
 		"typescript": "5.5.3",
