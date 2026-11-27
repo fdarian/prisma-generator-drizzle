@@ -80,5 +80,49 @@ export async function testManyToMany({ db, schema }: TestContext) {
 				categories: [{ A: category.id, B: post.id }],
 			})
 		})
+
+		// Prisma assigns A/B by model name order (MappedArticle < MappedTag),
+		// which is the reverse of the mapped table name order (a_tags < z_articles)
+		test('implicit m-n or join table with @@map models', async () => {
+			expect(schema).toHaveProperty('mappedArticlesToMappedTags')
+			await db.delete(schema.mappedArticlesToMappedTags)
+			await db.delete(schema.mappedArticles)
+			await db.delete(schema.mappedTags)
+			// --
+
+			const article = { id: createId() }
+			await db.insert(schema.mappedArticles).values(article)
+
+			const tags = [{ id: createId() }, { id: createId() }].sort((a, b) =>
+				a.id.localeCompare(b.id)
+			)
+			await db.insert(schema.mappedTags).values(tags)
+
+			await db
+				.insert(schema.mappedArticlesToMappedTags)
+				.values(tags.map((tag) => ({ A: article.id, B: tag.id })))
+
+			const article_result = await db.query.mappedArticles.findFirst({
+				where: (MappedArticle, { eq }) => eq(MappedArticle.id, article.id),
+				with: { tags: { with: { mappedTag: true } } },
+			})
+			expect(article_result?.id).toBe(article.id)
+			expect(
+				article_result?.tags
+					.map((joined) => joined.mappedTag)
+					.sort((a, b) => a.id.localeCompare(b.id))
+			).toStrictEqual(tags)
+
+			for (const tag of tags) {
+				const tag_result = await db.query.mappedTags.findFirst({
+					where: (MappedTag, { eq }) => eq(MappedTag.id, tag.id),
+					with: { articles: { with: { mappedArticle: true } } },
+				})
+				expect(tag_result?.id).toBe(tag.id)
+				expect(
+					tag_result?.articles.map((joined) => joined.mappedArticle)
+				).toStrictEqual([article])
+			}
+		})
 	})
 }

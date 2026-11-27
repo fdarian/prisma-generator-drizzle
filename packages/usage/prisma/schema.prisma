@@ -41,6 +41,21 @@ model Category {
   posts Post[] @relation("CustomCategoryToPost")
 }
 
+// With @@map where the mapped table name order is the reverse of the model name order
+model MappedArticle {
+  id   String      @id
+  tags MappedTag[]
+
+  @@map("z_articles")
+}
+
+model MappedTag {
+  id       String          @id
+  articles MappedArticle[]
+
+  @@map("a_tags")
+}
+
 // #endregion
 
 // #region Ignore
