@@ -68,10 +68,22 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: ⎔ Setup bun
         uses: oven-sh/setup-bun@v1
 
       - name: 📥 Install deps
+        run: bun install
+
+      - name: 🏗️ Build workspace packages
+        run: bunx turbo build
+
+      - name: 🔗 Link workspace bins
+        # The first install ran before packages/generator/dist existed, so bun skipped linking its bin
         run: bun install
 
       - name: 🧪 Test
