@@ -14,19 +14,20 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
         
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-
-      - name: ⎔ Setup bun
-        uses: oven-sh/setup-bun@v1
+          node-version: 24
+          cache: pnpm
 
       - name: 📥 Install deps
-        run: bun install
+        run: pnpm install --frozen-lockfile
 
       - name: 🔎 Run checks
-        run: bunx turbo check
+        run: pnpm turbo check
 
   test:
     name: ⚡ Test
@@ -68,23 +69,17 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-
-      - name: ⎔ Setup bun
-        uses: oven-sh/setup-bun@v1
+          node-version: 24
+          cache: pnpm
 
       - name: 📥 Install deps
-        run: bun install
-
-      - name: 🏗️ Build generator
-        run: bunx turbo build --filter=prisma-generator-drizzle
-
-      - name: 🔗 Link workspace bins
-        # The first install ran before packages/generator/dist existed, so bun skipped linking its bin
-        run: bun install
+        run: pnpm install --frozen-lockfile
 
       - name: 🧪 Test
-        run: bunx turbo test
+        run: pnpm turbo test

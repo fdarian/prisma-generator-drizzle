@@ -16,7 +16,7 @@
 		"check:biome": "biome ci .",
 		"check:type": "tsc --noEmit",
 		"build": "tsup src/generator.ts src/bin.ts --clean",
-		"prepack": "bun run build"
+		"prepack": "pnpm run build"
 	},
 	"dependencies": {
 		"@mrleebo/prisma-ast": "^0.12.0",
@@ -31,7 +31,6 @@
 		"@types/lodash": "^4.14.202",
 		"@types/node": "^20.11.25",
 		"@types/pluralize": "^0.0.33",
-		"@types/prettier": "3.0.0",
 		"prisma": "7.10.1",
 		"tsup": "^8.0.2",
 		"typescript": "5.5.3"
