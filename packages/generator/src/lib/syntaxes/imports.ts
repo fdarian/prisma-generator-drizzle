@@ -51,13 +51,17 @@ export type ImportValue =
 	| ReturnType<typeof defaultImportValue>
 	| ReturnType<typeof wildcardImport>
 
+const HAS_JS_EXTENSION = /\.(js|mjs|cjs|json)$/
+
 /**
  * Adds the .js extension to relative imports.
  */
 function renderImportPath(path: string) {
 	const moduleResolution = getModuleResolution()
 	if (moduleResolution === 'nodenext' || moduleResolution === 'node16') {
-		return path.startsWith('.') ? `${path}.js` : path
+		return path.startsWith('.') && !HAS_JS_EXTENSION.test(path)
+			? `${path}.js`
+			: path
 	}
 
 	return path

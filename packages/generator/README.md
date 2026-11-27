@@ -263,6 +263,8 @@ export const users = pgTable('User', {
 
 By default, the generator will try to find the closest tsconfig from the current working directory to determine the import style, whether to add `.js` or not. When there's no config found, it will use the common import (e.g. `import { users } from './users'`).
 
+When `moduleResolution` isn't set in the tsconfig, `compilerOptions.module` (`node16`, `nodenext`, `node18`, `node20`) is used to infer it.
+
 You can explicitly set the `moduleResolution` option in the [generator configuration](#configuration).
 
 Check also [the discussion](https://github.com/farreldarian/prisma-generator-drizzle/issues/18)
