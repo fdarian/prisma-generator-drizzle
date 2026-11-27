@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 import { describe, expect, test } from 'bun:test'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { getCustomDirective } from './custom'
@@ -16,7 +17,7 @@ const block = [
 const expected = {
 	imports: [
 		{
-			name: { type: 'named-import', names: ['Foo'] },
+			name: { type: 'named-import' as const, names: ['Foo'] },
 			module: './foo',
 			type: true,
 		},

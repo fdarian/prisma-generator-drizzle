@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 import { describe, expect, test } from 'bun:test'
 import { getDirective } from './directive'
 import type { SchemaField } from './prisma-helpers/schema/schema-field'

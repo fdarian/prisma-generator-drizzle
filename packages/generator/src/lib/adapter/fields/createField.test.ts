@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 import { describe, expect, test } from 'bun:test'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { getCustomDefault, getCustomType } from './createField'

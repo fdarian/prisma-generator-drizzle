@@ -94,6 +94,19 @@ export function createField(input: CreateFieldInput) {
 	}
 }
 
+const DEFAULT_SYNTAX = '<module>::<function> or <module>::<function> `<code>`'
+
+function invalidDirective(
+	field: SchemaField,
+	directive: string,
+	syntax: string,
+	value: string
+) {
+	return new Error(
+		`Invalid ${directive} directive on field "${field.name}": expected "${directive} ${syntax}", got ${JSON.stringify(value)}`
+	)
+}
+
 export function getCustomType(field: SchemaField) {
 	const directive = getDirective(field, 'drizzle.type')
 	if (directive == null) return
@@ -101,7 +114,7 @@ export function getCustomType(field: SchemaField) {
 	const splits = directive.split('::')
 
 	if (splits.length !== 2)
-		throw new Error(`Invalid type definition: ${field.documentation}`)
+		throw invalidDirective(field, 'drizzle.type', '<module>::<Type>', directive)
 
 	const [module, type] = splits
 
@@ -118,7 +131,7 @@ export function getCustomDefault(field: SchemaField) {
 	const splits = directive.split('::')
 
 	if (splits.length !== 2)
-		throw new Error(`Invalid default definition: ${field.documentation}`)
+		throw invalidDirective(field, 'drizzle.default', DEFAULT_SYNTAX, directive)
 
 	const [module, _secondFragment] = splits
 
@@ -132,7 +145,7 @@ export function getCustomDefault(field: SchemaField) {
 	}
 
 	if (splits2.length !== 3)
-		throw new Error(`Invalid default definition: ${field.documentation}`)
+		throw invalidDirective(field, 'drizzle.default', DEFAULT_SYNTAX, directive)
 
 	const [type, code] = splits2
 	return {

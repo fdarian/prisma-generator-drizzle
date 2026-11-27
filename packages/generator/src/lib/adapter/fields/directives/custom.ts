@@ -5,15 +5,23 @@ import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 const DIRECTIVE = 'drizzle.custom'
 
 export function getCustomDirective(field: SchemaField) {
-	const directiveInput = field.documentation
-	if (directiveInput == null || !directiveInput.startsWith(DIRECTIVE)) {
-		return
-	}
+	if (field.documentation == null) return
 
-	const parsing = v.safeParse(DirectiveSchema, parseJson(directiveInput))
+	const lines = field.documentation.split('\n')
+	const start = lines.findIndex((line) =>
+		line.trimStart().startsWith(DIRECTIVE)
+	)
+	if (start === -1) return
+
+	const directiveLines = lines.slice(start)
+	directiveLines[0] = directiveLines[0].trimStart().slice(DIRECTIVE.length)
+
+	const json = parseJson(field, directiveLines)
+	const parsing = v.safeParse(DirectiveSchema, json)
 	if (!parsing.success)
 		throw new InvalidDirectiveShapeError({
-			input: directiveInput,
+			field,
+			input: lines.slice(start).join('\n'),
 			issues: parsing.issues,
 		})
 	return parsing.output
@@ -59,21 +67,31 @@ const DirectiveSchema = v.object({
 
 class InvalidDirectiveShapeError extends Error {
 	constructor(args: {
+		field: SchemaField
 		input: string
 		issues: [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]]
 	}) {
 		super(
-			`Invalid ${DIRECTIVE} definition:\n\n— Error:${JSON.stringify(v.flatten(args.issues), null, 2)}\n—\n\n— Your Input\n${args.input}\n—`
+			`Invalid ${DIRECTIVE} definition on field "${args.field.name}":\n\n— Error:${JSON.stringify(v.flatten(args.issues), null, 2)}\n—\n\n— Your Input\n${args.input}\n—`
 		)
 	}
 }
 
-function parseJson(directiveInput: string) {
-	try {
-		return JSON.parse(directiveInput.replace(DIRECTIVE, ''))
-	} catch (err) {
-		throw new Error(
-			`Invalid ${DIRECTIVE} JSON shape\n\n— Error:\n${getErrorMessage(err)}\n—\n\n— Your Input\n${directiveInput}\n—`
-		)
+/**
+ * Doc lines may follow the JSON block, so the JSON ends at the first
+ * line count where the accumulated text parses.
+ */
+function parseJson(field: SchemaField, directiveLines: string[]) {
+	let lastError: unknown
+	for (let count = 1; count <= directiveLines.length; count++) {
+		try {
+			return JSON.parse(directiveLines.slice(0, count).join('\n'))
+		} catch (err) {
+			lastError = err
+		}
 	}
+
+	throw new Error(
+		`Invalid ${DIRECTIVE} JSON shape on field "${field.name}"\n\n— Error:\n${getErrorMessage(lastError)}\n—\n\n— Your Input\n${DIRECTIVE}${directiveLines.join('\n')}\n—`
+	)
 }
