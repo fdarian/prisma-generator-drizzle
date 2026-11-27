@@ -55,7 +55,8 @@ export type ImportValue =
  * Adds the .js extension to relative imports.
  */
 function renderImportPath(path: string) {
-	if (getModuleResolution() === 'nodenext') {
+	const moduleResolution = getModuleResolution()
+	if (moduleResolution === 'nodenext' || moduleResolution === 'node16') {
 		return path.startsWith('.') ? `${path}.js` : path
 	}
 

@@ -68,5 +68,5 @@ export function isRelationalQueryEnabled() {
 }
 
 export function getModuleResolution() {
-	return getGenerator().config.moduleResolution
+	return getGenerator().moduleResolution
 }
