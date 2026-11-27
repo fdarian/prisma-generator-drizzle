@@ -24,7 +24,7 @@ describe('getCustomType', () => {
 				)
 			)
 		).toThrow(
-			'Invalid drizzle.type directive on field "sentryTraceData": expected "drizzle.type <module>::<Type>", got "\\"PrismaJson.SentryTraceData\\""'
+			'Invalid drizzle.type directive on field "sentryTraceData": expected "drizzle.type <module>::<Type>", got "\\"PrismaJson.SentryTraceData\\"". For a global or namespace type without a module, use `drizzle.custom { "$type": "<Type>" }`.'
 		)
 	})
 })

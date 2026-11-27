@@ -8,23 +8,28 @@ export function getCustomDirective(field: SchemaField) {
 	if (field.documentation == null) return
 
 	const lines = field.documentation.split('\n')
-	const start = lines.findIndex((line) =>
-		line.trimStart().startsWith(DIRECTIVE)
-	)
+	const start = lines.findIndex(isDirectiveLine)
 	if (start === -1) return
 
 	const directiveLines = lines.slice(start)
-	directiveLines[0] = directiveLines[0].trimStart().slice(DIRECTIVE.length)
-
-	const json = parseJson(field, directiveLines)
-	const parsing = v.safeParse(DirectiveSchema, json)
-	if (!parsing.success)
+	const parsed = parseJson(field, directiveLines)
+	const shape = v.safeParse(DirectiveSchema, parsed.json)
+	if (!shape.success)
 		throw new InvalidDirectiveShapeError({
 			field,
-			input: lines.slice(start).join('\n'),
-			issues: parsing.issues,
+			input: directiveLines.slice(0, parsed.consumedLines).join('\n'),
+			issues: shape.issues,
 		})
-	return parsing.output
+	return shape.output
+}
+
+/** Ignores prose such as `drizzle.custom is not used here` or `drizzle.customType`. */
+function isDirectiveLine(line: string) {
+	const trimmed = line.trimStart()
+	if (!trimmed.startsWith(DIRECTIVE)) return false
+
+	const rest = trimmed.slice(DIRECTIVE.length).trim()
+	return rest === '' || rest.startsWith('{')
 }
 
 const NamedImportSchema = v.pipe(
@@ -82,16 +87,22 @@ class InvalidDirectiveShapeError extends Error {
  * line count where the accumulated text parses.
  */
 function parseJson(field: SchemaField, directiveLines: string[]) {
+	const firstLine = directiveLines[0].trimStart().slice(DIRECTIVE.length)
+	const jsonLines = [firstLine, ...directiveLines.slice(1)]
+
 	let lastError: unknown
-	for (let count = 1; count <= directiveLines.length; count++) {
+	for (let count = 1; count <= jsonLines.length; count++) {
 		try {
-			return JSON.parse(directiveLines.slice(0, count).join('\n'))
+			return {
+				json: JSON.parse(jsonLines.slice(0, count).join('\n')),
+				consumedLines: count,
+			}
 		} catch (err) {
 			lastError = err
 		}
 	}
 
 	throw new Error(
-		`Invalid ${DIRECTIVE} JSON shape on field "${field.name}"\n\n— Error:\n${getErrorMessage(lastError)}\n—\n\n— Your Input\n${DIRECTIVE}${directiveLines.join('\n')}\n—`
+		`Invalid ${DIRECTIVE} JSON shape on field "${field.name}"\n\n— Error:\n${getErrorMessage(lastError)}\n—\n\n— Your Input\n${directiveLines.join('\n')}\n—`
 	)
 }

@@ -64,6 +64,34 @@ describe('getCustomDirective', () => {
 		).toEqual(expected)
 	})
 
+	test('parses a directive with the brace on the next line', () => {
+		expect(
+			getCustomDirective(
+				fieldWithDocs('drizzle.custom\n{"$type": "Foo"}\nTrailing description')
+			)
+		).toEqual({ $type: 'Foo' })
+	})
+
+	test('ignores prose starting with the directive name', () => {
+		expect(
+			getCustomDirective(fieldWithDocs('drizzle.custom is not used here'))
+		).toBeUndefined()
+	})
+
+	test('ignores a longer directive name', () => {
+		expect(
+			getCustomDirective(fieldWithDocs('drizzle.customType foo'))
+		).toBeUndefined()
+	})
+
+	test('throws on an unclosed block followed by doc lines', () => {
+		expect(() =>
+			getCustomDirective(
+				fieldWithDocs('drizzle.custom {\n"$type": "Foo"\nTrailing description')
+			)
+		).toThrow('Invalid drizzle.custom JSON shape on field "data"')
+	})
+
 	test('throws on invalid JSON', () => {
 		expect(() =>
 			getCustomDirective(fieldWithDocs('drizzle.custom {not json'))
@@ -74,5 +102,13 @@ describe('getCustomDirective', () => {
 		expect(() =>
 			getCustomDirective(fieldWithDocs('drizzle.custom {"$type": 1}'))
 		).toThrow('"data"')
+	})
+
+	test('shows only the parsed lines when the shape is invalid', () => {
+		expect(() =>
+			getCustomDirective(
+				fieldWithDocs('drizzle.custom {\n"$type": 1\n}\nTrailing description')
+			)
+		).toThrow(/"\$type": 1\n\}\n—/)
 	})
 })

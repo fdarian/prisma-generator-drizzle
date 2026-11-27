@@ -100,11 +100,11 @@ function invalidDirective(
 	field: SchemaField,
 	directive: string,
 	syntax: string,
-	value: string
+	value: string,
+	hint?: string
 ) {
-	return new Error(
-		`Invalid ${directive} directive on field "${field.name}": expected "${directive} ${syntax}", got ${JSON.stringify(value)}`
-	)
+	const message = `Invalid ${directive} directive on field "${field.name}": expected "${directive} ${syntax}", got ${JSON.stringify(value)}`
+	return new Error(hint ? `${message}. ${hint}` : message)
 }
 
 export function getCustomType(field: SchemaField) {
@@ -114,7 +114,13 @@ export function getCustomType(field: SchemaField) {
 	const splits = directive.split('::')
 
 	if (splits.length !== 2)
-		throw invalidDirective(field, 'drizzle.type', '<module>::<Type>', directive)
+		throw invalidDirective(
+			field,
+			'drizzle.type',
+			'<module>::<Type>',
+			directive,
+			'For a global or namespace type without a module, use `drizzle.custom { "$type": "<Type>" }`.'
+		)
 
 	const [module, type] = splits
 
