@@ -352,10 +352,11 @@ import type { Item } from '../my-type'
 
 **prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for the Prisma client.
 
-| Dependency  | Version            | Source                                              |
-| ----------- | ------------------ | --------------------------------------------------- |
-| Prisma      | `7.10.1` (pinned)  | `prisma` and `@prisma/generator-helper`             |
-| drizzle-orm | `^0.45.4` (tested) | the `usage` test project; no peer range is declared |
+| Dependency  | Version                                        | Source                                                                  |
+| ----------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| Prisma      | `7.10.1` (pinned)                              | `prisma` and `@prisma/generator-helper`                                 |
+| drizzle-orm | `^0.45.4` (tested)                             | the `usage` test project; no peer range is declared                     |
+| drizzle-orm | `1.0.0-rc.6` (tested, `relations = "v2"` only) | the `usage-relations-v2` test project; experimental until 1.0 is stable |
 
 Native `@db.*` attributes map to the matching Drizzle column where one exists. Native types without a Drizzle equivalent fall back to the default column of their scalar.
 

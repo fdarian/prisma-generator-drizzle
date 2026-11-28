@@ -5,7 +5,7 @@
 	"format": false,
 	"changelog": "@changesets/cli/changelog",
 	"commit": false,
-	"ignore": ["usage", "with-drizzle-prisma"],
+	"ignore": ["usage", "usage-relations-v2", "with-drizzle-prisma"],
 	"fixed": [],
 	"linked": [],
 	"updateInternalDependencies": "patch",
