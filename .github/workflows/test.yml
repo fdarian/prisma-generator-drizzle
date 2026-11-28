@@ -23,6 +23,9 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      - name: ⎔ Setup bun
+        uses: oven-sh/setup-bun@v2
+
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
 
@@ -80,6 +83,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+
+      - name: ⎔ Setup bun
+        uses: oven-sh/setup-bun@v2
 
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
