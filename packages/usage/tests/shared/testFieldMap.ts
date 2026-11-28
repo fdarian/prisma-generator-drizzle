@@ -4,9 +4,11 @@ import type { TestContext } from 'tests/utils/types'
 import { array, parse, record, string, unknown } from 'valibot'
 import { afterEach, describe, expect, test } from 'vitest'
 
-export function testFieldMap({ db, schema, provider }: TestContext) {
-	const fields = schema.mappedFields
-	const parents = schema.mappedFieldParents
+export function testFieldMap(context: TestContext) {
+	const db = context.db
+	const provider = context.provider
+	const fields = context.schema.mappedFields
+	const parents = context.schema.mappedFieldParents
 
 	const parent: typeof parents.$inferSelect = { id: 9001, name: 'parent' }
 
@@ -54,7 +56,7 @@ export function testFieldMap({ db, schema, provider }: TestContext) {
 			await insertBoth()
 
 			const result = await db.query.mappedFields
-				.findFirst({ where: (table, { eq }) => eq(table.id, field.id) })
+				.findFirst({ where: (table) => eq(table.id, field.id) })
 				.then(throwIfnull)
 
 			expect(result).toStrictEqual(field)
@@ -65,7 +67,7 @@ export function testFieldMap({ db, schema, provider }: TestContext) {
 
 			const fieldResult = await db.query.mappedFields
 				.findFirst({
-					where: (table, { eq }) => eq(table.id, field.id),
+					where: (table) => eq(table.id, field.id),
 					with: { parent: true },
 				})
 				.then(throwIfnull)
@@ -73,7 +75,7 @@ export function testFieldMap({ db, schema, provider }: TestContext) {
 
 			const parentResult = await db.query.mappedFieldParents
 				.findFirst({
-					where: (table, { eq }) => eq(table.id, parent.id),
+					where: (table) => eq(table.id, parent.id),
 					with: { children: true },
 				})
 				.then(throwIfnull)

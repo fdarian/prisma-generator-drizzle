@@ -306,7 +306,7 @@ describe('foreign key names', () => {
 		).toEqual(['fk_offices_region_code_country_code_fkey'])
 	})
 
-	describe('a relation whose local field is @map ped', () => {
+	describe('a relation whose local field uses @map', () => {
 		function mappedSuccessor() {
 			return setup(
 				`model MappedField {
@@ -327,23 +327,23 @@ describe('foreign key names', () => {
 		}
 
 		test('names the default constraint after the mapped column', () => {
-			const { schema, model } = mappedSuccessor()
+			const mapped = mappedSuccessor()
 			expect(
 				resolveForeignKeys(
-					schema,
-					model,
+					mapped.schema,
+					mapped.model,
 					postgresAdapter.maxIdentifierLength
 				).map((fk) => fk.name)
 			).toEqual(['MappedField_successor_id_fkey'])
 		})
 
 		test('still references the TS keys of the columns', () => {
-			const { schema, model } = mappedSuccessor()
-			const [foreignKey] = resolveForeignKeys(
-				schema,
-				model,
+			const mapped = mappedSuccessor()
+			const foreignKey = resolveForeignKeys(
+				mapped.schema,
+				mapped.model,
 				postgresAdapter.maxIdentifierLength
-			)
+			)[0]
 			expect(foreignKey.columns).toEqual(['successorId'])
 			expect(createForeignKeyEntry(foreignKey)).toContain(
 				'columns: [table.successorId]'
