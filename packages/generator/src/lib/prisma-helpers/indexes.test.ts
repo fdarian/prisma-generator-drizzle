@@ -137,8 +137,8 @@ function resolve(
 	indexes: DMMF.Index[],
 	model = post
 ) {
-	const { schema, model: schemaModel } = setup(model, indexes)
-	return resolveIndexes(schema, schemaModel, adapter)
+	const ctx = setup(model, indexes)
+	return resolveIndexes(ctx.schema, ctx.model, adapter)
 }
 
 describe('constraint names', () => {
@@ -379,12 +379,12 @@ describe('index arguments', () => {
 
 describe('unresolvable fields', () => {
 	test('skips an index whose columns are all @ignore d', () => {
-		const { schema, model } = setup(
+		const ctx = setup(
 			dmmfModel('Post', [scalar('id')]),
 			[index('normal', [field('hidden')])],
 			'model Post {\n id String @id\n hidden String @ignore\n}'
 		)
-		expect(resolveIndexes(schema, model, postgresAdapter)).toEqual([])
+		expect(resolveIndexes(ctx.schema, ctx.model, postgresAdapter)).toEqual([])
 	})
 
 	test('throws for an unknown field', () => {
@@ -412,8 +412,8 @@ describe('generateTableDeclaration constraints', () => {
 	]
 
 	function generate(adapter: Parameters<typeof generateTableDeclaration>[0]) {
-		const { schema, model: schemaModel } = setup(model, indexes)
-		return generateTableDeclaration(adapter, schema, schemaModel)
+		const ctx = setup(model, indexes)
+		return generateTableDeclaration(adapter, ctx.schema, ctx.model)
 	}
 
 	function importedNames(
@@ -455,13 +455,11 @@ describe('generateTableDeclaration constraints', () => {
 	})
 
 	test('imports only the builders in use', () => {
-		const { schema, model: schemaModel } = setup(model, [
-			index('unique', [field('slug')]),
-		])
+		const ctx = setup(model, [index('unique', [field('slug')])])
 		const output = generateTableDeclaration(
 			postgresAdapter,
-			schema,
-			schemaModel
+			ctx.schema,
+			ctx.model
 		)
 		expect(importedNames(output, postgresAdapter.coreModule)).toContain(
 			'uniqueIndex'
@@ -475,11 +473,11 @@ describe('generateTableDeclaration constraints', () => {
 	})
 
 	test('emits no extra config for a model without indexes', () => {
-		const { schema, model: schemaModel } = setup(model, [])
+		const ctx = setup(model, [])
 		const output = generateTableDeclaration(
 			postgresAdapter,
-			schema,
-			schemaModel
+			ctx.schema,
+			ctx.model
 		)
 		expect(output.code).not.toContain('ExtraConfigValue')
 	})
@@ -520,15 +518,15 @@ describe('implicit join table', () => {
 			'SQLiteTableExtraConfigValue[] => [uniqueIndex("_PostToTag_AB_unique").on(table.A, table.B), index("_PostToTag_B_index").on(table.B)]',
 		],
 	])('%s emits what Prisma creates', (_, getAdapter, expected) => {
-		const { schema, model } = joinTable('_PostToTag')
-		const output = generateTableDeclaration(getAdapter(), schema, model)
+		const ctx = joinTable('_PostToTag')
+		const output = generateTableDeclaration(getAdapter(), ctx.schema, ctx.model)
 		expect(output.code).toContain(expected)
 	})
 
 	test('does not read the primaryKey of the synthetic model', () => {
-		const { schema, model } = joinTable('_PostToTag')
+		const ctx = joinTable('_PostToTag')
 		expect(
-			resolveIndexes(schema, model, mysqlAdapter).map((i) => i.kind)
+			resolveIndexes(ctx.schema, ctx.model, mysqlAdapter).map((i) => i.kind)
 		).toEqual(['unique', 'index'])
 	})
 
@@ -538,8 +536,8 @@ describe('implicit join table', () => {
 	])(
 		'truncates the table name at the %s limit and keeps the suffix',
 		(_, getAdapter, limit) => {
-			const { schema, model } = joinTable(`_${'r'.repeat(80)}`)
-			const names = resolveIndexes(schema, model, getAdapter()).map(
+			const ctx = joinTable(`_${'r'.repeat(80)}`)
+			const names = resolveIndexes(ctx.schema, ctx.model, getAdapter()).map(
 				(i) => i.name
 			)
 			const keySuffix =
@@ -551,7 +549,8 @@ describe('implicit join table', () => {
 				`_${'r'.repeat(limit - '_B_index'.length - 1)}_B_index`,
 			])
 			for (const name of names) {
-				expect(new TextEncoder().encode(name ?? '').length).toBe(limit)
+				if (name == null) throw new Error('Expected a named constraint')
+				expect(new TextEncoder().encode(name).length).toBe(limit)
 			}
 		}
 	)

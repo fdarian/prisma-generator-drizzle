@@ -4,13 +4,9 @@ import type { Module } from '../syntaxes/module'
 import type { FieldFunc } from './fields/createField'
 
 export type IndexFeatures = {
-	/** Per-column `.desc()` */
 	sortOrder: boolean
-	/** `.using(method, ...)` */
 	method: boolean
-	/** `primaryKey({ name })` */
 	primaryKeyName: boolean
-	/** What Prisma creates on the (A, B) columns of an implicit join table */
 	implicitJoinTableKey: 'primaryKey' | 'unique'
 }
 
@@ -19,9 +15,7 @@ type DeclarationFunc = { imports: ImportValue[]; func: string }
 export function createAdapter<TName extends string>(impl: {
 	name: TName
 	coreModule: string
-	/** Identifier length limit of the database, constraint names are truncated to it */
 	maxIdentifierLength: number
-	/** What the Drizzle index builders of the dialect can express */
 	indexFeatures: IndexFeatures
 	getDeclarationFunc: {
 		enum: (
