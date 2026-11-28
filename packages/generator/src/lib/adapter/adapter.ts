@@ -7,6 +7,10 @@ type DeclarationFunc = { imports: ImportValue[]; func: string }
 
 export function createAdapter<TName extends string>(impl: {
 	name: TName
+	/** Module exporting the table function and `foreignKey` */
+	coreModule: string
+	/** Type of any column of the dialect, used to annotate lazy `.references()` callbacks */
+	anyColumnType: string
 	getDeclarationFunc: {
 		enum: (
 			name: string,
@@ -16,7 +20,8 @@ export function createAdapter<TName extends string>(impl: {
 		table: (
 			name: string,
 			fields: FieldFunc[],
-			schema: string | null
+			schema: string | null,
+			extraConfigEntries: string[]
 		) => DeclarationFunc
 	}
 	fields: Partial<

@@ -56,16 +56,22 @@ const customBigIntModule = createModule({
 
 export const sqliteAdapter = createAdapter({
 	name: 'sqlite',
+	coreModule,
+	anyColumnType: 'AnySQLiteColumn',
 	getDeclarationFunc: {
 		enum(_, __) {
 			throw new Error('Prisma does not support enums')
 		},
-		table(name, fields) {
+		table(name, fields, extraConfigEntries) {
 			return {
 				imports: [namedImport(['sqliteTable'], coreModule)],
 				func: `sqliteTable('${name}', { ${fields
 					.map(({ field, func }) => `${field.name}: ${func}`)
-					.join(', ')} })`,
+					.join(', ')} }${
+					extraConfigEntries.length > 0
+						? `, (table) => [${extraConfigEntries.join(', ')}]`
+						: ''
+				})`,
 			}
 		},
 	},

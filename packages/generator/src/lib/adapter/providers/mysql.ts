@@ -134,6 +134,8 @@ const onAutoincrementDefault: CreateFieldInput['onDefault'] = (field) => {
 
 export const mysqlAdapter = createAdapter({
 	name: 'mysql',
+	coreModule,
+	anyColumnType: 'AnyMySqlColumn',
 	getDeclarationFunc: {
 		enum(_, values) {
 			return {
@@ -143,12 +145,16 @@ export const mysqlAdapter = createAdapter({
 					.join(', ')}])`,
 			}
 		},
-		table(name, fields) {
+		table(name, fields, extraConfigEntries) {
 			return {
 				imports: [namedImport(['mysqlTable'], coreModule)],
 				func: `mysqlTable('${name}', { ${fields
 					.map(({ field, func }) => `${field.name}: ${func}`)
-					.join(', ')} })`,
+					.join(', ')} }${
+					extraConfigEntries.length > 0
+						? `, (table) => [${extraConfigEntries.join(', ')}]`
+						: ''
+				})`,
 			}
 		},
 	},

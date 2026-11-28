@@ -12,6 +12,7 @@ export function generateModelModules(adapter: Adapter, schema: Schema) {
 	return schema.dmmf.datamodel.models.map((dmmfModel) => {
 		return createModelModule(
 			adapter,
+			schema,
 			createSchemaModel({
 				dmmfModel,
 				astModel: findCorrespondingAstModel(schema.ast, dmmfModel),
@@ -20,8 +21,12 @@ export function generateModelModules(adapter: Adapter, schema: Schema) {
 	})
 }
 
-export function createModelModule(adapter: Adapter, model: SchemaModel) {
-	const tableVar = generateTableDeclaration(adapter, model)
+export function createModelModule(
+	adapter: Adapter,
+	schema: Schema,
+	model: SchemaModel
+) {
+	const tableVar = generateTableDeclaration(adapter, schema, model)
 
 	return createModule({
 		name: model.getModuleName(),

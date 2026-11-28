@@ -53,6 +53,8 @@ export function createSchemaField(args: {
 			relationName: dmmfField.relationName,
 			relationFromFields: dmmfField.relationFromFields,
 			relationToFields: dmmfField.relationToFields,
+			relationOnDelete: dmmfField.relationOnDelete,
+			relationOnUpdate: dmmfField.relationOnUpdate,
 		} as const
 	}
 

@@ -92,6 +92,8 @@ function getUpdatedAtExpression(
 
 export const postgresAdapter = createAdapter({
 	name: 'postgres',
+	coreModule,
+	anyColumnType: 'AnyPgColumn',
 	getDeclarationFunc: {
 		enum(name, values, schema) {
 			const args = `'${name}', [${values.map((v) => `'${v}'`).join(', ')}]`
@@ -106,10 +108,14 @@ export const postgresAdapter = createAdapter({
 				func: `${getPgSchemaVarName(schema)}.enum(${args})`,
 			}
 		},
-		table(name, fields, schema) {
+		table(name, fields, schema, extraConfigEntries) {
 			const args = `'${name}', { ${fields
 				.map((f) => `${f.field.name}: ${f.func}`)
-				.join(', ')} }`
+				.join(', ')} }${
+				extraConfigEntries.length > 0
+					? `, (table) => [${extraConfigEntries.join(', ')}]`
+					: ''
+			}`
 			if (isPublicSchema(schema)) {
 				return {
 					imports: [namedImport(['pgTable'], coreModule)],
