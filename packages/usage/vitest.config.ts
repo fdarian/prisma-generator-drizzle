@@ -6,7 +6,7 @@ export default defineConfig({
 		alias: [
 			{
 				/** The `prisma` package (v7) has an exports map, so these would no longer fall back to the local ./prisma directory */
-				find: /^prisma\/(drizzle|mysql|sqlite)\//,
+				find: /^prisma\/(drizzle|mysql|sqlite|multi-schema)\//,
 				replacement: `${fileURLToPath(new URL('./prisma', import.meta.url))}/$1/`,
 			},
 		],

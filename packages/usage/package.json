@@ -9,6 +9,7 @@
 		"test": "vitest run",
 		"generate": "prisma generate --config prisma.config.ts",
 		"pushreset:postgres": "prisma db push --config prisma.config.ts --force-reset --accept-data-loss && prisma generate --config prisma.config.ts",
+		"pushreset:multi-schema": "prisma db push --config prisma.multi-schema.config.ts --force-reset --accept-data-loss && prisma generate --config prisma.multi-schema.config.ts",
 		"pushreset:mysql": "prisma db push --config prisma.mysql.config.ts --force-reset --accept-data-loss && prisma generate --config prisma.mysql.config.ts",
 		"pushreset:sqlite": "prisma db push --config prisma.sqlite.config.ts --force-reset --accept-data-loss && prisma generate --config prisma.sqlite.config.ts",
 		"clone:sqlite": "node scripts/cloneSqlite.ts",
