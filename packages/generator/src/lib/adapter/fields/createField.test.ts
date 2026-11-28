@@ -1,5 +1,4 @@
-/// <reference types="bun-types" />
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, it } from 'vitest'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { getCustomDefault, getCustomType } from './createField'
 
@@ -8,7 +7,7 @@ function fieldWithDocs(documentation: string) {
 }
 
 describe('getCustomType', () => {
-	test.each([
+	it.each([
 		['before a doc line', 'drizzle.type viem::Address\nSome description'],
 		['after a doc line', 'Some description\ndrizzle.type viem::Address'],
 	])('reads drizzle.type %s', (_, documentation) => {
@@ -16,7 +15,7 @@ describe('getCustomType', () => {
 		expect(result?.code).toBe('.$type<Address>()')
 	})
 
-	test('throws naming the field and expected syntax without ::', () => {
+	it('throws naming the field and expected syntax without ::', () => {
 		expect(() =>
 			getCustomType(
 				fieldWithDocs(
@@ -30,7 +29,7 @@ describe('getCustomType', () => {
 })
 
 describe('getCustomDefault', () => {
-	test('reads drizzle.default after a doc line', () => {
+	it('reads drizzle.default after a doc line', () => {
 		const result = getCustomDefault(
 			fieldWithDocs('Some description\ndrizzle.default nanoid::nanoid')
 		)
