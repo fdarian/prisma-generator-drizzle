@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'bun:test'
 import { parseTypeExpression } from './type-expression'
 
 describe('parseTypeExpression', () => {
-	it.each([
+	test.each([
 		['Item', ['Item']],
 		['Item[]', ['Item']],
 		['Item[][]', ['Item']],
@@ -31,7 +31,7 @@ describe('parseTypeExpression', () => {
 		expect(parseTypeExpression(expression)).toEqual({ supported: true, names })
 	})
 
-	it.each([
+	test.each([
 		'{ items: Item[] }',
 		'(x: Item) => void',
 		'[Head, ...Rest[]]',

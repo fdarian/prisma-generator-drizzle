@@ -80,7 +80,7 @@ describe('@updatedAt', () => {
 			}
 
 			generator drizzle {
-				provider = "prisma-generator-drizzle"
+				provider = "bunx prisma-generator-drizzle"
 				${opts.dateMode ? `dateMode = "${opts.dateMode}"` : ''}
 				output = "drizzle.ts"
 			}
@@ -91,7 +91,7 @@ describe('@updatedAt', () => {
 				updatedAt DateTime @updatedAt
 			}`
 		)
-		execSync(`pnpm exec prisma generate --schema ${getSchemaPath(temp)}`)
+		execSync(`bun prisma generate --schema ${getSchemaPath(temp)}`)
 		return fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
 	}
 

@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, mock, test } from 'bun:test'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { postgresAdapter } from './postgres'
 
-vi.mock('~/shared/generator-context', () => ({
+mock.module('~/shared/generator-context', () => ({
 	getModuleResolution: () => undefined,
 }))
 
@@ -25,14 +25,14 @@ function jsonField(documentation: string, isList: boolean) {
 }
 
 describe('postgres Json field with drizzle.type', () => {
-	it('applies the type after .array() on a list field', () => {
+	test('applies the type after .array() on a list field', () => {
 		const result = createJson(jsonField('drizzle.type mod::Settings[]', true))
 		expect(result.func).toBe(
 			"jsonb('history').array().$type<Settings[]>().notNull()"
 		)
 	})
 
-	it('types a non-list field', () => {
+	test('types a non-list field', () => {
 		const result = createJson(jsonField('drizzle.type mod::Settings', false))
 		expect(result.func).toBe("jsonb('history').$type<Settings>().notNull()")
 	})
