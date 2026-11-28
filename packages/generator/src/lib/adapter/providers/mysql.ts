@@ -100,6 +100,11 @@ export const mysqlAdapter = createAdapter({
 				field,
 				imports: [namedImport(['datetime'], coreModule)],
 				func: `datetime('${getDbName(field)}', { mode: '${getDateMode(field)}', fsp: 3 })`, // biome-ignore format: keep one line
+				// MySQL rejects the `Z` suffix of an ISO string in a DATETIME value
+				onUpdatedAt: (field) =>
+					getDateMode(field) === 'string'
+						? "new Date().toISOString().replace('T', ' ').replace('Z', '')"
+						: undefined,
 				// https://github.com/drizzle-team/drizzle-orm/issues/921
 				onDefault: (field) => {
 					if (

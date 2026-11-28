@@ -11,6 +11,7 @@ import {
 	namedImport,
 } from '~/lib/syntaxes/imports'
 import type { ModifyType, Prettify } from '~/lib/types/utils'
+import { getDateMode } from '~/shared/date-mode'
 import { getCustomDirective } from './directives/custom'
 
 export type DefineImport = {
@@ -28,6 +29,8 @@ export interface CreateFieldInput {
 		field: FieldWithDefault
 	) => { code: string; imports?: ImportValue[] } | undefined
 	onPrimaryKey?: (field: SchemaField) => string | undefined
+	/** Returns the expression evaluated on update, when the default doesn't fit the column */
+	onUpdatedAt?: (field: SchemaField) => string | undefined
 }
 
 export type FieldFunc = ReturnType<typeof createField>
@@ -87,12 +90,22 @@ export function createField(input: CreateFieldInput) {
 	else if (field.isRequired || field.hasDefaultValue || hasDefaultFn)
 		func += '.notNull()'
 
+	if (field.isUpdatedAt) {
+		func += `.$onUpdate(() => ${input.onUpdatedAt?.(field) ?? getNow(field)})`
+	}
+
 	return {
 		imports,
 		field,
 		name: field.name,
 		func: func,
 	}
+}
+
+function getNow(field: SchemaField) {
+	return getDateMode(field) === 'date'
+		? 'new Date()'
+		: 'new Date().toISOString()'
 }
 
 const DEFAULT_SYNTAX = '<module>::<function> or <module>::<function> `<code>`'
