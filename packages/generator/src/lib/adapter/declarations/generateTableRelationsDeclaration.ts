@@ -346,7 +346,6 @@ function createJoinColumn(name: 'A' | 'B', pkField: DMMF.Field) {
 	} satisfies DMMF.Field
 }
 
-/** Counts distinct implicit many-to-many relations between two models, which can be the same model */
 function countImplicitManyToManyRelations(
 	schema: Schema,
 	names: [string, string]
@@ -368,7 +367,11 @@ function countImplicitManyToManyRelations(
 				f.relationName === field.relationName &&
 				!(second === first && f.name === field.name)
 		)
-		if (opposingField?.isList) relationNames.add(field.relationName)
+		if (opposingField == null)
+			throw new Error(
+				`Opposite field of relation ${field.relationName} not found in model ${second.name}`
+			)
+		if (opposingField.isList) relationNames.add(field.relationName)
 	}
 	return relationNames.size
 }

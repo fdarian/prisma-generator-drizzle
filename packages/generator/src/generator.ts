@@ -3,7 +3,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createPrismaSchemaBuilder } from '@mrleebo/prisma-ast'
 import {
-	type DMMF,
 	type GeneratorOptions,
 	generatorHandler,
 } from '@prisma/generator-helper'
@@ -284,11 +283,6 @@ async function getAdapter(options: GeneratorOptions) {
 		default:
 			throw new Error(`Connector ${provider} is not supported`)
 	}
-}
-
-export function deduplicateModels(accum: DMMF.Model[], model: DMMF.Model) {
-	if (accum.some(({ name }) => name === model.name)) return accum
-	return [...accum, model]
 }
 
 export type GeneratedModules = BaseGeneratedModules &
