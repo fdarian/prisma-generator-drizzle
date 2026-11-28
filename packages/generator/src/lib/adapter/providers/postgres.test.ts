@@ -137,23 +137,26 @@ describe('postgres list fields', () => {
 		} as unknown as SchemaField
 	}
 
-	function createBigInt(field: SchemaField) {
+	async function createBigInt(field: SchemaField) {
+		const postgresAdapter = await loadPostgresAdapter()
 		const bigInt = postgresAdapter.fields.BigInt
 		if (bigInt == null) throw new Error('postgres adapter has no BigInt field')
 		return bigInt(field)
 	}
 
-	it('appends .array() to a BigInt list', () => {
-		expect(createBigInt(bigIntField()).func).toBe(
+	test('appends .array() to a BigInt list', async () => {
+		const result = await createBigInt(bigIntField())
+		expect(result.func).toBe(
 			"bigint('ids', { mode: 'bigint' }).array().notNull()"
 		)
 	})
 
-	it('honors the field mode on a BigInt list', () => {
+	test('honors the field mode on a BigInt list', async () => {
 		const field = bigIntField(
 			'drizzle.custom { "field": { "mode": "number" } }'
 		)
-		expect(createBigInt(field).func).toBe(
+		const result = await createBigInt(field)
+		expect(result.func).toBe(
 			"bigint('ids', { mode: 'number' }).array().notNull()"
 		)
 	})

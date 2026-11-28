@@ -1,17 +1,28 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test } from 'bun:test'
+import type { GeneratorOptions } from '@prisma/generator-helper'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
-import { mysqlAdapter } from './mysql'
-import { postgresAdapter } from './postgres'
+import { initializeGenerator } from '~/shared/generator-context'
 
-const generatorConfig: { dateMode?: 'date' | 'string' } = {}
+function initialize(config: Record<string, string>) {
+	initializeGenerator({
+		generator: { config, output: { value: 'drizzle.ts' } },
+		dmmf: {},
+	} as unknown as GeneratorOptions)
+}
 
-vi.mock('~/shared/generator-context', () => ({
-	getGenerator: () => ({ config: generatorConfig }),
-	getModuleResolution: () => undefined,
-}))
+initialize({})
+
+let mysqlAdapter: typeof import('./mysql').mysqlAdapter
+let postgresAdapter: typeof import('./postgres').postgresAdapter
+
+// The adapters read the generator context while their modules load, so they must be imported after initialization
+beforeAll(async () => {
+	mysqlAdapter = (await import('./mysql')).mysqlAdapter
+	postgresAdapter = (await import('./postgres')).postgresAdapter
+})
 
 beforeEach(() => {
-	generatorConfig.dateMode = undefined
+	initialize({})
 })
 
 type FieldInput = {
@@ -62,7 +73,7 @@ const mysqlImport = (name: string) =>
 	`import { ${name} } from 'drizzle-orm/mysql-core';`
 
 describe('postgres native types', () => {
-	it.each<[string, string, string[], string, string]>([
+	test.each<[string, string, string[], string, string]>([
 		[
 			'String',
 			'VarChar',
@@ -157,13 +168,13 @@ describe('postgres native types', () => {
 		expect(result.imports[0]).toContain(`{ ${importName} }`)
 	})
 
-	it('keeps the import module for native builders', () => {
+	test('keeps the import module for native builders', () => {
 		expect(
 			pg({ type: 'String', nativeType: ['VarChar', ['255']] }).imports
 		).toEqual([pgImport('varchar')])
 	})
 
-	it.each<[string, string]>([
+	test.each<[string, string]>([
 		['String', "text('col')"],
 		['Int', "integer('col')"],
 		['Float', "doublePrecision('col')"],
@@ -176,15 +187,15 @@ describe('postgres native types', () => {
 		expect(pg({ type }).func).toBe(func)
 	})
 
-	it('appends .array() to a native list column', () => {
+	test('appends .array() to a native list column', () => {
 		expect(
 			pg({ type: 'String', isList: true, nativeType: ['VarChar', ['255']] })
 				.func
 		).toBe("varchar('col', { length: 255 }).array()")
 	})
 
-	it('honors the dateMode config on Timestamptz', () => {
-		generatorConfig.dateMode = 'string'
+	test('honors the dateMode config on Timestamptz', () => {
+		initialize({ dateMode: 'string' })
 
 		expect(
 			pg({ type: 'DateTime', nativeType: ['Timestamptz', ['6']] }).func
@@ -193,7 +204,7 @@ describe('postgres native types', () => {
 		)
 	})
 
-	it('honors the drizzle.dateMode directive on Date', () => {
+	test('honors the drizzle.dateMode directive on Date', () => {
 		expect(
 			pg({
 				type: 'DateTime',
@@ -204,7 +215,7 @@ describe('postgres native types', () => {
 	})
 
 	// https://github.com/fdarian/prisma-generator-drizzle/issues/78
-	it('maps @db.Date to date, with defaultNow', () => {
+	test('maps @db.Date to date, with defaultNow', () => {
 		const result = pg({
 			type: 'DateTime',
 			nativeType: ['Date', []],
@@ -218,7 +229,7 @@ describe('postgres native types', () => {
 	})
 
 	// https://github.com/fdarian/prisma-generator-drizzle/issues/74
-	it('maps @db.Time to time, with defaultNow', () => {
+	test('maps @db.Time to time, with defaultNow', () => {
 		const result = pg({
 			type: 'DateTime',
 			nativeType: ['Time', []],
@@ -229,7 +240,7 @@ describe('postgres native types', () => {
 		expect(result.imports).toEqual([pgImport('time')])
 	})
 
-	it.each([
+	test.each([
 		['Time', "time('col').default('14:21:00.000').notNull()"],
 		[
 			'Timetz',
@@ -245,7 +256,7 @@ describe('postgres native types', () => {
 		expect(result.func).toBe(expected)
 	})
 
-	it('maps SmallInt with autoincrement to smallserial', () => {
+	test('maps SmallInt with autoincrement to smallserial', () => {
 		const result = pg({
 			type: 'Int',
 			nativeType: ['SmallInt', []],
@@ -257,7 +268,7 @@ describe('postgres native types', () => {
 		expect(result.imports).toEqual([pgImport('smallserial')])
 	})
 
-	it('keeps serial for Integer with autoincrement', () => {
+	test('keeps serial for Integer with autoincrement', () => {
 		expect(
 			pg({
 				type: 'Int',
@@ -268,7 +279,7 @@ describe('postgres native types', () => {
 		).toBe("serial('col').primaryKey()")
 	})
 
-	it('applies a drizzle.custom $type on top of a native column', () => {
+	test('applies a drizzle.custom $type on top of a native column', () => {
 		const result = pg({
 			type: 'String',
 			nativeType: ['VarChar', ['255']],
@@ -283,7 +294,7 @@ describe('postgres native types', () => {
 		])
 	})
 
-	it('throws on a non-numeric native type argument', () => {
+	test('throws on a non-numeric native type argument', () => {
 		expect(() =>
 			pg({ type: 'String', nativeType: ['VarChar', ['Max']] })
 		).toThrow('Unsupported @db.VarChar argument "Max" on field "col"')
@@ -291,7 +302,7 @@ describe('postgres native types', () => {
 })
 
 describe('postgres @updatedAt on native date/time columns', () => {
-	it.each<[string, string, string[], string]>([
+	test.each<[string, string, string[], string]>([
 		[
 			'Time',
 			'Time',
@@ -317,8 +328,8 @@ describe('postgres @updatedAt on native date/time columns', () => {
 		}
 	)
 
-	it('emits a time-of-day string regardless of dateMode', () => {
-		generatorConfig.dateMode = 'string'
+	test('emits a time-of-day string regardless of dateMode', () => {
+		initialize({ dateMode: 'string' })
 		expect(
 			pg({ type: 'DateTime', nativeType: ['Time', []], isUpdatedAt: true }).func
 		).toBe(
@@ -326,7 +337,7 @@ describe('postgres @updatedAt on native date/time columns', () => {
 		)
 	})
 
-	it('emits a Date for @db.Date by default and a date string in string mode', () => {
+	test('emits a Date for @db.Date by default and a date string in string mode', () => {
 		const field = {
 			type: 'DateTime',
 			nativeType: ['Date', []] as [string, string[]],
@@ -336,14 +347,14 @@ describe('postgres @updatedAt on native date/time columns', () => {
 			"date('col', { mode: 'date' }).$onUpdate(() => new Date())"
 		)
 
-		generatorConfig.dateMode = 'string'
+		initialize({ dateMode: 'string' })
 		expect(pg(field).func).toBe(
 			"date('col', { mode: 'string' }).$onUpdate(() => new Date().toISOString().slice(0, 10))"
 		)
 	})
 
-	it('keeps the ISO string for @db.Timestamp and @db.Timestamptz in string mode', () => {
-		generatorConfig.dateMode = 'string'
+	test('keeps the ISO string for @db.Timestamp and @db.Timestamptz in string mode', () => {
+		initialize({ dateMode: 'string' })
 		expect(
 			pg({
 				type: 'DateTime',
@@ -357,7 +368,7 @@ describe('postgres @updatedAt on native date/time columns', () => {
 })
 
 describe('mysql native types', () => {
-	it.each<[string, string, string[], string, string]>([
+	test.each<[string, string, string[], string, string]>([
 		[
 			'String',
 			'VarChar',
@@ -457,7 +468,7 @@ describe('mysql native types', () => {
 		expect(result.imports[0]).toContain(`{ ${importName} }`)
 	})
 
-	it.each<[string, string]>([
+	test.each<[string, string]>([
 		['String', "text('col')"],
 		['Int', "int('col')"],
 		['Float', "float('col')"],
@@ -470,7 +481,7 @@ describe('mysql native types', () => {
 		expect(mysql({ type }).func).toBe(func)
 	})
 
-	it('maps DateTime(6) with now() to CURRENT_TIMESTAMP(6)', () => {
+	test('maps DateTime(6) with now() to CURRENT_TIMESTAMP(6)', () => {
 		const result = mysql({
 			type: 'DateTime',
 			nativeType: ['DateTime', ['6']],
@@ -486,7 +497,7 @@ describe('mysql native types', () => {
 		])
 	})
 
-	it('maps DateTime without precision and now() to CURRENT_TIMESTAMP', () => {
+	test('maps DateTime without precision and now() to CURRENT_TIMESTAMP', () => {
 		expect(
 			mysql({
 				type: 'DateTime',
@@ -498,7 +509,7 @@ describe('mysql native types', () => {
 		)
 	})
 
-	it('maps @db.Date with now() to (CURRENT_DATE)', () => {
+	test('maps @db.Date with now() to (CURRENT_DATE)', () => {
 		expect(
 			mysql({
 				type: 'DateTime',
@@ -510,7 +521,7 @@ describe('mysql native types', () => {
 		)
 	})
 
-	it('maps a fixed @default on @db.Time to a time string', () => {
+	test('maps a fixed @default on @db.Time to a time string', () => {
 		const result = mysql({
 			type: 'DateTime',
 			nativeType: ['Time', ['3']],
@@ -522,7 +533,7 @@ describe('mysql native types', () => {
 		)
 	})
 
-	it('maps @db.Time(2) with now() to (CURRENT_TIME(2))', () => {
+	test('maps @db.Time(2) with now() to (CURRENT_TIME(2))', () => {
 		expect(
 			mysql({
 				type: 'DateTime',
@@ -532,7 +543,7 @@ describe('mysql native types', () => {
 		).toBe("time('col', { fsp: 2 }).default(sql`(CURRENT_TIME(2))`).notNull()")
 	})
 
-	it('maps @db.Time without precision and now() to (CURRENT_TIME)', () => {
+	test('maps @db.Time without precision and now() to (CURRENT_TIME)', () => {
 		expect(
 			mysql({
 				type: 'DateTime',
@@ -542,7 +553,7 @@ describe('mysql native types', () => {
 		).toBe("time('col').default(sql`(CURRENT_TIME)`).notNull()")
 	})
 
-	it('keeps CURRENT_TIMESTAMP(3) for DateTime without @db.*', () => {
+	test('keeps CURRENT_TIMESTAMP(3) for DateTime without @db.*', () => {
 		expect(
 			mysql({
 				type: 'DateTime',
@@ -553,7 +564,7 @@ describe('mysql native types', () => {
 		)
 	})
 
-	it('keeps autoincrement on native integer ids', () => {
+	test('keeps autoincrement on native integer ids', () => {
 		expect(
 			mysql({
 				type: 'Int',
@@ -564,7 +575,7 @@ describe('mysql native types', () => {
 		).toBe("int('col', { unsigned: true }).autoincrement().primaryKey()")
 	})
 
-	it('keeps the drizzle.custom field.mode on UnsignedBigInt', () => {
+	test('keeps the drizzle.custom field.mode on UnsignedBigInt', () => {
 		expect(
 			mysql({
 				type: 'BigInt',
@@ -574,7 +585,7 @@ describe('mysql native types', () => {
 		).toBe("bigint('col', { mode: 'number', unsigned: true })")
 	})
 
-	it('applies a drizzle.custom $type on top of a native column', () => {
+	test('applies a drizzle.custom $type on top of a native column', () => {
 		expect(
 			mysql({
 				type: 'String',
