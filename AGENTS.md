@@ -19,7 +19,7 @@ Prisma generator (`prisma-generator-drizzle`) that emits a Drizzle ORM schema fr
 |---|---|
 | Install | `pnpm install` |
 | Build the generator | `pnpm turbo build --filter=prisma-generator-drizzle` |
-| Generate the usage schema | `pnpm turbo generate --filter=usage` |
+| Generate the usage schema | `pnpm turbo run generate --filter=usage` (needs `VITE_PG_DATABASE_URL`) |
 | Typecheck + lint | `pnpm turbo check` (`check:type` is `tsc --noEmit`, `check:biome` is `biome ci`) |
 | Format | `pnpm exec biome check --write .` |
 | Test | `pnpm turbo test` |
