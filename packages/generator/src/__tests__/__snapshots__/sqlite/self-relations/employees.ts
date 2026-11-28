@@ -1,0 +1,4 @@
+import { sqliteTable, integer, foreignKey } from 'drizzle-orm/sqlite-core';
+import type { SQLiteTableExtraConfigValue } from 'drizzle-orm/sqlite-core';
+
+export const employees = sqliteTable('Employee', { id: integer('id', { mode: 'number' }).primaryKey(), managerId: integer('managerId', { mode: 'number' }), mentorId: integer('mentorId', { mode: 'number' }) }, (table): SQLiteTableExtraConfigValue[] => [foreignKey({ name: "Employee_managerId_fkey", columns: [table.managerId], foreignColumns: [table.id] }).onDelete('set null').onUpdate('cascade'), foreignKey({ name: "Employee_mentorId_fkey", columns: [table.mentorId], foreignColumns: [table.id] }).onDelete('set null').onUpdate('cascade')]);

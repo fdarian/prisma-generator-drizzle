@@ -1,0 +1,3 @@
+import { sqliteTable, integer } from 'drizzle-orm/sqlite-core';
+
+export const posts = sqliteTable('Post', { id: integer('id', { mode: 'number' }).primaryKey(), createdAt: integer('createdAt', { mode: 'timestamp' }).defaultNow().notNull(), updatedAt: integer('updatedAt', { mode: 'timestamp' }).$onUpdate(() => new Date()).notNull(), mappedAt: integer('mapped_at', { mode: 'timestamp' }).$onUpdate(() => new Date()).notNull(), optionalAt: integer('optionalAt', { mode: 'timestamp' }).$onUpdate(() => new Date()) });

@@ -1,0 +1,4 @@
+import { relations } from 'drizzle-orm';
+import { employees } from './employees';
+
+export const employeesRelations = relations(employees, (helpers) => ({ manager: helpers.one(employees, { relationName: 'Management', fields: [ employees.managerId ], references: [ employees.id ] }), reports: helpers.many(employees, { relationName: 'Management' }), mentor: helpers.one(employees, { relationName: 'Mentoring', fields: [ employees.mentorId ], references: [ employees.id ] }), mentee: helpers.one(employees, { relationName: 'Mentoring', fields: [ employees.id ], references: [ employees.mentorId ] }) }));

@@ -5,6 +5,7 @@
 			".turbo",
 			"**/dist",
 			"**/.next",
+			"**/__snapshots__",
 			"strip-json-comments.ts",
 			// Generated
 			"**/.temp",

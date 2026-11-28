@@ -1,6 +1,6 @@
 import { flatMap } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
-import { reduceImports } from '../../generator'
+import { reduceImports } from '../../generate'
 import type { ImportValue } from './imports'
 
 export type Module = ReturnType<typeof createModule>

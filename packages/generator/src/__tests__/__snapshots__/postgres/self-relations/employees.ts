@@ -1,0 +1,4 @@
+import { pgTable, integer, foreignKey } from 'drizzle-orm/pg-core';
+import type { PgTableExtraConfigValue } from 'drizzle-orm/pg-core';
+
+export const employees = pgTable('Employee', { id: integer('id').primaryKey(), managerId: integer('managerId'), mentorId: integer('mentorId') }, (table): PgTableExtraConfigValue[] => [foreignKey({ name: "Employee_managerId_fkey", columns: [table.managerId], foreignColumns: [table.id] }).onDelete('set null').onUpdate('cascade'), foreignKey({ name: "Employee_mentorId_fkey", columns: [table.mentorId], foreignColumns: [table.id] }).onDelete('set null').onUpdate('cascade')]);

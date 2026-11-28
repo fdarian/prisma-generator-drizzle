@@ -1,0 +1,5 @@
+import { sqliteTable, integer, text, real, blob } from 'drizzle-orm/sqlite-core';
+import { customBigInt } from './custom-bigint';
+import { customDecimal } from './custom-decimal';
+
+export const literals = sqliteTable('Literals', { id: integer('id', { mode: 'number' }).primaryKey(), string: text('string').default('hello').notNull(), int: integer('int', { mode: 'number' }).default(42).notNull(), negInt: integer('negInt', { mode: 'number' }).default(-7).notNull(), bigInt: customBigInt('bigInt').default(BigInt(9007199254740993)).notNull(), float: real('float').default(1.5).notNull(), decimal: customDecimal('decimal').default('12.34').notNull(), boolTrue: integer('boolTrue', { mode: 'boolean' }).default(true).notNull(), boolFalse: integer('boolFalse', { mode: 'boolean' }).default(false).notNull(), dateTime: integer('dateTime', { mode: 'timestamp' }).default(new Date('2024-01-02T03:04:05+00:00')).notNull(), bytes: blob('bytes', { mode: 'buffer' }).$defaultFn(() => Buffer.from('aGVsbG8=', 'base64')).notNull() });
