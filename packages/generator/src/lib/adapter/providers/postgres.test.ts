@@ -1,12 +1,21 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test } from 'bun:test'
+import type { GeneratorOptions } from '@prisma/generator-helper'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
-import { postgresAdapter } from './postgres'
+import { initializeGenerator } from '~/shared/generator-context'
 
-vi.mock('~/shared/generator-context', () => ({
-	getModuleResolution: () => undefined,
-}))
+initializeGenerator({
+	generator: { config: {}, output: { value: 'drizzle.ts' } },
+	dmmf: {},
+} as unknown as GeneratorOptions)
 
-function createJson(field: SchemaField) {
+// The adapter reads the generator context while its module loads, so it must be imported after initialization
+async function loadPostgresAdapter() {
+	const postgres = await import('./postgres')
+	return postgres.postgresAdapter
+}
+
+async function createJson(field: SchemaField) {
+	const postgresAdapter = await loadPostgresAdapter()
 	const json = postgresAdapter.fields.Json
 	if (json == null) throw new Error('postgres adapter has no Json field')
 	return json(field)
@@ -25,15 +34,19 @@ function jsonField(documentation: string, isList: boolean) {
 }
 
 describe('postgres Json field with drizzle.type', () => {
-	it('applies the type after .array() on a list field', () => {
-		const result = createJson(jsonField('drizzle.type mod::Settings[]', true))
+	test('applies the type after .array() on a list field', async () => {
+		const result = await createJson(
+			jsonField('drizzle.type mod::Settings[]', true)
+		)
 		expect(result.func).toBe(
 			"jsonb('history').array().$type<Settings[]>().notNull()"
 		)
 	})
 
-	it('types a non-list field', () => {
-		const result = createJson(jsonField('drizzle.type mod::Settings', false))
+	test('types a non-list field', async () => {
+		const result = await createJson(
+			jsonField('drizzle.type mod::Settings', false)
+		)
 		expect(result.func).toBe("jsonb('history').$type<Settings>().notNull()")
 	})
 })
@@ -44,9 +57,14 @@ describe('postgres table declaration', () => {
 			field: { name: 'id' },
 			func: "text('id')",
 		},
-	] as Parameters<typeof postgresAdapter.getDeclarationFunc.table>[1]
+	] as Parameters<
+		Awaited<
+			ReturnType<typeof loadPostgresAdapter>
+		>['getDeclarationFunc']['table']
+	>[1]
 
-	it.each([null, 'public'])('uses pgTable for schema %s', (schema) => {
+	test.each([null, 'public'])('uses pgTable for schema %s', async (schema) => {
+		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.getDeclarationFunc.table(
 			'User',
 			fields,
@@ -60,7 +78,8 @@ describe('postgres table declaration', () => {
 		])
 	})
 
-	it('attaches the table to its schema variable', () => {
+	test('attaches the table to its schema variable', async () => {
+		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.getDeclarationFunc.table(
 			'User',
 			fields,
@@ -76,7 +95,8 @@ describe('postgres table declaration', () => {
 })
 
 describe('postgres enum declaration', () => {
-	it.each([null, 'public'])('uses pgEnum for schema %s', (schema) => {
+	test.each([null, 'public'])('uses pgEnum for schema %s', async (schema) => {
+		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.getDeclarationFunc.enum(
 			'Role',
 			['A', 'B'],
@@ -89,7 +109,8 @@ describe('postgres enum declaration', () => {
 		])
 	})
 
-	it('attaches the enum to its schema variable', () => {
+	test('attaches the enum to its schema variable', async () => {
+		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.getDeclarationFunc.enum(
 			'Role',
 			['A', 'B'],
@@ -116,23 +137,26 @@ describe('postgres list fields', () => {
 		} as unknown as SchemaField
 	}
 
-	function createBigInt(field: SchemaField) {
+	async function createBigInt(field: SchemaField) {
+		const postgresAdapter = await loadPostgresAdapter()
 		const bigInt = postgresAdapter.fields.BigInt
 		if (bigInt == null) throw new Error('postgres adapter has no BigInt field')
 		return bigInt(field)
 	}
 
-	it('appends .array() to a BigInt list', () => {
-		expect(createBigInt(bigIntField()).func).toBe(
+	test('appends .array() to a BigInt list', async () => {
+		const result = await createBigInt(bigIntField())
+		expect(result.func).toBe(
 			"bigint('ids', { mode: 'bigint' }).array().notNull()"
 		)
 	})
 
-	it('honors the field mode on a BigInt list', () => {
+	test('honors the field mode on a BigInt list', async () => {
 		const field = bigIntField(
 			'drizzle.custom { "field": { "mode": "number" } }'
 		)
-		expect(createBigInt(field).func).toBe(
+		const result = await createBigInt(field)
+		expect(result.func).toBe(
 			"bigint('ids', { mode: 'number' }).array().notNull()"
 		)
 	})

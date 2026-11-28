@@ -19,7 +19,7 @@ async function generate(relationMode: string | undefined) {
 		}
 
 		generator drizzle {
-			provider = "prisma-generator-drizzle"
+			provider = "bunx prisma-generator-drizzle"
 			output = "drizzle.ts"
 		}
 
@@ -58,7 +58,7 @@ async function generate(relationMode: string | undefined) {
 			authors Author[]
 		}`
 	)
-	execSync(`pnpm exec prisma generate --schema ${temp.basePath}/schema.prisma`)
+	execSync(`bun prisma generate --schema ${temp.basePath}/schema.prisma`)
 
 	return fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
 }

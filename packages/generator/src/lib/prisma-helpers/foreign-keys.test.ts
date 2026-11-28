@@ -1,13 +1,7 @@
+import { beforeAll, describe, expect, test } from 'bun:test'
 import { getSchema } from '@mrleebo/prisma-ast'
-import type { DMMF } from '@prisma/generator-helper'
-import { describe, expect, it, vi } from 'vitest'
-import {
-	createForeignKeyEntry,
-	generateTableDeclaration,
-} from '../adapter/declarations/generateTableDeclaration'
-import { mysqlAdapter } from '../adapter/providers/mysql'
-import { postgresAdapter } from '../adapter/providers/postgres'
-import { sqliteAdapter } from '../adapter/providers/sqlite'
+import type { DMMF, GeneratorOptions } from '@prisma/generator-helper'
+import { initializeGenerator } from '~/shared/generator-context'
 import {
 	getDefaultForeignKeyName,
 	getForeignKeys,
@@ -16,9 +10,35 @@ import {
 import { createSchema } from './schema/schema'
 import { createSchemaModel } from './schema/schema-model'
 
-vi.mock('~/shared/generator-context', () => ({
-	getModuleResolution: () => undefined,
-}))
+initializeGenerator({
+	generator: { config: {}, output: { value: 'drizzle.ts' } },
+	dmmf: {},
+} as unknown as GeneratorOptions)
+
+type TableDeclaration = typeof import(
+	'../adapter/declarations/generateTableDeclaration'
+)
+
+let createForeignKeyEntry: TableDeclaration['createForeignKeyEntry']
+let generateTableDeclaration: TableDeclaration['generateTableDeclaration']
+let mysqlAdapter: typeof import('../adapter/providers/mysql').mysqlAdapter
+let postgresAdapter: typeof import(
+	'../adapter/providers/postgres'
+).postgresAdapter
+let sqliteAdapter: typeof import('../adapter/providers/sqlite').sqliteAdapter
+
+// The adapters read the generator context while their modules load, so they must be imported after initialization
+beforeAll(async () => {
+	const declaration = await import(
+		'../adapter/declarations/generateTableDeclaration'
+	)
+	createForeignKeyEntry = declaration.createForeignKeyEntry
+	generateTableDeclaration = declaration.generateTableDeclaration
+	mysqlAdapter = (await import('../adapter/providers/mysql')).mysqlAdapter
+	postgresAdapter = (await import('../adapter/providers/postgres'))
+		.postgresAdapter
+	sqliteAdapter = (await import('../adapter/providers/sqlite')).sqliteAdapter
+})
 
 function scalar(name: string, isRequired = true): DMMF.Field {
 	return {
@@ -83,7 +103,7 @@ function setup(source: string, models: DMMF.Model[], modelName: string) {
 const target = (name: string) => dmmfModel(name, [scalar('id')])
 
 describe('getForeignKeys', () => {
-	it('throws when the target model is unknown and not ignored', () => {
+	test('throws when the target model is unknown and not ignored', () => {
 		const { schema, model } = setup(
 			'model Post {\n id String @id\n authorId String\n author Author @relation(fields: [authorId], references: [id])\n}',
 			[
@@ -100,7 +120,7 @@ describe('getForeignKeys', () => {
 		).toThrow(/unknown model Author/)
 	})
 
-	it('skips a relation whose local column is @ignore d', () => {
+	test('skips a relation whose local column is @ignore d', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id
@@ -124,7 +144,7 @@ describe('getForeignKeys', () => {
 		).toEqual([])
 	})
 
-	it('throws when a local column is missing and not @ignore d', () => {
+	test('throws when a local column is missing and not @ignore d', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id
@@ -148,7 +168,7 @@ describe('getForeignKeys', () => {
 		).toThrow(/references unknown fields authorId/)
 	})
 
-	it('throws when the AST field of a regular model is missing', () => {
+	test('throws when the AST field of a regular model is missing', () => {
 		const { schema, model } = setup(
 			'model Post {\n id String @id\n}',
 			[
@@ -168,10 +188,11 @@ describe('getForeignKeys', () => {
 })
 
 describe('getDefaultForeignKeyName', () => {
-	const mysql = mysqlAdapter.maxIdentifierLength
-	const postgres = postgresAdapter.maxIdentifierLength
+	// literals because test.each reads them at collection time, before the adapters are loaded
+	const mysql = 64
+	const postgres = 63
 
-	it('joins the table and column names', () => {
+	test('joins the table and column names', () => {
 		expect(
 			getDefaultForeignKeyName({
 				tableName: 'Post',
@@ -188,14 +209,14 @@ describe('getDefaultForeignKeyName', () => {
 		).toBe('Office_country_code_fkey')
 	})
 
-	it('has the provider limits', () => {
-		expect(postgres).toBe(63)
-		expect(mysql).toBe(64)
+	test('has the provider limits', () => {
+		expect(postgresAdapter.maxIdentifierLength).toBe(postgres)
+		expect(mysqlAdapter.maxIdentifierLength).toBe(mysql)
 		expect(sqliteAdapter.maxIdentifierLength).toBe(10000)
 	})
 
 	// joined names of limit - 6 and limit - 5 bytes: only the latter is truncated
-	it.each([
+	test.each([
 		['mysql', mysql],
 		['postgres', postgres],
 	])('truncates at the %s limit', (_, limit) => {
@@ -225,7 +246,7 @@ describe('getDefaultForeignKeyName', () => {
 		expect(over).toBe(`T_${atCut}_fkey`)
 	})
 
-	it('backs off to a character boundary when the cut falls inside a multibyte character', () => {
+	test('backs off to a character boundary when the cut falls inside a multibyte character', () => {
 		// 'T_' + 56 ascii = 58 bytes, so the 2-byte character spans bytes 58-59 and the cut at 59 is inside it
 		const straddling = getDefaultForeignKeyName({
 			tableName: 'T',
@@ -236,7 +257,7 @@ describe('getDefaultForeignKeyName', () => {
 		expect(new TextEncoder().encode(straddling).length).toBeLessThan(mysql)
 	})
 
-	it('keeps a multibyte character that ends exactly at the cut', () => {
+	test('keeps a multibyte character that ends exactly at the cut', () => {
 		const kept = getDefaultForeignKeyName({
 			tableName: 'T',
 			columnNames: [`${'a'.repeat(55)}ézzz`],
@@ -248,7 +269,7 @@ describe('getDefaultForeignKeyName', () => {
 })
 
 describe('foreign key names', () => {
-	it('uses the db names of the table and columns in the order of fields', () => {
+	test('uses the db names of the table and columns in the order of fields', () => {
 		const { schema, model } = setup(
 			`model Office {
 				id String @id
@@ -285,7 +306,7 @@ describe('foreign key names', () => {
 		).toEqual(['fk_offices_region_code_country_code_fkey'])
 	})
 
-	it('prefers @relation(map)', () => {
+	test('prefers @relation(map)', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id
@@ -331,7 +352,7 @@ describe('foreign key target gate', () => {
 		relation('region', 'Region', ['country', 'code'], ['country', 'code']),
 	])
 
-	it('skips a composite @@id target but still resolves and emits it', () => {
+	test('skips a composite @@id target but still resolves and emits it', () => {
 		const { schema, model } = setup(
 			officeSource,
 			[officeModel, compositeTarget()],
@@ -350,7 +371,7 @@ describe('foreign key target gate', () => {
 		).not.toContain('foreignKey(')
 	})
 
-	it('skips a single-column target that is not the @id', () => {
+	test('skips a single-column target that is not the @id', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id
@@ -374,7 +395,7 @@ describe('foreign key target gate', () => {
 		expect(getForeignKeys(schema, model, limit)).toEqual([])
 	})
 
-	it('keeps a single-column @id target', () => {
+	test('keeps a single-column @id target', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id
@@ -398,7 +419,7 @@ describe('foreign key target gate', () => {
 })
 
 describe('generateTableDeclaration foreign keys', () => {
-	it('moves every foreign key of a shared column into the config callback', () => {
+	test('moves every foreign key of a shared column into the config callback', () => {
 		const { schema, model } = setup(
 			`model Shared {
 				id String @id
@@ -424,7 +445,7 @@ describe('generateTableDeclaration foreign keys', () => {
 		expect(output.code).toContain('foreignColumns: [seconds.id]')
 	})
 
-	it('escapes the constraint name', () => {
+	test('escapes the constraint name', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id
@@ -445,7 +466,7 @@ describe('generateTableDeclaration foreign keys', () => {
 		expect(output.code).toContain(`name: "it's_fk"`)
 	})
 
-	it('annotates the config callback return type', () => {
+	test('annotates the config callback return type', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id

@@ -1,11 +1,11 @@
 generator drizzle {
-  provider = "prisma-generator-drizzle"
+  provider = "bunx prisma-generator-drizzle"
   output   = "drizzle"
   relations = "v2"
 }
 
 generator drizzleSingle {
-  provider = "prisma-generator-drizzle"
+  provider = "bunx prisma-generator-drizzle"
   output   = "drizzle-single/drizzle.ts"
   relations = "v2"
 }

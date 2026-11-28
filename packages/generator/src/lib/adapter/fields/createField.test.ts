@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'bun:test'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { createField, getCustomDefault, getCustomType } from './createField'
 
@@ -7,7 +7,7 @@ function fieldWithDocs(documentation: string) {
 }
 
 describe('getCustomType', () => {
-	it.each([
+	test.each([
 		['before a doc line', 'drizzle.type viem::Address\nSome description'],
 		['after a doc line', 'Some description\ndrizzle.type viem::Address'],
 	])('reads drizzle.type %s', (_, documentation) => {
@@ -15,7 +15,7 @@ describe('getCustomType', () => {
 		expect(result?.code).toBe('.$type<Address>()')
 	})
 
-	it('throws naming the field and expected syntax without ::', () => {
+	test('throws naming the field and expected syntax without ::', () => {
 		expect(() =>
 			getCustomType(
 				fieldWithDocs(
@@ -29,7 +29,7 @@ describe('getCustomType', () => {
 })
 
 describe('getCustomType type expressions', () => {
-	it.each([
+	test.each([
 		['plain', 'mod::Item', '.$type<Item>()', ['Item']],
 		['nested array', 'mod::Item[][]', '.$type<Item[][]>()', ['Item']],
 		['union', 'mod::Item | Other', '.$type<Item | Other>()', ['Item', 'Other']],
@@ -50,7 +50,7 @@ describe('getCustomType type expressions', () => {
 		expect(result?.imports.isTypeImport).toBe(true)
 	})
 
-	it('keeps a relative module path', () => {
+	test('keeps a relative module path', () => {
 		const result = getCustomType(
 			fieldWithDocs('drizzle.type ../my-type::Email')
 		)
@@ -59,14 +59,14 @@ describe('getCustomType type expressions', () => {
 		expect(result?.imports.names).toEqual(['Email'])
 	})
 
-	it('reads an array expression among doc lines', () => {
+	test('reads an array expression among doc lines', () => {
 		const result = getCustomType(
 			fieldWithDocs('Some description\ndrizzle.type mod::Item[]\nMore text')
 		)
 		expect(result?.code).toBe('.$type<Item[]>()')
 	})
 
-	it('throws when the expression imports nothing', () => {
+	test('throws when the expression imports nothing', () => {
 		expect(() =>
 			getCustomType(fieldWithDocs('drizzle.type mod::string[]'))
 		).toThrow(
@@ -74,7 +74,7 @@ describe('getCustomType type expressions', () => {
 		)
 	})
 
-	it('throws with a drizzle.custom example for a complex type', () => {
+	test('throws with a drizzle.custom example for a complex type', () => {
 		expect(() =>
 			getCustomType(fieldWithDocs('drizzle.type mod::{ items: Item[] }'))
 		).toThrow(
@@ -84,7 +84,7 @@ describe('getCustomType type expressions', () => {
 })
 
 describe('createField inline $type', () => {
-	it('emits the inline type literal verbatim without imports', () => {
+	test('emits the inline type literal verbatim without imports', () => {
 		const inline = '{ month: string, min: number, max: number }[]'
 		const result = createField({
 			field: {
@@ -102,7 +102,7 @@ describe('createField inline $type', () => {
 })
 
 describe('getCustomDefault', () => {
-	it('reads drizzle.default after a doc line', () => {
+	test('reads drizzle.default after a doc line', () => {
 		const result = getCustomDefault(
 			fieldWithDocs('Some description\ndrizzle.default nanoid::nanoid')
 		)

@@ -18,7 +18,7 @@ test('global config', async () => {
 		}
 
 		generator drizzle { 
-			provider = "prisma-generator-drizzle"
+			provider = "bunx prisma-generator-drizzle"
 			dateMode = "string"
 			output = "drizzle.ts" 
 		} 
@@ -28,7 +28,7 @@ test('global config', async () => {
 			date DateTime 
 		}`
 	)
-	execSync(`pnpm exec prisma generate --schema ${getSchemaPath(temp)}`)
+	execSync(`bun prisma generate --schema ${getSchemaPath(temp)}`)
 
 	const output = fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
 	expect(output).toContain(
@@ -46,7 +46,7 @@ test('field-level config', async () => {
 		}
 
 		generator drizzle { 
-			provider = "prisma-generator-drizzle"
+			provider = "bunx prisma-generator-drizzle"
 			output = "drizzle.ts" 
 		} 
 
@@ -57,7 +57,7 @@ test('field-level config', async () => {
 			stringDate DateTime 
 		}`
 	)
-	execSync(`pnpm exec prisma generate --schema ${getSchemaPath(temp)}`)
+	execSync(`bun prisma generate --schema ${getSchemaPath(temp)}`)
 
 	const output = await fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
 	expect(output).toContain(
@@ -80,7 +80,7 @@ describe('@updatedAt', () => {
 			}
 
 			generator drizzle {
-				provider = "prisma-generator-drizzle"
+				provider = "bunx prisma-generator-drizzle"
 				${opts.dateMode ? `dateMode = "${opts.dateMode}"` : ''}
 				output = "drizzle.ts"
 			}
@@ -91,7 +91,7 @@ describe('@updatedAt', () => {
 				updatedAt DateTime @updatedAt
 			}`
 		)
-		execSync(`pnpm exec prisma generate --schema ${getSchemaPath(temp)}`)
+		execSync(`bun prisma generate --schema ${getSchemaPath(temp)}`)
 		return fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
 	}
 

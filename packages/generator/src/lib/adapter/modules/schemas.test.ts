@@ -1,13 +1,25 @@
-import { describe, expect, it, vi } from 'vitest'
-import { mysqlAdapter } from '../providers/mysql'
-import { postgresAdapter } from '../providers/postgres'
+import { describe, expect, test } from 'bun:test'
+import type { GeneratorOptions } from '@prisma/generator-helper'
+import { initializeGenerator } from '~/shared/generator-context'
 import type { EnumModule } from './enums'
 import type { ModelModule } from './model'
-import { generateSchemasModule } from './schemas'
 
-vi.mock('~/shared/generator-context', () => ({
-	getModuleResolution: () => undefined,
-}))
+initializeGenerator({
+	generator: { config: {}, output: { value: 'drizzle.ts' } },
+	dmmf: {},
+} as unknown as GeneratorOptions)
+
+// The adapters read the generator context while their modules load, so they must be imported after initialization
+async function load() {
+	const mysql = await import('../providers/mysql')
+	const postgres = await import('../providers/postgres')
+	const schemas = await import('./schemas')
+	return {
+		mysqlAdapter: mysql.mysqlAdapter,
+		postgresAdapter: postgres.postgresAdapter,
+		generateSchemasModule: schemas.generateSchemasModule,
+	}
+}
 
 function enumIn(dbSchema: string | null) {
 	return { dbSchema } as EnumModule
@@ -18,8 +30,9 @@ function modelIn(schema: string | null, name = 'model') {
 }
 
 describe('generateSchemasModule', () => {
-	it('collects schemas from enums, models and implicit join tables', () => {
-		const module = generateSchemasModule(postgresAdapter, {
+	test('collects schemas from enums, models and implicit join tables', async () => {
+		const m = await load()
+		const module = m.generateSchemasModule(m.postgresAdapter, {
 			enums: [enumIn('auth')],
 			models: [modelIn('public'), modelIn(null)],
 			implicitModels: [modelIn('blog')],
@@ -34,36 +47,40 @@ describe('generateSchemasModule', () => {
 		expect(module?.code).not.toContain('public')
 	})
 
-	it('emits nothing without @@schema', () => {
+	test('emits nothing without @@schema', async () => {
+		const m = await load()
 		expect(
-			generateSchemasModule(postgresAdapter, {
+			m.generateSchemasModule(m.postgresAdapter, {
 				enums: [enumIn(null)],
 				models: [modelIn(null), modelIn('public')],
 			})
 		).toBe(undefined)
 	})
 
-	it('emits nothing for adapters without schema support', () => {
+	test('emits nothing for adapters without schema support', async () => {
+		const m = await load()
 		expect(
-			generateSchemasModule(mysqlAdapter, {
+			m.generateSchemasModule(m.mysqlAdapter, {
 				enums: [],
 				models: [modelIn('auth')],
 			})
 		).toBe(undefined)
 	})
 
-	it('throws when a model module would overwrite the schemas module', () => {
+	test('throws when a model module would overwrite the schemas module', async () => {
+		const m = await load()
 		expect(() =>
-			generateSchemasModule(postgresAdapter, {
+			m.generateSchemasModule(m.postgresAdapter, {
 				enums: [],
 				models: [modelIn('auth'), modelIn(null, 'pg-schemas')],
 			})
 		).toThrow('same name as the generated "pg-schemas" module')
 	})
 
-	it('throws when an implicit model module would overwrite the schemas module', () => {
+	test('throws when an implicit model module would overwrite the schemas module', async () => {
+		const m = await load()
 		expect(() =>
-			generateSchemasModule(postgresAdapter, {
+			m.generateSchemasModule(m.postgresAdapter, {
 				enums: [],
 				models: [modelIn('auth')],
 				implicitModels: [modelIn(null, 'pg-schemas')],
