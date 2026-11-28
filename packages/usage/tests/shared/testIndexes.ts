@@ -37,7 +37,7 @@ export function testIndexes(ctx: TestContext) {
 				if (!is(table, MySqlTable)) throw new Error('Expected a MySqlTable')
 				return getMysqlTableConfig(table).indexes.map((index) => ({
 					name: index.config.name,
-					unique: index.config.unique,
+					unique: index.config.unique === true,
 				}))
 			case 'sqlite':
 				if (!is(table, SQLiteTable)) throw new Error('Expected a SQLiteTable')
