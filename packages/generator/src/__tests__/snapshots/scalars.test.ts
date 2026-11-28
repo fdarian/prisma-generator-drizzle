@@ -1,4 +1,4 @@
-import { describe, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { expectFilesToMatchSnapshots, generateFromSchema } from '../harness'
 
 const postgres = `
@@ -68,5 +68,12 @@ describe('scalars', () => {
 			provider: testCase.provider,
 			fixture: 'scalars',
 		})
+	})
+
+	// Prisma creates DOUBLE for Float on MySQL; `providers/mysql.ts:249` (`Float`) emits
+	// drizzle `float(...)` (single precision FLOAT) unless `@db.Double` is set
+	test.failing('mysql Float is a double', async () => {
+		const files = await generateFromSchema(mysql)
+		expect(files['scalars.ts']).toContain("double('float')")
 	})
 })

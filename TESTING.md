@@ -26,7 +26,7 @@
 
 - A run without `UPDATE_SNAPSHOTS` compares the emitted file set and contents with the fixture directory, and a mismatch or a missing directory fails with the command to run. To record or update snapshots, run `UPDATE_SNAPSHOTS=1 bun test` in `packages/generator`; it rewrites each fixture directory, removing files the generator no longer emits. Review the diff before committing.
 
-- `pnpm test` in `packages/generator` also typechecks the snapshots against drizzle-orm (`tsrs -p tsconfig.snapshots.json`), so a snapshot that emits invalid code fails the Test job. Files in `__snapshots__` that are not inside a fixture directory (`directive-stubs.ts`) are hand-written.
+- `pnpm test` in `packages/generator` also typechecks the snapshots against drizzle-orm (`tsrs -p tsconfig.snapshots.json`), so a snapshot that emits invalid code fails the Test job. Files in `__snapshots__` that are not inside a fixture directory (`directive-stubs.ts`) are hand-written. The `config-relations-v2` fixtures are excluded from that typecheck because `defineRelations` only exists in drizzle-orm 1.0, which the README documents as the only supported target for `relations = "v2"`.
 
 - Snapshots are excluded from biome, from the lefthook pre-commit, and from the generator's tsconfigs, since they are generated output.
 

@@ -68,6 +68,16 @@ describe('relationalQuery', () => {
 	)
 })
 
+describe('relations', () => {
+	test.each(providers)('%s v2', async (provider) => {
+		await expectSchemaToMatchSnapshots(
+			schemaFor(provider),
+			{ provider, fixture: 'config-relations-v2' },
+			{ config: { relations: 'v2' } }
+		)
+	})
+})
+
 describe('dateMode', () => {
 	test.each<Provider>(['postgres', 'mysql'])('%s string', async (provider) => {
 		await expectSchemaToMatchSnapshots(

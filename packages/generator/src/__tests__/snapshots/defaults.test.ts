@@ -88,7 +88,7 @@ describe('defaults', () => {
 		}
 	)
 
-	// generateds.ts: `BigInt(9007199254740993)` rounds to ...992 as a number literal
+	// literals.ts: `BigInt(9007199254740993)` rounds to ...992 as a number literal
 	// (createField.ts, getDefaultScalarDefinition, `case 'BigInt'`)
 	test.failing(
 		'postgres BigInt default beyond 2^53 keeps its precision',
@@ -102,7 +102,8 @@ describe('defaults', () => {
 		}
 	)
 
-	// createField.ts, getDefaultScalarDefinition, `case 'String'`: emits 'it's'
+	// createField.ts, getDefaultScalarDefinition, `case 'String'`: emits 'it's'.
+	// The default argument is evaluated, so any valid escaping passes.
 	test.failing(
 		'postgres String default with an apostrophe is escaped',
 		async () => {
@@ -112,7 +113,27 @@ model Quoted {
   text String @default("it's")
 }
 `)
-			expect(files['quoteds.ts']).toContain("it\\'s")
+			const argument = files['quoteds.ts'].match(
+				/\.default\((.*?)\)\.notNull\(\)/
+			)?.[1]
+			if (argument === undefined) throw new Error('no .default() emitted')
+			expect(new Function(`return ${argument}`)()).toBe("it's")
+		}
+	)
+
+	// createField.ts:97-98 adds `.notNull()` whenever `field.hasDefaultValue`,
+	// so an optional field with a plain `@default` rejects NULL
+	test.failing.each<Provider>(['postgres', 'mysql', 'sqlite'])(
+		'%s optional field with @default is not notNull',
+		async (provider) => {
+			const files = await generateFromSchema(`${datasource(provider)}
+model Optional {
+  id    Int     @id
+  label String? @default("x")
+}
+`)
+			expect(files['optionals.ts']).toContain(".default('x')")
+			expect(files['optionals.ts']).not.toMatch(/label.*\.notNull\(\)/)
 		}
 	)
 })

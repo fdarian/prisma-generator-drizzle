@@ -159,7 +159,7 @@ describe('directives', () => {
 		)
 	})
 
-	// createField.ts:97-98 adds `.notNull()` when `hasDefaultFn` is set, even for an optional field
+	// createField.ts:97-98 adds `.notNull()` when `hasDefaultFn` is set (and, in defaults.test.ts, when `hasDefaultValue` is), even for an optional field
 	test.failing.each(providers)(
 		'%s optional field with drizzle.default is not notNull',
 		async (provider) => {
