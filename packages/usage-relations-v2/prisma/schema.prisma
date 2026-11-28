@@ -94,3 +94,25 @@ model Task {
   projectCode String
   project     Project @relation(fields: [orgId, projectCode], references: [orgId, code])
 }
+
+// Self relation with the list side declared above the FK side
+model Category {
+  id       Int        @id @default(autoincrement())
+  name     String
+  children Category[] @relation("Category_parent")
+  parentId Int?
+  parent   Category?  @relation("Category_parent", fields: [parentId], references: [id])
+}
+
+// Implicit many-to-many where declaration order (Zebra first) differs from name order (Apple first)
+model Zebra {
+  id     Int     @id @default(autoincrement())
+  name   String
+  apples Apple[]
+}
+
+model Apple {
+  id     Int     @id @default(autoincrement())
+  name   String
+  zebras Zebra[]
+}

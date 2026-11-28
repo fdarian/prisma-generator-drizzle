@@ -163,3 +163,61 @@ test('composite foreign key', async () => {
 	})
 	expect(task?.project).toEqual({ orgId: 2, code: 'A' })
 })
+
+test('self relation declared with the list side above the FK side', async () => {
+	await db.insert(schema.categories).values([
+		{ id: 1, name: 'root', parentId: null },
+		{ id: 2, name: 'a', parentId: 1 },
+		{ id: 3, name: 'b', parentId: 1 },
+		{ id: 4, name: 'a1', parentId: 2 },
+	])
+
+	const root = await db.query.categories.findFirst({
+		where: { id: 1 },
+		with: { parent: true, children: { orderBy: { id: 'asc' } } },
+	})
+	expect(root?.parent).toBeNull()
+	expect(root?.children.map((category) => category.name)).toEqual(['a', 'b'])
+
+	const a = await db.query.categories.findFirst({
+		where: { id: 2 },
+		with: { parent: true, children: true },
+	})
+	expect(a?.parent?.name).toBe('root')
+	expect(a?.children.map((category) => category.name)).toEqual(['a1'])
+})
+
+test('implicit many-to-many where declaration order differs from name order', async () => {
+	await db.insert(schema.apples).values([
+		{ id: 1, name: 'fuji' },
+		{ id: 2, name: 'gala' },
+	])
+	await db.insert(schema.zebras).values([
+		{ id: 10, name: 'stripy' },
+		{ id: 20, name: 'dotty' },
+	])
+	// Prisma sorts model names, so A is Apple and B is Zebra even though Zebra is declared first
+	await db.insert(schema.applesToZebras).values([
+		{ A: '1', B: '10' },
+		{ A: '1', B: '20' },
+		{ A: '2', B: '20' },
+	])
+
+	const apple = await db.query.apples.findFirst({
+		where: { id: 1 },
+		with: { zebras: { orderBy: { id: 'asc' } } },
+	})
+	expect(apple?.zebras.map((zebra) => zebra.name)).toEqual(['stripy', 'dotty'])
+
+	const zebra = await db.query.zebras.findFirst({
+		where: { id: 20 },
+		with: { apples: { orderBy: { id: 'asc' } } },
+	})
+	expect(zebra?.apples.map((apple) => apple.name)).toEqual(['fuji', 'gala'])
+
+	const stripy = await db.query.zebras.findFirst({
+		where: { id: 10 },
+		with: { apples: true },
+	})
+	expect(stripy?.apples.map((apple) => apple.name)).toEqual(['fuji'])
+})
