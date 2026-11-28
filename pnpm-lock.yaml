@@ -210,7 +210,7 @@ importers:
         version: 7.10.1(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3)
       drizzle-orm:
         specifier: ^0.45.4
-        version: 0.45.4(@electric-sql/pglite@0.4.3)(@prisma/client@7.10.1(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))
+        version: 0.45.4(@electric-sql/pglite@0.4.3)(@prisma/client@7.10.1(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(bun-types@1.4.5)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))
       next:
         specifier: 14.2.4
         version: 14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -282,6 +282,9 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0(typescript@5.9.3)
     devDependencies:
+      '@types/bun':
+        specifier: ^1.3.0
+        version: 1.4.5
       '@types/lodash':
         specifier: ^4.14.202
         version: 4.17.27
@@ -300,9 +303,6 @@ importers:
       tsrs:
         specifier: 7.1.0-beta.tsrs5
         version: 7.1.0-beta.tsrs5
-      vitest:
-        specifier: ^1.6.0
-        version: 1.6.1(@types/node@20.19.43)(supports-color@7.2.0)
 
   packages/usage:
     dependencies:
@@ -320,7 +320,7 @@ importers:
         version: 10.6.0
       drizzle-orm:
         specifier: ^0.45.4
-        version: 0.45.4(@electric-sql/pglite@0.4.3)(@prisma/client@7.10.1(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))
+        version: 0.45.4(@electric-sql/pglite@0.4.3)(@prisma/client@7.10.1(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(bun-types@1.4.5)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))
       mysql2:
         specifier: ^3.9.2
         version: 3.24.6(@types/node@20.19.43)
@@ -340,6 +340,9 @@ importers:
       '@types/better-sqlite3':
         specifier: ^9.6.0
         version: 9.6.0
+      '@types/bun':
+        specifier: ^1.3.0
+        version: 1.4.5
       '@types/node':
         specifier: ^20.19.43
         version: 20.19.43
@@ -369,7 +372,7 @@ importers:
         version: 13.2.0
       drizzle-orm:
         specifier: 1.0.0-rc.6
-        version: 1.0.0-rc.6(@electric-sql/pglite@0.4.3)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(valibot@1.5.0(typescript@5.9.3))
+        version: 1.0.0-rc.6(@electric-sql/pglite@0.4.3)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(bun-types@1.4.5)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(valibot@1.5.0(typescript@5.9.3))
     devDependencies:
       '@types/better-sqlite3':
         specifier: ^9.6.0
@@ -1398,6 +1401,9 @@ packages:
   '@types/better-sqlite3@9.6.0':
     resolution: {integrity: sha512-ZEEwBSgMu7GYJOynoagg5X9JbxfL6dTJDsgViJIqh67jV44kyOr9RXfmFjLK5rzC4MWssP06t9hu/JwGDnUbCg==}
 
+  '@types/bun@1.4.5':
+    resolution: {integrity: sha512-DpgwNI9z0L1S0gtb45QLCWgwCUcMLnsHYMJHQvpNj7erGiCGBvpggltAIeARrtobNMKMuy0UP7i56tKKgwFs/Q==}
+
   '@types/cross-spawn@6.0.2':
     resolution: {integrity: sha512-KuwNhp3eza+Rhu8IFI5HUXRP0LIhqH5cAjubUvGXXthh4YYBuP2ntwEX+Cz8GJoZUHlKo247wPWOfA9LYEq4cw==}
 
@@ -1895,6 +1901,9 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
+
+  bun-types@1.4.5:
+    resolution: {integrity: sha512-ECHn+9dhL3wv0G6u0+7dQvrnaimXiRDxxerYBmhTaLyJEEuvTPWk2Fye3XIf5Y++JIIiHKfQw4Z7V5D8KuiXbg==}
 
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -5625,6 +5634,10 @@ snapshots:
     dependencies:
       '@types/node': 20.19.43
 
+  '@types/bun@1.4.5':
+    dependencies:
+      bun-types: 1.4.5
+
   '@types/cross-spawn@6.0.2':
     dependencies:
       '@types/node': 20.19.43
@@ -6158,6 +6171,11 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
+  bun-types@1.4.5:
+    dependencies:
+      '@types/node': 20.19.43
+      undici-types: 6.21.0
+
   busboy@1.6.0:
     dependencies:
       streamsearch: 1.1.0
@@ -6492,24 +6510,26 @@ snapshots:
 
   dotenv@17.4.2: {}
 
-  drizzle-orm@0.45.4(@electric-sql/pglite@0.4.3)(@prisma/client@7.10.1(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)):
+  drizzle-orm@0.45.4(@electric-sql/pglite@0.4.3)(@prisma/client@7.10.1(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(bun-types@1.4.5)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)):
     optionalDependencies:
       '@electric-sql/pglite': 0.4.3
       '@prisma/client': 7.10.1(prisma@7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3)
       '@types/better-sqlite3': 9.6.0
       '@types/pg': 8.23.1
       better-sqlite3: 13.2.0
+      bun-types: 1.4.5
       mysql2: 3.24.6(@types/node@20.19.43)
       pg: 8.23.1
       postgres: 3.4.9
       prisma: 7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
 
-  drizzle-orm@1.0.0-rc.6(@electric-sql/pglite@0.4.3)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(valibot@1.5.0(typescript@5.9.3)):
+  drizzle-orm@1.0.0-rc.6(@electric-sql/pglite@0.4.3)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(bun-types@1.4.5)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(valibot@1.5.0(typescript@5.9.3)):
     optionalDependencies:
       '@electric-sql/pglite': 0.4.3
       '@types/better-sqlite3': 9.6.0
       '@types/pg': 8.23.1
       better-sqlite3: 13.2.0
+      bun-types: 1.4.5
       mysql2: 3.24.6(@types/node@20.19.43)
       pg: 8.23.1
       postgres: 3.4.9
