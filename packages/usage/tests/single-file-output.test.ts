@@ -65,11 +65,10 @@ test('exports a schema containing tables and relations', async () => {
 		`.temp/${temp.name}/schema.prisma`,
 		`datasource db {
 			provider = "postgresql"
-			url      = env("VITE_PG_DATABASE_URL")
 		}
 
 		generator drizzle {
-			provider = "bunx prisma-generator-drizzle"
+			provider = "prisma-generator-drizzle"
 			output = "drizzle.ts"
 		}
 
@@ -90,7 +89,9 @@ test('exports a schema containing tables and relations', async () => {
 			author User @relation(fields: [authorId], references: [id])
 		}`
 	)
-	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
+	execSync(
+		`pnpm exec prisma generate --schema .temp/${temp.name}/schema.prisma`
+	)
 
 	expect(fs.readFileSync(`.temp/${temp.name}/drizzle.ts`, 'utf-8')).toContain(
 		'export const schema = '

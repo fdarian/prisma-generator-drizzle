@@ -73,7 +73,7 @@ test('node16 config adds .js extensions', async () => {
 
 function generate(basePath: string) {
 	// The generator finds the tsconfig.json from its own cwd, so it has to be the temp directory
-	execSync('bun prisma generate --schema schema.prisma', {
+	execSync('pnpm exec prisma generate --schema schema.prisma', {
 		cwd: path.resolve(basePath),
 	})
 }
@@ -97,11 +97,10 @@ function writeSchema(basePath: string, generatorConfig: string) {
 		`${basePath}/schema.prisma`,
 		`datasource db {
 			provider = "postgresql"
-			url      = env("VITE_PG_DATABASE_URL")
 		}
 
 		generator drizzle {
-			provider = "bunx prisma-generator-drizzle"
+			provider = "prisma-generator-drizzle"
 			output = "drizzle"
 			${generatorConfig}
 		}
