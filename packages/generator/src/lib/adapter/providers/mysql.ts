@@ -11,7 +11,7 @@ import {
 	isDefaultFunc,
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
-import { getNativeType, renderColumn } from './native-type'
+import { getNativeType, onTimeDefault, renderColumn } from './native-type'
 
 const coreModule = 'drizzle-orm/mysql-core'
 
@@ -74,7 +74,8 @@ function createDateTimeColumn(
 	field: SchemaField,
 	builder: string,
 	options: { mode?: string; fsp?: number },
-	nowExpression = currentExpression('CURRENT_TIMESTAMP', options.fsp)
+	nowExpression = currentExpression('CURRENT_TIMESTAMP', options.fsp),
+	onLiteralDefault?: CreateFieldInput['onDefault']
 ) {
 	return createColumn(
 		field,
@@ -92,6 +93,9 @@ function createDateTimeColumn(
 					code: `.default(sql\`${nowExpression}\`)`,
 				}
 			}
+
+			const literal = onLiteralDefault?.(field)
+			if (literal) return literal
 
 			// Drizzle doesn't respect the timezone, different on postgres
 			// Might be caused by https://github.com/drizzle-team/drizzle-orm/issues/1442
@@ -211,7 +215,8 @@ export const mysqlAdapter = createAdapter({
 						field,
 						'time',
 						{ fsp: native.args[0] },
-						`(${currentExpression('CURRENT_TIME', native.args[0])})`
+						`(${currentExpression('CURRENT_TIME', native.args[0])})`,
+						onTimeDefault
 					)
 				default:
 					return createDateTimeColumn(field, 'datetime', { mode, fsp: 3 })

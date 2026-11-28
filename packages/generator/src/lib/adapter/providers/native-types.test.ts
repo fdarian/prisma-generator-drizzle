@@ -227,6 +227,22 @@ describe('postgres native types', () => {
 		expect(result.imports).toEqual([pgImport('time')])
 	})
 
+	it.each([
+		['Time', "time('col').default('14:21:00.000').notNull()"],
+		[
+			'Timetz',
+			"time('col', { withTimezone: true }).default('14:21:00.000').notNull()",
+		],
+	])('maps a fixed @default on @db.%s to a time string', (name, expected) => {
+		const result = pg({
+			type: 'DateTime',
+			nativeType: [name, []],
+			default: '1970-01-01T14:21:00.000Z',
+		})
+
+		expect(result.func).toBe(expected)
+	})
+
 	it('maps SmallInt with autoincrement to smallserial', () => {
 		const result = pg({
 			type: 'Int',
@@ -423,6 +439,18 @@ describe('mysql native types', () => {
 			}).func
 		).toBe(
 			"date('col', { mode: 'date' }).default(sql`(CURRENT_DATE)`).notNull()"
+		)
+	})
+
+	it('maps a fixed @default on @db.Time to a time string', () => {
+		const result = mysql({
+			type: 'DateTime',
+			nativeType: ['Time', ['3']],
+			default: '2024-05-01T14:21:00.123Z',
+		})
+
+		expect(result.func).toBe(
+			"time('col', { fsp: 3 }).default('14:21:00.123').notNull()"
 		)
 	})
 

@@ -11,13 +11,13 @@ import {
 	isDefaultFunc,
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
+import { getNativeType, onTimeDefault, renderColumn } from './native-type'
 import {
 	createPgSchemasModule,
 	getPgSchemaImport,
 	getPgSchemaVarName,
 	isPublicSchema,
 } from './pg-schemas'
-import { getNativeType, renderColumn } from './native-type'
 
 const coreModule = 'drizzle-orm/pg-core'
 
@@ -53,12 +53,14 @@ function createField(input: CreateFieldInput) {
 function createColumn(
 	field: SchemaField,
 	builder: string,
-	options?: Parameters<typeof renderColumn>[2]
+	options?: Parameters<typeof renderColumn>[2],
+	onDefault?: CreateFieldInput['onDefault']
 ) {
 	return createField({
 		field,
 		imports: [namedImport([builder], coreModule)],
 		func: renderColumn(builder, getDbName(field), options),
+		onDefault,
 	})
 }
 
@@ -155,12 +157,19 @@ export const postgresAdapter = createAdapter({
 				case 'Date':
 					return createColumn(field, 'date', { mode })
 				case 'Time':
-					return createColumn(field, 'time', { precision: native.args[0] })
+					return createColumn(
+						field,
+						'time',
+						{ precision: native.args[0] },
+						onTimeDefault
+					)
 				case 'Timetz':
-					return createColumn(field, 'time', {
-						precision: native.args[0],
-						withTimezone: true,
-					})
+					return createColumn(
+						field,
+						'time',
+						{ precision: native.args[0], withTimezone: true },
+						onTimeDefault
+					)
 				default:
 					return createColumn(field, 'timestamp', { mode, precision: 3 })
 			}
