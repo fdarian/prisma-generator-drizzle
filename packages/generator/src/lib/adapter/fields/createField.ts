@@ -1,5 +1,6 @@
 import type { DMMF } from '@prisma/generator-helper'
 import { getDirective } from '~/lib/directive'
+import { getEnumMemberDbName } from '~/lib/prisma-helpers/enums'
 import type {
 	SchemaField,
 	SchemaFieldWithDefault,
@@ -253,7 +254,7 @@ function getDefaultScalarDefinition(
 	value: DMMF.FieldDefaultScalar
 ) {
 	if (field.kind === 'enum') {
-		return `'${value}'`
+		return `'${getEnumMemberDbName(field.type, String(value))}'`
 	}
 
 	switch (field.type) {
