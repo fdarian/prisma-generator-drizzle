@@ -266,7 +266,10 @@ async function getAdapter(options: GeneratorOptions) {
 
 	const provider = options.datasources[0].provider
 	switch (provider) {
-		case 'cockroachdb': // CockroahDB should be postgres compatible
+		case 'cockroachdb': {
+			const mod = await import('./lib/adapter/providers/postgres')
+			return mod.cockroachdbAdapter
+		}
 		case 'postgres':
 		case 'postgresql': {
 			const mod = await import('./lib/adapter/providers/postgres')

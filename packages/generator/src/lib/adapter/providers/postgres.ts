@@ -294,3 +294,12 @@ export const postgresAdapter = createAdapter({
 		return createPgSchemasModule(coreModule, schemas)
 	},
 })
+
+/** Prisma's CockroachDB flavour creates the implicit join table key as a unique index named `_X_AB_unique`, not a primary key */
+export const cockroachdbAdapter = {
+	...postgresAdapter,
+	indexFeatures: {
+		...postgresAdapter.indexFeatures,
+		implicitJoinTableKey: 'unique',
+	},
+} satisfies typeof postgresAdapter

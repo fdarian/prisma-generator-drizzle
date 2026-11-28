@@ -33,6 +33,9 @@ let mysqlAdapter: typeof import('../adapter/providers/mysql').mysqlAdapter
 let postgresAdapter: typeof import(
 	'../adapter/providers/postgres'
 ).postgresAdapter
+let cockroachdbAdapter: typeof import(
+	'../adapter/providers/postgres'
+).cockroachdbAdapter
 let sqliteAdapter: typeof import('../adapter/providers/sqlite').sqliteAdapter
 
 // The adapters read the generator context while their modules load, so they must be imported after initialization
@@ -41,8 +44,9 @@ beforeAll(async () => {
 		await import('../adapter/declarations/generateTableDeclaration')
 	).generateTableDeclaration
 	mysqlAdapter = (await import('../adapter/providers/mysql')).mysqlAdapter
-	postgresAdapter = (await import('../adapter/providers/postgres'))
-		.postgresAdapter
+	const postgres = await import('../adapter/providers/postgres')
+	postgresAdapter = postgres.postgresAdapter
+	cockroachdbAdapter = postgres.cockroachdbAdapter
 	sqliteAdapter = (await import('../adapter/providers/sqlite')).sqliteAdapter
 })
 
@@ -702,6 +706,20 @@ describe('implicit join table', () => {
 		const ctx = joinTable('_PostToTag')
 		const output = generateTableDeclaration(getAdapter(), ctx.schema, ctx.model)
 		expect(output.code).toContain(expected)
+	})
+
+	test('cockroachdb creates a unique index instead of a primary key', () => {
+		const ctx = joinTable('_PostToTag')
+		const resolved = resolveIndexes(ctx.schema, ctx.model, cockroachdbAdapter)
+		expect(resolved.map((i) => [i.kind, i.name])).toEqual([
+			['unique', '_PostToTag_AB_unique'],
+			['index', '_PostToTag_B_index'],
+		])
+		expect(
+			generateTableDeclaration(cockroachdbAdapter, ctx.schema, ctx.model).code
+		).toContain(
+			'uniqueIndex("_PostToTag_AB_unique").on(table.A, table.B), index("_PostToTag_B_index").on(table.B)]'
+		)
 	})
 
 	test('does not read the primaryKey of the synthetic model', () => {
