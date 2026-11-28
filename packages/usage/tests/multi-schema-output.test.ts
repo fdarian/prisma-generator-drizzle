@@ -66,7 +66,7 @@ test('classic resolution imports pg-schemas without an extension', async () => {
 })
 
 function generate(basePath: string) {
-	execSync('pnpm exec prisma generate --schema schema.prisma', {
+	execSync('bun prisma generate --schema schema.prisma', {
 		cwd: path.resolve(basePath),
 	})
 }
@@ -79,8 +79,8 @@ function writeFixture(basePath: string, generatorConfig: string) {
 	const schema = fs
 		.readFileSync('./prisma/multi-schema/schema.prisma', 'utf-8')
 		.replace(
-			'provider = "prisma-generator-drizzle"\n',
-			`provider = "prisma-generator-drizzle"\n  ${generatorConfig}\n`
+			'provider = "bunx prisma-generator-drizzle"\n',
+			`provider = "bunx prisma-generator-drizzle"\n  ${generatorConfig}\n`
 		)
 	fs.writeFileSync(`${basePath}/schema.prisma`, schema)
 }
