@@ -53,6 +53,12 @@ export function createField(input: CreateFieldInput) {
 
 	let func = `${typeof input.func === 'string' ? input.func : input.func(custom?.field ?? {})}`
 
+	// Before `.$type<>()`: drizzle checks the callback against the column's own
+	// data type, which a custom `$type` would otherwise narrow
+	if (field.isUpdatedAt) {
+		func += `.$onUpdate(() => ${input.onUpdatedAt?.(field) ?? getNow(field)})`
+	}
+
 	// .type<...>()
 	if (custom?.$type) {
 		func += `.$type<${custom.$type}>()`
@@ -89,10 +95,6 @@ export function createField(input: CreateFieldInput) {
 	if (field.isId) func += input.onPrimaryKey?.(field) ?? '.primaryKey()'
 	else if (field.isRequired || field.hasDefaultValue || hasDefaultFn)
 		func += '.notNull()'
-
-	if (field.isUpdatedAt) {
-		func += `.$onUpdate(() => ${input.onUpdatedAt?.(field) ?? getNow(field)})`
-	}
 
 	return {
 		imports,

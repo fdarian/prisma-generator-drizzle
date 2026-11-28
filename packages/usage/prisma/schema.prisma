@@ -137,6 +137,10 @@ model UpdatedAtModel {
   id        String   @id
   name      String?
   updatedAt DateTime @updatedAt
+// start -sqlite
+  /// drizzle.dateMode string
+  updatedAtString DateTime @updatedAt
+// end -sqlite
 }
 
 // #endregion
