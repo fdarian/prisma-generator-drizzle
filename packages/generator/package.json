@@ -12,7 +12,7 @@
 		"node": ">=14.0"
 	},
 	"scripts": {
-		"start": "bun dist/bin.js",
+		"start": "node dist/bin.js",
 		"dev": "tsdown --watch",
 		"check:biome": "biome ci .",
 		"check:type": "tsrs --noEmit && tsrs --noEmit -p tsconfig.test.json",
