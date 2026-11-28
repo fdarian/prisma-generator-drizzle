@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test } from 'bun:test'
+import type { GeneratorOptions } from '@prisma/generator-helper'
+import { initializeGenerator } from '~/shared/generator-context'
 import {
 	createPgSchemasModule,
 	getNonPublicSchemas,
@@ -7,19 +9,19 @@ import {
 	isPublicSchema,
 } from './pg-schemas'
 
-const moduleResolution = vi.hoisted(() => ({
-	current: undefined as string | undefined,
-}))
-vi.mock('~/shared/generator-context', () => ({
-	getModuleResolution: () => moduleResolution.current,
-}))
+function initGenerator(config: Record<string, string>) {
+	initializeGenerator({
+		generator: { config, output: { value: 'drizzle.ts' } },
+		dmmf: {},
+	} as unknown as GeneratorOptions)
+}
 
 afterEach(() => {
-	moduleResolution.current = undefined
+	initGenerator({})
 })
 
 describe('isPublicSchema', () => {
-	it.each([
+	test.each([
 		[null, true],
 		['public', true],
 		['auth', false],
@@ -30,7 +32,7 @@ describe('isPublicSchema', () => {
 })
 
 describe('getPgSchemaVarName', () => {
-	it.each([
+	test.each([
 		['auth', 'authSchema'],
 		['user_data', 'userDataSchema'],
 		['my-app', 'myAppSchema'],
@@ -40,25 +42,25 @@ describe('getPgSchemaVarName', () => {
 })
 
 describe('getNonPublicSchemas', () => {
-	it('drops public, dedupes and sorts', () => {
+	test('drops public, dedupes and sorts', () => {
 		expect(
 			getNonPublicSchemas(['blog', 'public', 'auth', 'blog', 'auth'])
 		).toEqual(['auth', 'blog'])
 	})
 
-	it('throws when two schemas share a variable name', () => {
+	test('throws when two schemas share a variable name', () => {
 		expect(() => getNonPublicSchemas(['my_app', 'my-app'])).toThrow(
 			'both map to the variable "myAppSchema"'
 		)
 	})
 
-	it('throws when the variable name is not a valid identifier', () => {
+	test('throws when the variable name is not a valid identifier', () => {
 		expect(() => getNonPublicSchemas(['1st'])).toThrow(
 			'does not start with a letter'
 		)
 	})
 
-	it('throws when the variable name clashes with the pgSchema import', () => {
+	test('throws when the variable name clashes with the pgSchema import', () => {
 		expect(() => getNonPublicSchemas(['pg'])).toThrow(
 			'clashes with the pgSchema import'
 		)
@@ -66,14 +68,14 @@ describe('getNonPublicSchemas', () => {
 })
 
 describe('createPgSchemasModule', () => {
-	it('is undefined when only public schemas are used', () => {
+	test('is undefined when only public schemas are used', () => {
 		expect(createPgSchemasModule('drizzle-orm/pg-core', ['public'])).toBe(
 			undefined
 		)
 		expect(createPgSchemasModule('drizzle-orm/pg-core', [])).toBe(undefined)
 	})
 
-	it('declares each used schema once, sorted by name', () => {
+	test('declares each used schema once, sorted by name', () => {
 		const module = createPgSchemasModule('drizzle-orm/pg-core', [
 			'blog',
 			'public',
@@ -93,8 +95,8 @@ describe('createPgSchemasModule', () => {
 })
 
 describe('getPgSchemaImport', () => {
-	it('imports relative modules with .js under nodenext', () => {
-		moduleResolution.current = 'nodenext'
+	test('imports relative modules with .js under nodenext', () => {
+		initGenerator({ moduleResolution: 'nodenext' })
 		const result = getPgSchemaImport('auth')
 		expect(result.render()).toBe(
 			"import { authSchema } from './pg-schemas.js';"

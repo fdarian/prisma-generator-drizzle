@@ -1,6 +1,6 @@
+import { describe, expect, test } from 'bun:test'
 import { createPrismaSchemaBuilder } from '@mrleebo/prisma-ast'
 import type { DMMF } from '@prisma/generator-helper'
-import { describe, expect, it } from 'vitest'
 import { findEnumSchema } from './schema-enum'
 
 function parse(datamodel: string) {
@@ -25,15 +25,15 @@ enum Plain {
 }
 `)
 
-	it('reads @@schema among other block attributes', () => {
+	test('reads @@schema among other block attributes', () => {
 		expect(findEnumSchema(schema, enumNamed('Role'))).toBe('auth')
 	})
 
-	it('is null without @@schema', () => {
+	test('is null without @@schema', () => {
 		expect(findEnumSchema(schema, enumNamed('Plain'))).toBe(null)
 	})
 
-	it('throws for an enum missing from the ast', () => {
+	test('throws for an enum missing from the ast', () => {
 		expect(() => findEnumSchema(schema, enumNamed('Missing'))).toThrow(
 			'Cannot find corresponding ast enum for Missing'
 		)

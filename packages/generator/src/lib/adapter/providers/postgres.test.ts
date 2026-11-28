@@ -8,9 +8,14 @@ initializeGenerator({
 	dmmf: {},
 } as unknown as GeneratorOptions)
 
+// The adapter reads the generator context while its module loads, so it must be imported after initialization
+async function loadPostgresAdapter() {
+	const postgres = await import('./postgres')
+	return postgres.postgresAdapter
+}
+
 async function createJson(field: SchemaField) {
-	// The adapter reads the generator context while its module loads, so it must be imported after initialization
-	const { postgresAdapter } = await import('./postgres')
+	const postgresAdapter = await loadPostgresAdapter()
 	const json = postgresAdapter.fields.Json
 	if (json == null) throw new Error('postgres adapter has no Json field')
 	return json(field)
@@ -52,9 +57,14 @@ describe('postgres table declaration', () => {
 			field: { name: 'id' },
 			func: "text('id')",
 		},
-	] as Parameters<typeof postgresAdapter.getDeclarationFunc.table>[1]
+	] as Parameters<
+		Awaited<
+			ReturnType<typeof loadPostgresAdapter>
+		>['getDeclarationFunc']['table']
+	>[1]
 
-	it.each([null, 'public'])('uses pgTable for schema %s', (schema) => {
+	test.each([null, 'public'])('uses pgTable for schema %s', async (schema) => {
+		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.getDeclarationFunc.table(
 			'User',
 			fields,
@@ -68,7 +78,8 @@ describe('postgres table declaration', () => {
 		])
 	})
 
-	it('attaches the table to its schema variable', () => {
+	test('attaches the table to its schema variable', async () => {
+		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.getDeclarationFunc.table(
 			'User',
 			fields,
@@ -84,7 +95,8 @@ describe('postgres table declaration', () => {
 })
 
 describe('postgres enum declaration', () => {
-	it.each([null, 'public'])('uses pgEnum for schema %s', (schema) => {
+	test.each([null, 'public'])('uses pgEnum for schema %s', async (schema) => {
+		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.getDeclarationFunc.enum(
 			'Role',
 			['A', 'B'],
@@ -97,7 +109,8 @@ describe('postgres enum declaration', () => {
 		])
 	})
 
-	it('attaches the enum to its schema variable', () => {
+	test('attaches the enum to its schema variable', async () => {
+		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.getDeclarationFunc.enum(
 			'Role',
 			['A', 'B'],

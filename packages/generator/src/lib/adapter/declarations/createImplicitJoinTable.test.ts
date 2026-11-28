@@ -1,5 +1,5 @@
+import { describe, expect, test } from 'bun:test'
 import type { DMMF } from '@prisma/generator-helper'
-import { describe, expect, it } from 'vitest'
 import { createSchemaModel } from '~/lib/prisma-helpers/schema/schema-model'
 import { createImplicitJoinTable } from './generateTableRelationsDeclaration'
 
@@ -15,7 +15,7 @@ function modelIn(name: string, schema: string | null) {
 }
 
 describe('createImplicitJoinTable', () => {
-	it.each([
+	test.each([
 		['Post', 'blog', 'Tag', 'public', 'blog'],
 		['Tag', 'public', 'User', 'auth', 'public'],
 	])(
@@ -35,7 +35,7 @@ describe('createImplicitJoinTable', () => {
 		}
 	)
 
-	it('stays schemaless when the models are', () => {
+	test('stays schemaless when the models are', () => {
 		const result = createImplicitJoinTable('rel', [
 			modelIn('Post', null),
 			modelIn('Tag', null),
