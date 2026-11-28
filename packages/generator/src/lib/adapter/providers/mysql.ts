@@ -136,6 +136,7 @@ export const mysqlAdapter = createAdapter({
 	name: 'mysql',
 	coreModule,
 	maxIdentifierLength: 64,
+	indexFeatures: { sortOrder: false, method: false, primaryKeyName: false },
 	getDeclarationFunc: {
 		enum(_, values) {
 			return {

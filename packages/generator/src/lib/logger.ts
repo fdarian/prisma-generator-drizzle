@@ -23,7 +23,12 @@ function createTask() {
 	}
 }
 
+function warn(message: string) {
+	baseLogger.warn(`${GENERATOR_NAME}: ${message}`)
+}
+
 export const logger = {
 	log,
+	warn,
 	createTask,
 }

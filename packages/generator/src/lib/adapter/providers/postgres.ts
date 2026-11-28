@@ -94,6 +94,7 @@ export const postgresAdapter = createAdapter({
 	name: 'postgres',
 	coreModule,
 	maxIdentifierLength: 63,
+	indexFeatures: { sortOrder: true, method: true, primaryKeyName: true },
 	getDeclarationFunc: {
 		enum(name, values, schema) {
 			const args = `'${name}', [${values.map((v) => `'${v}'`).join(', ')}]`

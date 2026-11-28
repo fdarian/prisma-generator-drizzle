@@ -5,6 +5,7 @@ import {
 	type ForeignKey,
 	getForeignKeys,
 } from '~/lib/prisma-helpers/foreign-keys'
+import { resolveIndexes } from '~/lib/prisma-helpers/indexes'
 import type { Schema } from '~/lib/prisma-helpers/schema/schema'
 import {
 	type SchemaModel,
@@ -12,6 +13,7 @@ import {
 } from '~/lib/prisma-helpers/schema/schema-model'
 import { namedImport } from '~/lib/syntaxes/imports'
 import type { Adapter } from '../types'
+import { createConstraintEntries } from './createConstraintEntries'
 
 export function generateTableDeclaration(
 	adapter: Adapter,
@@ -25,11 +27,16 @@ export function generateTableDeclaration(
 
 	const foreignKeys = getForeignKeys(schema, model, adapter.maxIdentifierLength)
 
+	const constraints = createConstraintEntries({
+		coreModule: adapter.coreModule,
+		indexes: resolveIndexes(schema, model, adapter),
+	})
+
 	const tableDeclaration = adapter.getDeclarationFunc.table(
 		model.getDbName(),
 		parsedFields,
 		model.getSchema(),
-		foreignKeys.map(createForeignKeyEntry)
+		[...constraints.entries, ...foreignKeys.map(createForeignKeyEntry)]
 	)
 
 	return {
@@ -37,6 +44,7 @@ export function generateTableDeclaration(
 		imports: [
 			...tableDeclaration.imports,
 			...parsedFields.flatMap((field) => field.imports),
+			...constraints.imports,
 			...(foreignKeys.length > 0
 				? [namedImport(['foreignKey'], adapter.coreModule)]
 				: []),

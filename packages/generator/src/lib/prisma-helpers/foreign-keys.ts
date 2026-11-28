@@ -1,5 +1,6 @@
 import type { Attribute, KeyValue } from '@mrleebo/prisma-ast'
 import type { DMMF } from '@prisma/generator-helper'
+import { getDefaultConstraintName } from './constraint-names'
 import { getDbName } from './getDbName'
 import { getModelModuleName, getModelVarName } from './model'
 import type { Schema } from './schema/schema'
@@ -65,27 +66,12 @@ export function isTargetConstraintEmitted(foreignKey: ForeignKey) {
 	)
 }
 
-/**
- * Mirrors `foreign_key_constraint_name` in prisma-engines, where lengths are
- * UTF-8 bytes and truncation backs off to a character boundary.
- */
 export function getDefaultForeignKeyName(args: {
 	tableName: string
 	columnNames: string[]
 	maxIdentifierLength: number
 }) {
-	const joined = new TextEncoder().encode(
-		`${args.tableName}_${args.columnNames.join('_')}`
-	)
-	const limit = args.maxIdentifierLength - 5
-	if (joined.length < limit) {
-		return `${new TextDecoder().decode(joined)}_fkey`
-	}
-
-	let end = limit
-	// Continuation bytes (0b10xxxxxx) are not the start of a character
-	while (end > 0 && (joined[end] & 0xc0) === 0x80) end--
-	return `${new TextDecoder().decode(joined.subarray(0, end))}_fkey`
+	return getDefaultConstraintName({ ...args, suffix: '_fkey' })
 }
 
 export function resolveForeignKeys(
@@ -201,7 +187,11 @@ function isIgnoredModel(schema: Schema, modelName: string) {
 	)
 }
 
-function isIgnoredField(schema: Schema, modelName: string, fieldName: string) {
+export function isIgnoredField(
+	schema: Schema,
+	modelName: string,
+	fieldName: string
+) {
 	const astField = findAstModel(schema, modelName)?.properties.find(
 		(prop) => prop.type === 'field' && prop.name === fieldName
 	)
