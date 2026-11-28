@@ -6,4 +6,4 @@ Emit `@unique` / `@@unique` as `uniqueIndex`, `@@index` as `index` and composite
 
 Foreign keys now reference composite `@@id`, `@unique` and `@@unique` targets, not only single-column `@id`.
 
-Index arguments Drizzle cannot express (`length`, `ops`, `clustered`, sort order on MySQL and SQLite, fulltext indexes) are skipped with a warning.
+On Postgres, sort order is emitted as `.desc().nullsFirst()` and `ops` as `.op(...)`. Index arguments Drizzle cannot express (`length`, `clustered`, sort order and `ops` on MySQL and SQLite) are skipped with a warning, and so are whole indexes that are fulltext, partial (`where:`) or on an `@ignore` / `Unsupported` field.

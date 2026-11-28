@@ -507,8 +507,9 @@ Unique, index and composite primary key declarations are emitted in the table's 
 
 - `map: "..."` overrides the name. Default names are truncated to the database's identifier limit, like Prisma does.
 - Implicit many-to-many join tables get what Prisma creates for them: a primary key on `(A, B)` on Postgres (a unique index on MySQL and SQLite) and an index on `B`.
-- Index arguments are honoured where Drizzle supports them: sort order on Postgres (`.desc()`) and the Postgres index `type` (`.using(...)`).
-- A warning is printed and the argument is skipped for `length`, `ops` and `clustered`, for sort order on MySQL and SQLite, and for `@@fulltext` indexes (the whole index is skipped).
+- Index arguments are honoured where Drizzle supports them on Postgres: sort order (`.desc().nullsFirst()`, as Prisma's `DESC` is `NULLS FIRST`), operator classes (`ops`, as `.op(...)`) and the index `type` (`.using(...)`).
+- A warning is printed and the argument is skipped for `length` and `clustered`, and for sort order and `ops` on MySQL and SQLite.
+- A warning is printed and the whole index is skipped for `@@fulltext`, for a `where:` predicate (preview feature `partialIndexes`) and for an index on a field the generator does not emit (`@ignore` or `Unsupported(...)`).
 
 ### Relations and foreign keys
 
