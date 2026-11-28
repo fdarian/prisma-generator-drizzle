@@ -323,7 +323,7 @@ describe('foreign key names', () => {
 		test('names the default constraint after the mapped column', () => {
 			const mapped = mappedSuccessor()
 			expect(
-				resolveForeignKeys(
+				getForeignKeys(
 					mapped.schema,
 					mapped.model,
 					postgresAdapter.maxIdentifierLength
@@ -333,7 +333,7 @@ describe('foreign key names', () => {
 
 		test('still references the TS keys of the columns', () => {
 			const mapped = mappedSuccessor()
-			const foreignKey = resolveForeignKeys(
+			const foreignKey = getForeignKeys(
 				mapped.schema,
 				mapped.model,
 				postgresAdapter.maxIdentifierLength
