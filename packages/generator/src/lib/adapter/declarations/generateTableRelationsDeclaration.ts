@@ -1,7 +1,7 @@
 import type { DMMF } from '@prisma/generator-helper'
 import { map } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
-import { camelCase, kebabCase } from 'lodash'
+import { camelCase, kebabCase, upperFirst } from 'lodash'
 import pluralize from 'pluralize'
 import { getModelVarName } from '~/lib/prisma-helpers/model'
 import type { Schema } from '~/lib/prisma-helpers/schema/schema'
@@ -84,15 +84,48 @@ function getManyToManyRelation(
 		)
 
 	const opposingModel = findOpposingRelationModel(field, ctx.schema)
-	const joinTable = createImplicitJoinTable(field.relationName, [
-		ctx.modelModule.model,
-		opposingModel,
-	])
+	const joinTable = createImplicitJoinTable({
+		baseName: field.relationName,
+		models: [ctx.modelModule.model, opposingModel],
+		isUniqueForPair:
+			countImplicitManyToManyRelations(ctx.schema, [
+				ctx.modelModule.model.dmmf.name,
+				opposingModel.dmmf.name,
+			]) === 1,
+	})
+
+	const selfSide = isSelfRelation(field, opposingModel)
+		? getSelfRelationSide(
+				field,
+				findOpposingRelationField(field, opposingModel)
+			)
+		: null
 
 	return createRelation({
 		referenceModelVarName: getModelVarName(joinTable.varName),
+		opts:
+			selfSide == null
+				? undefined
+				: createRelationOpts({
+						relationName: `${field.relationName}_${selfSide}`,
+					}),
 		implicit: [joinTable.model],
 	})
+}
+
+function isSelfRelation(
+	field: SchemaFieldRelational,
+	opposingModel: SchemaModel
+) {
+	return field.model.dmmf.name === opposingModel.dmmf.name
+}
+
+/** Prisma gives side A to the self relation field whose name sorts first, by byte order rather than declaration order */
+function getSelfRelationSide(
+	field: SchemaFieldRelational,
+	opposingField: SchemaFieldRelational
+) {
+	return field.name < opposingField.name ? 'A' : 'B'
 }
 
 function createRelation(input: {
@@ -213,25 +246,33 @@ function createRelationOpts(input: {
 	return `{ ${entries.join(', ')} }`
 }
 
-/**
- * @param baseName The `field.relationName` referring to the generated join table
- * @param models Two models having a many-to-many relationship
- */
-export function createImplicitJoinTable(
-	baseName: string,
+export function createImplicitJoinTable(input: {
+	/** The `field.relationName` referring to the generated join table */
+	baseName: string
+	/** Two models having a many-to-many relationship, which can be the same model */
 	models: [SchemaModel, SchemaModel]
-) {
+	/** Whether this is the only implicit many-to-many relation between the two models */
+	isUniqueForPair: boolean
+}) {
+	const baseName = input.baseName
 	/** Prisma assigns column A/B by sorting the model names (not the mapped db names), by byte order rather than locale */
-	const sorted = [...models].sort((a, b) =>
+	const sorted = [...input.models].sort((a, b) =>
 		a.dmmf.name < b.dmmf.name ? -1 : a.dmmf.name > b.dmmf.name ? 1 : 0
 	)
 	const modelA = sorted[0]
 	const modelB = sorted[1]
 	const pair = [modelA.dmmf.name, modelB.dmmf.name]
+	const isSelf = modelA.dmmf.name === modelB.dmmf.name
 
 	// Custom varName following drizzle's convention
-	const name = pipe(pair, map(pluralize), (names) => names.join('To'))
+	const pairName = pipe(pair, map(pluralize), (names) => names.join('To'))
+	const name = input.isUniqueForPair
+		? pairName
+		: `${pairName}${upperFirst(camelCase(baseName))}`
 	const varName = camelCase(name)
+
+	const fieldNameA = isSelf ? `${camelCase(pair[0])}A` : camelCase(pair[0])
+	const fieldNameB = isSelf ? `${camelCase(pair[1])}B` : camelCase(pair[1])
 
 	const model = {
 		name: name,
@@ -241,7 +282,7 @@ export function createImplicitJoinTable(
 		fields: [
 			createJoinColumn('A', findModelPrimaryKey(modelA)),
 			{
-				name: camelCase(pair[0]),
+				name: fieldNameA,
 				kind: 'object',
 				isList: false,
 				isRequired: true,
@@ -250,7 +291,7 @@ export function createImplicitJoinTable(
 				isReadOnly: false,
 				hasDefaultValue: false,
 				type: pair[0],
-				// relationName: `${baseName}_A`,
+				...(isSelf ? { relationName: `${baseName}_A` } : {}),
 				relationFromFields: ['A'],
 				relationToFields: [findModelPrimaryKey(modelA).name],
 				relationOnDelete: 'Cascade',
@@ -260,7 +301,7 @@ export function createImplicitJoinTable(
 			},
 			createJoinColumn('B', findModelPrimaryKey(modelB)),
 			{
-				name: camelCase(pair[1]),
+				name: fieldNameB,
 				kind: 'object',
 				isList: false,
 				isRequired: true,
@@ -269,7 +310,7 @@ export function createImplicitJoinTable(
 				isReadOnly: false,
 				hasDefaultValue: false,
 				type: pair[1],
-				// relationName: `${baseName}_B`,
+				...(isSelf ? { relationName: `${baseName}_B` } : {}),
 				relationFromFields: ['B'],
 				relationToFields: [findModelPrimaryKey(modelB).name],
 				relationOnDelete: 'Cascade',
@@ -305,6 +346,33 @@ function createJoinColumn(name: 'A' | 'B', pkField: DMMF.Field) {
 	} satisfies DMMF.Field
 }
 
+/** Counts distinct implicit many-to-many relations between two models, which can be the same model */
+function countImplicitManyToManyRelations(
+	schema: Schema,
+	names: [string, string]
+) {
+	const models = schema.dmmf.datamodel.models
+	const first = models.find((m) => m.name === names[0])
+	const second = models.find((m) => m.name === names[1])
+	if (first == null || second == null)
+		throw new Error(`Model ${names[0]} or ${names[1]} not found`)
+
+	const relationNames = new Set<string>()
+	for (const field of first.fields) {
+		if (field.kind !== 'object' || !field.isList || field.type !== second.name)
+			continue
+		if (field.relationName == null)
+			throw new Error(`relationName is null for ${field.name} of ${first.name}`)
+		const opposingField = second.fields.find(
+			(f) =>
+				f.relationName === field.relationName &&
+				!(second === first && f.name === field.name)
+		)
+		if (opposingField?.isList) relationNames.add(field.relationName)
+	}
+	return relationNames.size
+}
+
 export function findModelPrimaryKey(model: SchemaModel) {
 	const pkField = model.dmmf.fields.find((field) => field.isId)
 	if (pkField == null)
@@ -333,7 +401,11 @@ function findOpposingRelationField(
 	opposingModel: SchemaModel
 ) {
 	const opposingField = getModelFields(opposingModel).find(
-		(f) => f.isRelationField && f.relationName === field.relationName
+		(f) =>
+			f.isRelationField &&
+			f.relationName === field.relationName &&
+			// A self relation has both of its fields on the same model
+			!(f.model.dmmf.name === field.model.dmmf.name && f.name === field.name)
 	)
 	if (opposingField) return opposingField as SchemaFieldRelational
 	throw new DetermineRelationshipError(
