@@ -171,5 +171,36 @@ export function testNativeTypes({ db, schema, provider }: TestContext) {
 
 			await db.delete(table).where(eq(table.id, data.id as string))
 		})
+
+		// Prisma types the A/B columns like the ids they reference
+		test.runIf(provider === 'postgres')(
+			'implicit m-n join table uses the native type of the ids',
+			async () => {
+				const columns = getTableColumns(schema.uuidAuthorsToUuidBooks)
+				expect(columns.A.getSQLType()).toBe('uuid')
+				expect(columns.B.getSQLType()).toBe('uuid')
+
+				const author = { id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' }
+				const book = { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22' }
+				await db.delete(schema.uuidAuthorsToUuidBooks)
+				await db.delete(schema.uuidAuthors)
+				await db.delete(schema.uuidBooks)
+
+				await db.insert(schema.uuidAuthors).values(author)
+				await db.insert(schema.uuidBooks).values(book)
+				await db
+					.insert(schema.uuidAuthorsToUuidBooks)
+					.values({ A: author.id, B: book.id })
+
+				const result = await db.query.uuidAuthors.findFirst({
+					where: (UuidAuthor, { eq }) => eq(UuidAuthor.id, author.id),
+					with: { books: true },
+				})
+				expect(result).toStrictEqual({
+					...author,
+					books: [{ A: author.id, B: book.id }],
+				})
+			}
+		)
 	})
 }

@@ -239,19 +239,7 @@ export function createImplicitJoinTable(
 		// `prisma migrate diff` places the join table in the schema of the model sorting first
 		schema: modelA.dmmf.schema,
 		fields: [
-			{
-				name: 'A',
-				kind: 'scalar',
-				isList: false,
-				isRequired: true,
-				isUnique: false,
-				isId: false,
-				isReadOnly: false,
-				hasDefaultValue: false,
-				type: 'String',
-				isGenerated: false,
-				isUpdatedAt: false,
-			},
+			createJoinColumn('A', findModelPrimaryKey(modelA)),
 			{
 				name: camelCase(pair[0]),
 				kind: 'object',
@@ -268,19 +256,7 @@ export function createImplicitJoinTable(
 				isGenerated: false,
 				isUpdatedAt: false,
 			},
-			{
-				name: 'B',
-				kind: 'scalar',
-				isList: false,
-				isRequired: true,
-				isUnique: false,
-				isId: false,
-				isReadOnly: false,
-				hasDefaultValue: false,
-				type: 'String',
-				isGenerated: false,
-				isUpdatedAt: false,
-			},
+			createJoinColumn('B', findModelPrimaryKey(modelB)),
 			{
 				name: camelCase(pair[1]),
 				kind: 'object',
@@ -305,6 +281,24 @@ export function createImplicitJoinTable(
 	} satisfies DMMF.Model
 
 	return { varName, baseName, model }
+}
+
+/** Prisma types a join table column like the id it references */
+function createJoinColumn(name: 'A' | 'B', pkField: DMMF.Field) {
+	return {
+		name,
+		kind: pkField.kind,
+		isList: false,
+		isRequired: true,
+		isUnique: false,
+		isId: false,
+		isReadOnly: false,
+		hasDefaultValue: false,
+		type: pkField.type,
+		nativeType: pkField.nativeType,
+		isGenerated: false,
+		isUpdatedAt: false,
+	} satisfies DMMF.Field
 }
 
 function findModelPrimaryKey(model: SchemaModel) {

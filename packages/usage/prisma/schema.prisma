@@ -56,6 +56,17 @@ model MappedTag {
   @@map("a_tags")
 }
 
+// Join table columns take the type of the ids they reference
+model IntAuthor {
+  id    Int       @id
+  books IntBook[]
+}
+
+model IntBook {
+  id      Int         @id
+  authors IntAuthor[]
+}
+
 // #endregion
 
 // #region Ignore
@@ -283,6 +294,18 @@ model NativeType {
   // +mysql mediumText    String   @db.MediumText
   // +mysql double        Float    @db.Double
 }
+
+// start -mysql
+model UuidAuthor {
+  id    String     @id @db.Uuid
+  books UuidBook[]
+}
+
+model UuidBook {
+  id      String       @id @db.Uuid
+  authors UuidAuthor[]
+}
+// end -mysql
 
 // end -sqlite
 
