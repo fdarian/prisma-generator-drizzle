@@ -2,11 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test'
 import { getSchema } from '@mrleebo/prisma-ast'
 import type { DMMF, GeneratorOptions } from '@prisma/generator-helper'
 import { initializeGenerator } from '~/shared/generator-context'
-import {
-	getDefaultForeignKeyName,
-	getForeignKeys,
-	resolveForeignKeys,
-} from './foreign-keys'
+import { getDefaultForeignKeyName, getForeignKeys } from './foreign-keys'
 import { createSchema } from './schema/schema'
 import { createSchemaModel } from './schema/schema-model'
 
@@ -298,11 +294,9 @@ describe('foreign key names', () => {
 			'Office'
 		)
 		expect(
-			resolveForeignKeys(
-				schema,
-				model,
-				postgresAdapter.maxIdentifierLength
-			).map((fk) => fk.name)
+			getForeignKeys(schema, model, postgresAdapter.maxIdentifierLength).map(
+				(fk) => fk.name
+			)
 		).toEqual(['fk_offices_region_code_country_code_fkey'])
 	})
 
@@ -376,7 +370,7 @@ describe('foreign key names', () => {
 	})
 })
 
-describe('foreign key target gate', () => {
+describe('foreign key targets', () => {
 	function compositeTarget() {
 		return {
 			...dmmfModel('Region', [scalar('country'), scalar('code')]),
@@ -384,39 +378,45 @@ describe('foreign key target gate', () => {
 		}
 	}
 
-	const officeSource = `model Office {
-		id String @id
-		country String
-		code String
-		region Region @relation(fields: [country, code], references: [country, code])
-	}`
-	const officeModel = dmmfModel('Office', [
-		scalar('id'),
-		scalar('country'),
-		scalar('code'),
-		relation('region', 'Region', ['country', 'code'], ['country', 'code']),
-	])
-
-	test('skips a composite @@id target but still resolves and emits it', () => {
+	test('emits a foreign key to a composite @@id target', () => {
 		const { schema, model } = setup(
-			officeSource,
-			[officeModel, compositeTarget()],
+			`model Office {
+				id String @id
+				country String
+				code String
+				region Region @relation(fields: [country, code], references: [country, code])
+			}`,
+			[
+				dmmfModel('Office', [
+					scalar('id'),
+					scalar('country'),
+					scalar('code'),
+					relation(
+						'region',
+						'Region',
+						['country', 'code'],
+						['country', 'code']
+					),
+				]),
+				compositeTarget(),
+			],
 			'Office'
 		)
-		const limit = postgresAdapter.maxIdentifierLength
-		expect(getForeignKeys(schema, model, limit)).toEqual([])
-
-		const resolved = resolveForeignKeys(schema, model, limit)
-		expect(resolved).toHaveLength(1)
-		expect(createForeignKeyEntry(resolved[0])).toBe(
+		const foreignKeys = getForeignKeys(
+			schema,
+			model,
+			postgresAdapter.maxIdentifierLength
+		)
+		expect(foreignKeys).toHaveLength(1)
+		expect(createForeignKeyEntry(foreignKeys[0])).toBe(
 			`foreignKey({ name: "Office_country_code_fkey", columns: [table.country, table.code], foreignColumns: [regions.country, regions.code] }).onDelete('restrict').onUpdate('cascade')`
 		)
 		expect(
 			generateTableDeclaration(postgresAdapter, schema, model).code
-		).not.toContain('foreignKey(')
+		).toContain('foreignKey(')
 	})
 
-	test('skips a single-column target that is not the @id', () => {
+	test('emits a foreign key to a single-column @unique target', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id
@@ -429,18 +429,52 @@ describe('foreign key target gate', () => {
 					scalar('authorEmail'),
 					relation('author', 'Author', ['authorEmail'], ['email']),
 				]),
-				{
-					...dmmfModel('Author', [scalar('id'), scalar('email')]),
-				},
+				dmmfModel('Author', [scalar('id'), scalar('email')]),
 			],
 			'Post'
 		)
-		const limit = postgresAdapter.maxIdentifierLength
-		expect(resolveForeignKeys(schema, model, limit)).toHaveLength(1)
-		expect(getForeignKeys(schema, model, limit)).toEqual([])
+		const foreignKeys = getForeignKeys(
+			schema,
+			model,
+			postgresAdapter.maxIdentifierLength
+		)
+		expect(foreignKeys).toHaveLength(1)
+		expect(foreignKeys[0].target.columns).toEqual(['email'])
 	})
 
-	test('keeps a single-column @id target', () => {
+	test('emits a foreign key to a @@unique target', () => {
+		const { schema, model } = setup(
+			`model Office {
+				id String @id
+				country String
+				code String
+				region Region @relation(fields: [country, code], references: [country, code])
+			}`,
+			[
+				dmmfModel('Office', [
+					scalar('id'),
+					scalar('country'),
+					scalar('code'),
+					relation(
+						'region',
+						'Region',
+						['country', 'code'],
+						['country', 'code']
+					),
+				]),
+				{
+					...dmmfModel('Region', [scalar('country'), scalar('code')]),
+					uniqueFields: [['country', 'code']],
+				},
+			],
+			'Office'
+		)
+		expect(
+			getForeignKeys(schema, model, postgresAdapter.maxIdentifierLength)
+		).toHaveLength(1)
+	})
+
+	test('emits a foreign key to a single-column @id target', () => {
 		const { schema, model } = setup(
 			`model Post {
 				id String @id

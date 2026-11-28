@@ -45,27 +45,6 @@ function parseAction(value: string): ForeignKeyAction {
 	return action
 }
 
-/** Foreign keys that migrations can create, see `isTargetConstraintEmitted` */
-export function getForeignKeys(
-	schema: Schema,
-	model: SchemaModel,
-	maxIdentifierLength: number
-): ForeignKey[] {
-	return resolveForeignKeys(schema, model, maxIdentifierLength).filter(
-		isTargetConstraintEmitted
-	)
-}
-
-/** The generator does not emit composite `@@id`, `@@unique` or `@unique` constraints yet (#79), so only a single-column `@id` target is safe to reference; #79 removes this. */
-export function isTargetConstraintEmitted(foreignKey: ForeignKey) {
-	const target = foreignKey.target
-	if (target.model.primaryKey != null) return false
-	if (target.columns.length !== 1) return false
-	return target.model.fields.some(
-		(field) => field.name === target.columns[0] && field.isId
-	)
-}
-
 export function getDefaultForeignKeyName(args: {
 	tableName: string
 	columnNames: string[]
@@ -74,7 +53,7 @@ export function getDefaultForeignKeyName(args: {
 	return getDefaultConstraintName({ ...args, suffix: '_fkey' })
 }
 
-export function resolveForeignKeys(
+export function getForeignKeys(
 	schema: Schema,
 	model: SchemaModel,
 	maxIdentifierLength: number
