@@ -29,7 +29,7 @@ describe('getCustomType', () => {
 })
 
 describe('getCustomType type expressions', () => {
-	it.each([
+	test.each([
 		['plain', 'mod::Item', '.$type<Item>()', ['Item']],
 		['nested array', 'mod::Item[][]', '.$type<Item[][]>()', ['Item']],
 		['union', 'mod::Item | Other', '.$type<Item | Other>()', ['Item', 'Other']],
@@ -50,7 +50,7 @@ describe('getCustomType type expressions', () => {
 		expect(result?.imports.isTypeImport).toBe(true)
 	})
 
-	it('keeps a relative module path', () => {
+	test('keeps a relative module path', () => {
 		const result = getCustomType(
 			fieldWithDocs('drizzle.type ../my-type::Email')
 		)
@@ -59,14 +59,14 @@ describe('getCustomType type expressions', () => {
 		expect(result?.imports.names).toEqual(['Email'])
 	})
 
-	it('reads an array expression among doc lines', () => {
+	test('reads an array expression among doc lines', () => {
 		const result = getCustomType(
 			fieldWithDocs('Some description\ndrizzle.type mod::Item[]\nMore text')
 		)
 		expect(result?.code).toBe('.$type<Item[]>()')
 	})
 
-	it('throws when the expression imports nothing', () => {
+	test('throws when the expression imports nothing', () => {
 		expect(() =>
 			getCustomType(fieldWithDocs('drizzle.type mod::string[]'))
 		).toThrow(
@@ -74,7 +74,7 @@ describe('getCustomType type expressions', () => {
 		)
 	})
 
-	it('throws with a drizzle.custom example for a complex type', () => {
+	test('throws with a drizzle.custom example for a complex type', () => {
 		expect(() =>
 			getCustomType(fieldWithDocs('drizzle.type mod::{ items: Item[] }'))
 		).toThrow(
@@ -84,7 +84,7 @@ describe('getCustomType type expressions', () => {
 })
 
 describe('createField inline $type', () => {
-	it('emits the inline type literal verbatim without imports', () => {
+	test('emits the inline type literal verbatim without imports', () => {
 		const inline = '{ month: string, min: number, max: number }[]'
 		const result = createField({
 			field: {

@@ -111,7 +111,7 @@ describe('getCustomDirective', () => {
 		).toThrow(/"\$type": 1\n\}\n—/)
 	})
 
-	it('hints at trailing commas', () => {
+	test('hints at trailing commas', () => {
 		const run = () =>
 			getCustomDirective(
 				fieldWithDocs(
@@ -124,7 +124,7 @@ describe('getCustomDirective', () => {
 		)
 	})
 
-	it('does not hint at trailing commas when there are none', () => {
+	test('does not hint at trailing commas when there are none', () => {
 		const run = () =>
 			getCustomDirective(fieldWithDocs('drizzle.custom {"$type": }'))
 		expect(run).toThrow()
