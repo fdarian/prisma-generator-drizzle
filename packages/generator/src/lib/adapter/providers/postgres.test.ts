@@ -1,12 +1,16 @@
-import { describe, expect, mock, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
+import type { GeneratorOptions } from '@prisma/generator-helper'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
-import { postgresAdapter } from './postgres'
+import { initializeGenerator } from '~/shared/generator-context'
 
-mock.module('~/shared/generator-context', () => ({
-	getModuleResolution: () => undefined,
-}))
+initializeGenerator({
+	generator: { config: {}, output: { value: 'drizzle.ts' } },
+	dmmf: {},
+} as unknown as GeneratorOptions)
 
-function createJson(field: SchemaField) {
+async function createJson(field: SchemaField) {
+	// The adapter reads the generator context while its module loads, so it must be imported after initialization
+	const { postgresAdapter } = await import('./postgres')
 	const json = postgresAdapter.fields.Json
 	if (json == null) throw new Error('postgres adapter has no Json field')
 	return json(field)
@@ -25,15 +29,19 @@ function jsonField(documentation: string, isList: boolean) {
 }
 
 describe('postgres Json field with drizzle.type', () => {
-	test('applies the type after .array() on a list field', () => {
-		const result = createJson(jsonField('drizzle.type mod::Settings[]', true))
+	test('applies the type after .array() on a list field', async () => {
+		const result = await createJson(
+			jsonField('drizzle.type mod::Settings[]', true)
+		)
 		expect(result.func).toBe(
 			"jsonb('history').array().$type<Settings[]>().notNull()"
 		)
 	})
 
-	test('types a non-list field', () => {
-		const result = createJson(jsonField('drizzle.type mod::Settings', false))
+	test('types a non-list field', async () => {
+		const result = await createJson(
+			jsonField('drizzle.type mod::Settings', false)
+		)
 		expect(result.func).toBe("jsonb('history').$type<Settings>().notNull()")
 	})
 })
