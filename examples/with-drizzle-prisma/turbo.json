@@ -8,6 +8,7 @@
 		},
 		"build": {
 			"dependsOn": ["generate"],
+			"env": ["DATABASE_URL"],
 			"outputs": [".next/**", "!.next/cache/**"]
 		},
 		"check:biome": {},
