@@ -15,7 +15,7 @@
 		"start": "bun dist/bin.js",
 		"dev": "tsdown --watch",
 		"check:biome": "biome ci .",
-		"check:type": "tsrs --noEmit",
+		"check:type": "tsrs --noEmit && tsrs --noEmit -p tsconfig.test.json",
 		"build": "tsdown",
 		"test": "bun test"
 	},
