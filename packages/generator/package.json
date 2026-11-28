@@ -16,7 +16,6 @@
 		"check:biome": "biome ci .",
 		"check:type": "tsc --noEmit",
 		"build": "tsup src/generator.ts src/bin.ts --clean",
-		"prepack": "pnpm run build",
 		"test": "vitest run"
 	},
 	"dependencies": {
@@ -39,7 +38,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/fdarian/prisma-generator-drizzle"
+		"url": "git+https://github.com/fdarian/prisma-generator-drizzle.git"
 	},
 	"author": "Farrel Darian <contact@fdarian.com>",
 	"keywords": ["prisma", "drizzle", "generator"]
