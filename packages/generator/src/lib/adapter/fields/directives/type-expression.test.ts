@@ -1,27 +1,50 @@
 import { describe, expect, it } from 'vitest'
-import { getImportedTypeNames } from './type-expression'
+import { parseTypeExpression } from './type-expression'
 
-describe('getImportedTypeNames', () => {
+describe('parseTypeExpression', () => {
 	it.each([
 		['Item', ['Item']],
 		['Item[]', ['Item']],
+		['Item[][]', ['Item']],
 		['Array<Item>', ['Item']],
 		["Item['key']", ['Item']],
+		['Item["key"]', ['Item']],
 		['Record<string, Item>', ['Item']],
 		['Map<Key, Value>', ['Key', 'Value']],
-		['string[]', []],
-		['Partial<Record<string, number>>', []],
-		['Item | Item[] | Other', ['Item', 'Other']],
 		['ns.Type', ['ns']],
 		['ns.Inner.Type', ['ns']],
-		["Settings['some Other']", ['Settings']],
-		['Settings["Quoted"]', ['Settings']],
-		['Settings[`Tpl`]', ['Settings']],
-		['keyof typeof Config', ['Config']],
-		['readonly Item[]', ['Item']],
-		['Promise<Awaited<Item>>', ['Item']],
+		['Item | Other', ['Item', 'Other']],
+		['Item & Other', ['Item', 'Other']],
+		['Item | Item[] | Other', ['Item', 'Other']],
+		['(Item | Other)[]', ['Item', 'Other']],
+		['Record<PropertyKey, Item>', ['Item']],
+		['Partial<Record<string, number>>', []],
+		['string[]', []],
+		["'a' | 'b'", []],
+		['1 | 2', []],
+		['Ítem', ['Ítem']],
 		['$Type_1', ['$Type_1']],
-	])('%s', (expression, names) => {
-		expect(getImportedTypeNames(expression)).toEqual(names)
+		['Map', ['Map']],
+		['Date', ['Date']],
+		['  Item  [ ]  ', ['Item']],
+	])('imports for %s', (expression, names) => {
+		expect(parseTypeExpression(expression)).toEqual({ supported: true, names })
+	})
+
+	it.each([
+		'{ items: Item[] }',
+		'(x: Item) => void',
+		'[Head, ...Rest[]]',
+		'`item-${Id}`',
+		'{ [K in Keys]: Item }',
+		'keyof Config',
+		'Item extends Other ? A : B',
+		'Item[',
+		'Item<',
+		'string<Item>',
+		'Item |',
+		'',
+	])('does not support %s', (expression) => {
+		expect(parseTypeExpression(expression)).toEqual({ supported: false })
 	})
 })

@@ -125,8 +125,9 @@ describe('getCustomDirective', () => {
 	})
 
 	it('does not hint at trailing commas when there are none', () => {
-		expect(() =>
+		const run = () =>
 			getCustomDirective(fieldWithDocs('drizzle.custom {"$type": }'))
-		).not.toThrow('Trailing commas')
+		expect(run).toThrow()
+		expect(run).not.toThrow('Trailing commas')
 	})
 })

@@ -31,6 +31,8 @@ describe('getCustomType', () => {
 describe('getCustomType type expressions', () => {
 	it.each([
 		['plain', 'mod::Item', '.$type<Item>()', ['Item']],
+		['nested array', 'mod::Item[][]', '.$type<Item[][]>()', ['Item']],
+		['union', 'mod::Item | Other', '.$type<Item | Other>()', ['Item', 'Other']],
 		['array suffix', 'mod::Item[]', '.$type<Item[]>()', ['Item']],
 		['Array generic', 'mod::Array<Item>', '.$type<Array<Item>>()', ['Item']],
 		['indexed access', "mod::Item['key']", ".$type<Item['key']>()", ['Item']],
@@ -69,6 +71,14 @@ describe('getCustomType type expressions', () => {
 			getCustomType(fieldWithDocs('drizzle.type mod::string[]'))
 		).toThrow(
 			'Invalid drizzle.type directive on field "sentryTraceData": expected "drizzle.type <module>::<Type>", got "mod::string[]". "string[]" imports nothing from "mod". For an inline type, use `drizzle.custom { "$type": "string[]" }`.'
+		)
+	})
+
+	it('throws with a drizzle.custom example for a complex type', () => {
+		expect(() =>
+			getCustomType(fieldWithDocs('drizzle.type mod::{ items: Item[] }'))
+		).toThrow(
+			'Invalid drizzle.type directive on field "sentryTraceData": expected "drizzle.type <module>::<Type>", got "mod::{ items: Item[] }". "{ items: Item[] }" is too complex to find its imports. For complex types, use `drizzle.custom` with explicit "imports" and "$type", e.g. `drizzle.custom { "imports": [{ "name": ["<ImportedName>"], "module": "mod", "type": true }], "$type": "{ items: Item[] }" }`'
 		)
 	})
 })
