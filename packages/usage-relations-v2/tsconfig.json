@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["esnext"],
+		"strict": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"types": ["vitest/globals"]
+	},
+	"include": ["tests", "prisma"]
+}

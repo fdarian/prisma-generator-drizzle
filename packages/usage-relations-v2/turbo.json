@@ -1,0 +1,20 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"extends": ["//"],
+	"tasks": {
+		"push": {
+			"cache": false,
+			"dependsOn": ["^build"]
+		},
+		"check:type": {
+			"dependsOn": ["push"]
+		},
+		"check": {
+			"dependsOn": ["check:type"]
+		},
+		"test": {
+			"cache": false,
+			"dependsOn": ["push", "check:type"]
+		}
+	}
+}
