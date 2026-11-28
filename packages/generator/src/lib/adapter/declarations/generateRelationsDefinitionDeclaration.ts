@@ -9,6 +9,7 @@ import {
 import { namedImport } from '../../syntaxes/imports'
 import type { ModelModule } from '../modules/model'
 import {
+	countImplicitManyToManyRelations,
 	createImplicitJoinTable,
 	findModelPrimaryKey,
 	findOpposingRelationModel,
@@ -127,10 +128,15 @@ function createRelationEntry(
 			)
 		}
 
-		const joinTable = createImplicitJoinTable(field.relationName, [
-			field.model,
-			opposingModel,
-		])
+		const joinTable = createImplicitJoinTable({
+			baseName: field.relationName,
+			models: [field.model, opposingModel],
+			isUniqueForPair:
+				countImplicitManyToManyRelations(schema, [
+					field.model.dmmf.name,
+					opposingModel.dmmf.name,
+				]) === 1,
+		})
 		const joinVarName = getModelVarName(joinTable.model)
 		const ownColumn =
 			field.model.dmmf.name === joinTable.modelA.dmmf.name ? 'A' : 'B'

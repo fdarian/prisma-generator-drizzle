@@ -18,6 +18,16 @@ model SelfReference {
   referredUnique    SelfReference? @relation("SelfReference_referringUnique")
 }
 
+// Self one-to-many whose list field is declared before the foreign key side, which must not be mistaken for an implicit m-n relation
+model Tree {
+  id String @id
+
+  children Tree[] @relation("TreeParent")
+
+  parentId String?
+  parent   Tree?   @relation("TreeParent", fields: [parentId], references: [id])
+}
+
 // #region Implicit relationship purposes
 
 model TransactionHeader {
@@ -65,6 +75,42 @@ model IntAuthor {
 model IntBook {
   id      Int         @id
   authors IntAuthor[]
+}
+
+// Self relation, `following` is declared first to show that Prisma assigns side A by field name order, not declaration order
+model Person {
+  id        Int      @id
+  following Person[] @relation("Follows")
+  followers Person[] @relation("Follows")
+}
+
+// Self relation whose field names sort differently by byte order (`Zeta` < `beta`) and by locale order (`beta` < `Zeta`)
+model Node {
+  id   Int    @id
+  Zeta Node[] @relation("Links")
+  beta Node[] @relation("Links")
+}
+
+// Two self relations on the same model
+model Account {
+  id        Int       @id
+  blocked   Account[] @relation("Blocks")
+  blockedBy Account[] @relation("Blocks")
+  muted     Account[] @relation("Mutes")
+  mutedBy   Account[] @relation("Mutes")
+}
+
+// Multiple relations between the same pair of models
+model Author {
+  id    String @id
+  liked Book[] @relation("Likes")
+  saved Book[] @relation("Saves")
+}
+
+model Book {
+  id      String   @id
+  likedBy Author[] @relation("Likes")
+  savedBy Author[] @relation("Saves")
 }
 
 // #endregion
@@ -306,6 +352,16 @@ model UuidBook {
   authors UuidAuthor[]
 }
 // end -mysql
+
+model VarcharAuthor {
+  id    String        @id @db.VarChar(40)
+  books VarcharBook[]
+}
+
+model VarcharBook {
+  id      String          @id @db.VarChar(40)
+  authors VarcharAuthor[]
+}
 
 // end -sqlite
 

@@ -1,6 +1,6 @@
 import type { DMMF } from '@prisma/generator-helper'
 import { isEmpty } from 'lodash'
-import { deduplicateModels } from '~/generator'
+import { getModelModuleName, getModelVarName } from '~/lib/prisma-helpers/model'
 import type { Schema } from '~/lib/prisma-helpers/schema/schema'
 import {
 	createSchemaModel,
@@ -67,16 +67,11 @@ export function generateImplicitModules(
 	schema: Schema,
 	relationalModules: RelationalModule[]
 ) {
-	const models = relationalModules
-		.flatMap((module) => module.implicit)
-		.reduce(deduplicateModels, [] as DMMF.Model[])
-		.map((dmmfModel) => {
-			return createModelModule(
-				adapter,
-				schema,
-				createSchemaModel({ dmmfModel })
-			)
-		})
+	const models = collectImplicitJoinModels(
+		relationalModules.flatMap((module) => module.implicit)
+	).map((dmmfModel) => {
+		return createModelModule(adapter, schema, createSchemaModel({ dmmfModel }))
+	})
 
 	const relational = models.flatMap((modelModule) => {
 		const relationalModule = createRelationalModule(schema, modelModule)
@@ -84,6 +79,41 @@ export function generateImplicitModules(
 		return relationalModule
 	})
 	return { models, relational }
+}
+
+/**
+ * Both sides of a relation produce the same join model, which is collected once.
+ * Distinct relations whose names normalize to the same model, variable or module name
+ * would overwrite each other in the generated output, so they are rejected.
+ */
+export function collectImplicitJoinModels(joinModels: DMMF.Model[]) {
+	const collected: DMMF.Model[] = []
+	for (const joinModel of joinModels) {
+		const isDuplicate = collected.some(
+			(existing) =>
+				existing.name === joinModel.name && existing.dbName === joinModel.dbName
+		)
+		if (isDuplicate) continue
+
+		for (const existing of collected) {
+			const collision = findNameCollision(existing, joinModel)
+			if (collision != null)
+				throw new Error(
+					`Implicit many-to-many relations ${existing.dbName} and ${joinModel.dbName} generate the same ${collision}. Rename one of the relations so they differ after normalization.`
+				)
+		}
+		collected.push(joinModel)
+	}
+	return collected
+}
+
+function findNameCollision(a: DMMF.Model, b: DMMF.Model) {
+	if (a.name === b.name) return `model name "${a.name}"`
+	if (getModelVarName(a) === getModelVarName(b))
+		return `variable name "${getModelVarName(a)}"`
+	if (getModelModuleName(a) === getModelModuleName(b))
+		return `module name "${getModelModuleName(a)}"`
+	return null
 }
 
 export function generateSchemaModules(

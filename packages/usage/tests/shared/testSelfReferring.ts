@@ -92,5 +92,36 @@ export function testSelfReferring({ db, schema }: TestContext) {
 			expect(referring2_result?.referredMany).toStrictEqual([])
 			expect(referring2_result?.referringMany).toStrictEqual(referred)
 		})
+
+		// The list field is declared before the foreign key side, which was once mistaken for an implicit m-n relation
+		test('one to many with the list field declared first is not an implicit m-n', async () => {
+			expect(schema).not.toHaveProperty('treesToTrees')
+
+			const parent = { id: createId(), parentId: null }
+			await db.insert(schema.trees).values(parent)
+
+			const child = { id: createId(), parentId: parent.id }
+			await db.insert(schema.trees).values(child)
+
+			const parent_result = await db.query.trees.findFirst({
+				where: (Tree, operators) => operators.eq(Tree.id, parent.id),
+				with: { parent: true, children: true },
+			})
+			expect(parent_result).toStrictEqual({
+				...parent,
+				parent: null,
+				children: [child],
+			})
+
+			const child_result = await db.query.trees.findFirst({
+				where: (Tree, operators) => operators.eq(Tree.id, child.id),
+				with: { parent: true, children: true },
+			})
+			expect(child_result).toStrictEqual({
+				...child,
+				parent: parent,
+				children: [],
+			})
+		})
 	})
 }

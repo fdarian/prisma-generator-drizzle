@@ -120,6 +120,25 @@ Implicit many-to-many relations are queried directly (`with: { categories: true 
 
 `relationalQuery = false` disables this output as well.
 
+### Implicit many-to-many relations
+
+Prisma's implicit many-to-many relations are generated as a join table named after the two models, with columns `A` and `B` that take the type of each model's id. Prisma assigns `A` to the model whose name sorts first.
+
+| Relations between the pair of models | Join table (variable) |
+| ------------------------------------ | --------------------- |
+| Only one | `<plural A>To<plural B>`, e.g. `categoriesToPosts` |
+| Two or more | `<plural A>To<plural B><RelationName>`, e.g. `authorsToBooksLikes` and `authorsToBooksSaves` for `@relation("Likes")` and `@relation("Saves")` |
+
+Like other table variables, the whole variable name is pluralized, so `@relation("Person")` gives `...People` and `@relation("Like")` gives `...Likes`. Relation names that collide after normalization (e.g. `"post_likes"` and `"PostLikes"`, or `"Like"` and `"Likes"`) are rejected with an error, so rename one of them.
+
+The join table's relations are named after the models, e.g. `category` and `post`.
+
+For a model related to itself (`followers Person[] @relation("Follows")` and `following Person[] @relation("Follows")`):
+
+- The join table's relations are `personA` and `personB`, instead of the model name.
+- Prisma assigns side `A` to the field whose name sorts first (`followers`), regardless of declaration order. Its owner's id is stored in column `A`.
+- Each field resolves through the join table with `relationName` `<relation>_A` or `<relation>_B` (`Follows_A` for `followers`, `Follows_B` for `following`).
+
 ### Setting up [drizzle-kit](https://orm.drizzle.team/kit-docs/overview)
 
 Use the glob pattern (see [example 3](https://orm.drizzle.team/kit-docs/conf#schema-files-paths)) to reference the generated table definitions.

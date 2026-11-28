@@ -202,5 +202,33 @@ export function testNativeTypes({ db, schema, provider }: TestContext) {
 				})
 			}
 		)
+
+		test('implicit m-n join table uses the native type of varchar ids', async () => {
+			const columns = getTableColumns(schema.varcharAuthorsToVarcharBooks)
+			expect(columns.A.getSQLType()).toBe('varchar(40)')
+			expect(columns.B.getSQLType()).toBe('varchar(40)')
+
+			const author = { id: 'author-1' }
+			const book = { id: 'book-1' }
+			await db.delete(schema.varcharAuthorsToVarcharBooks)
+			await db.delete(schema.varcharAuthors)
+			await db.delete(schema.varcharBooks)
+
+			await db.insert(schema.varcharAuthors).values(author)
+			await db.insert(schema.varcharBooks).values(book)
+			await db
+				.insert(schema.varcharAuthorsToVarcharBooks)
+				.values({ A: author.id, B: book.id })
+
+			const result = await db.query.varcharAuthors.findFirst({
+				where: (VarcharAuthor, operators) =>
+					operators.eq(VarcharAuthor.id, author.id),
+				with: { books: true },
+			})
+			expect(result).toStrictEqual({
+				...author,
+				books: [{ A: author.id, B: book.id }],
+			})
+		})
 	})
 }
