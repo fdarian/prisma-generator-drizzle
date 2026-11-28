@@ -168,6 +168,14 @@ function resolveIndex(
 		)
 		return undefined
 	}
+	const lengthFields = index.fields.filter((f) => f.length != null)
+	if (lengthFields.length > 0) {
+		// Dropping the prefix length is not an option: MySQL rejects an index on a TEXT or BLOB column without one (ER 1170)
+		logger.warn(
+			`Skipped ${label}, Drizzle cannot express length on ${lengthFields.map((f) => f.name).join(', ')} and the index is invalid without it`
+		)
+		return undefined
+	}
 	if (index.clustered != null) skip('clustered')
 
 	const isPrimaryKey = kind === 'primaryKey'
@@ -176,7 +184,6 @@ function resolveIndex(
 		!isPrimaryKey && adapter.indexFeatures.operatorClass
 	const columns = fields.map((f) => {
 		const column = f.indexField.name
-		if (f.indexField.length != null) skip(`length on ${column}`)
 		const operatorClass = f.indexField.operatorClass
 		if (operatorClass != null && !canUseOperatorClass) {
 			skip(`operator class on ${column}`)

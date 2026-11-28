@@ -340,9 +340,9 @@ describe('index arguments', () => {
 		expect(warn).not.toHaveBeenCalled()
 	})
 
-	test('keeps the index and warns for length and clustered', () => {
+	test('keeps the index and warns for clustered', () => {
 		const resolved = resolve(postgresAdapter, [
-			index('normal', [field('title', { length: 10 }), field('slug')], {
+			index('normal', [field('title'), field('slug')], {
 				clustered: true,
 				dbName: 'lookup',
 			}),
@@ -351,9 +351,25 @@ describe('index arguments', () => {
 		expect(resolved[0].columns.map((c) => c.key)).toEqual(['title', 'slug'])
 		expect(warn.mock.calls.map((call) => call[0])).toEqual([
 			'Skipped clustered of index "lookup" of Post, Drizzle cannot express it',
-			'Skipped length on title of index "lookup" of Post, Drizzle cannot express it',
 		])
 	})
+
+	test.each(['normal', 'unique'] as const)(
+		'mysql skips a whole %s index with a length and warns',
+		(type) => {
+			expect(
+				resolve(mysqlAdapter, [
+					index(type, [field('title', { length: 10 }), field('slug')], {
+						dbName: 'lookup',
+					}),
+					index('normal', [field('slug')], { dbName: 'plain' }),
+				]).map((i) => i.name)
+			).toEqual(['plain'])
+			expect(warn.mock.calls.map((call) => call[0])).toEqual([
+				'Skipped index "lookup" of Post, Drizzle cannot express length on title and the index is invalid without it',
+			])
+		}
+	)
 
 	test.each([
 		['JsonbPathOps', 'jsonb_path_ops'],
