@@ -306,6 +306,51 @@ describe('foreign key names', () => {
 		).toEqual(['fk_offices_region_code_country_code_fkey'])
 	})
 
+	describe('a relation whose local field is @map ped', () => {
+		function mappedSuccessor() {
+			return setup(
+				`model MappedField {
+					id Int @id
+					successorId Int? @unique @map("successor_id")
+					successor MappedField? @relation("MappedFieldSuccession", fields: [successorId], references: [id])
+					predecessor MappedField? @relation("MappedFieldSuccession")
+				}`,
+				[
+					dmmfModel('MappedField', [
+						scalar('id'),
+						{ ...scalar('successorId', false), dbName: 'successor_id' },
+						relation('successor', 'MappedField', ['successorId'], ['id']),
+					]),
+				],
+				'MappedField'
+			)
+		}
+
+		test('names the default constraint after the mapped column', () => {
+			const { schema, model } = mappedSuccessor()
+			expect(
+				resolveForeignKeys(
+					schema,
+					model,
+					postgresAdapter.maxIdentifierLength
+				).map((fk) => fk.name)
+			).toEqual(['MappedField_successor_id_fkey'])
+		})
+
+		test('still references the TS keys of the columns', () => {
+			const { schema, model } = mappedSuccessor()
+			const [foreignKey] = resolveForeignKeys(
+				schema,
+				model,
+				postgresAdapter.maxIdentifierLength
+			)
+			expect(foreignKey.columns).toEqual(['successorId'])
+			expect(createForeignKeyEntry(foreignKey)).toContain(
+				'columns: [table.successorId]'
+			)
+		})
+	})
+
 	test('prefers @relation(map)', () => {
 		const { schema, model } = setup(
 			`model Post {
