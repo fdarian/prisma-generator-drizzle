@@ -9,6 +9,7 @@ import { testFieldMap } from './shared/testFieldMap'
 import { testFields } from './shared/testFields'
 import { testForeignKeys } from './shared/testForeignKeys'
 import { testIgnoreDecorator } from './shared/testIgnoreDecorator'
+import { testIndexes } from './shared/testIndexes'
 import { testManyToMany } from './shared/testManyToMany'
 import { testNativeTypes } from './shared/testNativeTypes'
 import { testOneToMany } from './shared/testOneToMany'
@@ -37,3 +38,4 @@ testEnumMap(ctx)
 testUpdatedAt(ctx)
 testNativeTypes(ctx)
 testForeignKeys(ctx)
+testIndexes(ctx)

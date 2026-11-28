@@ -1,4 +1,5 @@
-import { customType, pgTable, serial, text } from 'drizzle-orm/pg-core';
+import { customType, pgTable, serial, text, uniqueIndex } from 'drizzle-orm/pg-core';
+import type { PgTableExtraConfigValue } from 'drizzle-orm/pg-core';
 
 export const customBytes = customType<{ data: Buffer }>({
 	dataType() {
@@ -13,6 +14,6 @@ export const customBytes = customType<{ data: Buffer }>({
 	}
 });
 
-export const users = pgTable('User', { id: serial('id').primaryKey(), email: text('email').notNull(), name: text('name') });
+export const users = pgTable('User', { id: serial('id').primaryKey(), email: text('email').notNull(), name: text('name') }, (table): PgTableExtraConfigValue[] => [uniqueIndex("User_email_key").on(table.email)]);
 
 export const schema = { users };
