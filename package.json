@@ -1,9 +1,6 @@
 {
 	"name": "prisma-generator-drizzle-root",
 	"private": true,
-	"engines": {
-		"node": ">=22.18"
-	},
 	"scripts": {
 		"changeset": "changeset",
 		"ci:version": "changeset version",
