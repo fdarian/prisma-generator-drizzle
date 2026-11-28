@@ -11,15 +11,20 @@ import { getDbName } from './getDbName'
 import type { Schema } from './schema/schema'
 import type { SchemaModel } from './schema/schema-model'
 
-export type ResolvedIndex = {
-	kind: 'primaryKey' | 'unique' | 'index'
-	/** `map:`, else Prisma's default name. Undefined for a primary key the dialect does not name */
-	name: string | undefined
+type ResolvedIndexShape = {
 	/** Field names (TS keys) in index order */
 	columns: { key: string; desc: boolean }[]
 	/** Lowercase access method, e.g. `hash` */
 	method: string | undefined
 }
+
+export type ResolvedIndex =
+	| (ResolvedIndexShape & {
+			kind: 'primaryKey'
+			/** Undefined when the dialect does not name primary keys */
+			name: string | undefined
+	  })
+	| (ResolvedIndexShape & { kind: 'unique' | 'index'; name: string })
 
 type IndexAdapter = {
 	maxIdentifierLength: number
@@ -182,13 +187,16 @@ function resolveIndex(
 	if (method != null && !adapter.indexFeatures.method)
 		skip(`algorithm ${algorithm}`)
 
-	return {
-		kind,
-		name:
-			kind === 'primaryKey' && !adapter.indexFeatures.primaryKeyName
-				? undefined
-				: name,
+	const shape = {
 		columns,
 		method: adapter.indexFeatures.method ? method : undefined,
 	}
+	if (kind === 'primaryKey') {
+		return {
+			...shape,
+			kind,
+			name: adapter.indexFeatures.primaryKeyName ? name : undefined,
+		}
+	}
+	return { ...shape, kind, name }
 }

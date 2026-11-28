@@ -35,9 +35,6 @@ export function createIndexEntry(index: ResolvedIndex) {
 		return `primaryKey({ ${props.join(', ')} })`
 	}
 
-	if (index.name == null) {
-		throw new Error(`${index.kind} index has no name`)
-	}
 	const builder = `${getBuilderName(index)}(${JSON.stringify(index.name)})`
 	return index.method == null
 		? `${builder}.on(${columns.join(', ')})`
