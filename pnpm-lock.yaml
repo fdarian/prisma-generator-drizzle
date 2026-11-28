@@ -360,26 +360,26 @@ importers:
         version: 13.2.0
       drizzle-orm:
         specifier: 1.0.0-rc.6
-        version: 1.0.0-rc.6(@electric-sql/pglite@0.4.3)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.11.25))(pg@8.23.1)(postgres@3.4.9)(valibot@1.4.2(typescript@5.5.3))
+        version: 1.0.0-rc.6(@electric-sql/pglite@0.4.3)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(valibot@1.5.0(typescript@5.9.3))
     devDependencies:
       '@types/better-sqlite3':
         specifier: ^9.6.0
         version: 9.6.0
       '@types/node':
-        specifier: 20.11.25
-        version: 20.11.25
+        specifier: ^20.19.43
+        version: 20.19.43
       prisma:
         specifier: 7.10.1
-        version: 7.10.1(@types/node@20.11.25)(@types/react@19.3.3)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.3)
+        version: 7.10.1(@types/node@20.19.43)(@types/react@19.3.3)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       prisma-generator-drizzle:
         specifier: workspace:*
         version: link:../generator
-      typescript:
-        specifier: 5.5.3
-        version: 5.5.3
+      tsrs:
+        specifier: 7.1.0-beta.tsrs5
+        version: 7.1.0-beta.tsrs5
       vitest:
         specifier: ^1.6.0
-        version: 1.6.1(@types/node@20.11.25)(supports-color@7.2.0)
+        version: 1.6.1(@types/node@20.19.43)(supports-color@7.2.0)
 
 packages:
 
@@ -6557,16 +6557,16 @@ snapshots:
       postgres: 3.4.9
       prisma: 7.10.1(@types/node@20.19.43)(@types/react@19.3.3)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
 
-  drizzle-orm@1.0.0-rc.6(@electric-sql/pglite@0.4.3)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.11.25))(pg@8.23.1)(postgres@3.4.9)(valibot@1.4.2(typescript@5.5.3)):
+  drizzle-orm@1.0.0-rc.6(@electric-sql/pglite@0.4.3)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.2.0)(mysql2@3.24.6(@types/node@20.19.43))(pg@8.23.1)(postgres@3.4.9)(valibot@1.5.0(typescript@5.9.3)):
     optionalDependencies:
       '@electric-sql/pglite': 0.4.3
       '@types/better-sqlite3': 9.6.0
       '@types/pg': 8.23.1
       better-sqlite3: 13.2.0
-      mysql2: 3.24.6(@types/node@20.11.25)
+      mysql2: 3.24.6(@types/node@20.19.43)
       pg: 8.23.1
       postgres: 3.4.9
-      valibot: 1.4.2(typescript@5.5.3)
+      valibot: 1.5.0(typescript@5.9.3)
 
   dts-resolver@3.0.0: {}
 

@@ -17,7 +17,7 @@ describe('parseConfig relations', () => {
 	it('rejects other values naming the allowed ones', () => {
 		expect(() => parseConfig({ relations: 'v3' })).toThrow(ConfigError)
 		expect(() => parseConfig({ relations: 'v3' })).toThrow(
-			'- relations: Invalid type: Expected "v1" | "v2" but received "v3"'
+			'- relations: Invalid type: Expected ("v1" | "v2") but received "v3"'
 		)
 	})
 })

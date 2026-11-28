@@ -8,7 +8,7 @@
 		"test": "vitest run",
 		"generate": "prisma generate --config prisma.config.ts",
 		"push": "rm -f prisma/test.db prisma/test.db-journal && prisma db push --config prisma.config.ts && prisma generate --config prisma.config.ts",
-		"check:type": "tsc --noEmit"
+		"check:type": "tsrs --noEmit"
 	},
 	"dependencies": {
 		"better-sqlite3": "^13.2.0",
@@ -16,10 +16,10 @@
 	},
 	"devDependencies": {
 		"@types/better-sqlite3": "^9.6.0",
-		"@types/node": "20.11.25",
+		"@types/node": "^20.19.43",
 		"prisma": "7.10.1",
 		"prisma-generator-drizzle": "workspace:*",
-		"typescript": "5.5.3",
+		"tsrs": "7.1.0-beta.tsrs5",
 		"vitest": "^1.6.0"
 	}
 }
