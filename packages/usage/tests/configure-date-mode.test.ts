@@ -68,6 +68,61 @@ test('field-level config', async () => {
 	)
 })
 
+describe('@updatedAt', () => {
+	function generate(
+		temp: TempDirectory,
+		opts: { provider: string; dateMode?: string }
+	) {
+		fs.writeFileSync(
+			getSchemaPath(temp),
+			`datasource db {
+				provider = "${opts.provider}"
+			}
+
+			generator drizzle {
+				provider = "prisma-generator-drizzle"
+				${opts.dateMode ? `dateMode = "${opts.dateMode}"` : ''}
+				output = "drizzle.ts"
+			}
+
+			model User {
+				id Int @id
+				updatedAt DateTime @updatedAt
+			}`
+		)
+		execSync(`pnpm exec prisma generate --schema ${getSchemaPath(temp)}`)
+		return fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
+	}
+
+	test('date mode', async () => {
+		const temp = await tempHandler.prepare()
+		const output = generate(temp, { provider: 'postgresql' })
+
+		expect(output).toContain('.notNull().$onUpdate(() => new Date())')
+	})
+
+	test('string mode', async () => {
+		const temp = await tempHandler.prepare()
+		const output = generate(temp, {
+			provider: 'postgresql',
+			dateMode: 'string',
+		})
+
+		expect(output).toContain(
+			'.notNull().$onUpdate(() => new Date().toISOString())'
+		)
+	})
+
+	test('string mode on mysql', async () => {
+		const temp = await tempHandler.prepare()
+		const output = generate(temp, { provider: 'mysql', dateMode: 'string' })
+
+		expect(output).toContain(
+			".notNull().$onUpdate(() => new Date().toISOString().replace('T', ' ').replace('Z', ''))"
+		)
+	})
+})
+
 function getSchemaPath(temp: TempDirectory) {
 	return `${temp.basePath}/schema.prisma`
 }

@@ -105,6 +105,20 @@ model Default {
   stringList String[] @default(["John", "Doe"]) // -sqlite -mysql
 }
 
+// start -sqlite
+enum EnumWithMappedMember {
+  Plain
+  Mapped @map("db_mapped")
+}
+
+model EnumMappedDefault {
+  id    String                 @id
+  value EnumWithMappedMember   @default(Mapped)
+  list  EnumWithMappedMember[] @default([Plain, Mapped]) // -mysql
+}
+
+// end -sqlite
+
 model AutoIncrement {
   id  Int    @id @default(autoincrement())
   ref String @unique
@@ -113,6 +127,16 @@ model AutoIncrement {
 model AutoIncrementBigInt {
   id  BigInt @id @default(autoincrement())
   ref String @unique
+}
+
+// #endregion
+
+// #region UpdatedAt
+
+model UpdatedAtModel {
+  id        String   @id
+  name      String?
+  updatedAt DateTime @updatedAt
 }
 
 // #endregion
