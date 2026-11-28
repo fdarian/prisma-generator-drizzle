@@ -12,9 +12,7 @@ afterAll(() => {
 test('generates drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, 'drizzle.ts')
-	execSync(
-		`pnpm exec prisma generate --schema .temp/${temp.name}/schema.prisma`
-	)
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/drizzle.ts`)).toBe(true)
 })
@@ -22,9 +20,7 @@ test('generates drizzle.ts', async () => {
 test('generates ./drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, './drizzle.ts')
-	execSync(
-		`pnpm exec prisma generate --schema .temp/${temp.name}/schema.prisma`
-	)
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/drizzle.ts`)).toBe(true)
 })
@@ -32,9 +28,7 @@ test('generates ./drizzle.ts', async () => {
 test('generates sub/drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, 'sub/drizzle.ts')
-	execSync(
-		`pnpm exec prisma generate --schema .temp/${temp.name}/schema.prisma`
-	)
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/sub/drizzle.ts`)).toBe(true)
 })
@@ -42,9 +36,7 @@ test('generates sub/drizzle.ts', async () => {
 test('generates ./sub/drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, './sub/drizzle.ts')
-	execSync(
-		`pnpm exec prisma generate --schema .temp/${temp.name}/schema.prisma`
-	)
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/sub/drizzle.ts`)).toBe(true)
 })
@@ -52,9 +44,7 @@ test('generates ./sub/drizzle.ts', async () => {
 test('generates ./sub/multi/drizzle.ts', async () => {
 	const temp = await tempHandler.prepare()
 	writeSchemaWithOutput(temp.name, './sub/multi/drizzle.ts')
-	execSync(
-		`pnpm exec prisma generate --schema .temp/${temp.name}/schema.prisma`
-	)
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.existsSync(`.temp/${temp.name}/sub/multi/drizzle.ts`)).toBe(true)
 })
@@ -68,7 +58,7 @@ test('exports a schema containing tables and relations', async () => {
 		}
 
 		generator drizzle {
-			provider = "prisma-generator-drizzle"
+			provider = "bunx prisma-generator-drizzle"
 			output = "drizzle.ts"
 		}
 
@@ -89,9 +79,7 @@ test('exports a schema containing tables and relations', async () => {
 			author User @relation(fields: [authorId], references: [id])
 		}`
 	)
-	execSync(
-		`pnpm exec prisma generate --schema .temp/${temp.name}/schema.prisma`
-	)
+	execSync(`bun prisma generate --schema .temp/${temp.name}/schema.prisma`)
 
 	expect(fs.readFileSync(`.temp/${temp.name}/drizzle.ts`, 'utf-8')).toContain(
 		'export const schema = '
@@ -117,8 +105,8 @@ function writeSchemaWithOutput(name: string, output: string) {
 	const schema = fs
 		.readFileSync('./prisma/schema.prisma', { encoding: 'utf-8' })
 		.replace(
-			'generator drizzle {\n  provider = "prisma-generator-drizzle"\n}',
-			`generator drizzle {\n  provider = "prisma-generator-drizzle"\n  output = "${output}"\n}`
+			'generator drizzle {\n  provider = "bunx prisma-generator-drizzle"\n}',
+			`generator drizzle {\n  provider = "bunx prisma-generator-drizzle"\n  output = "${output}"\n}`
 		)
 	fs.writeFileSync(`.temp/${name}/schema.prisma`, schema)
 }

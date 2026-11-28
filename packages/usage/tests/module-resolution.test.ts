@@ -73,7 +73,7 @@ test('node16 config adds .js extensions', async () => {
 
 function generate(basePath: string) {
 	// The generator finds the tsconfig.json from its own cwd, so it has to be the temp directory
-	execSync('pnpm exec prisma generate --schema schema.prisma', {
+	execSync('bun prisma generate --schema schema.prisma', {
 		cwd: path.resolve(basePath),
 	})
 }
@@ -100,7 +100,7 @@ function writeSchema(basePath: string, generatorConfig: string) {
 		}
 
 		generator drizzle {
-			provider = "prisma-generator-drizzle"
+			provider = "bunx prisma-generator-drizzle"
 			output = "drizzle"
 			${generatorConfig}
 		}

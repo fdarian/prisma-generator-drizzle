@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'bun:test'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { createField, getCustomDefault, getCustomType } from './createField'
 
@@ -7,7 +7,7 @@ function fieldWithDocs(documentation: string) {
 }
 
 describe('getCustomType', () => {
-	it.each([
+	test.each([
 		['before a doc line', 'drizzle.type viem::Address\nSome description'],
 		['after a doc line', 'Some description\ndrizzle.type viem::Address'],
 	])('reads drizzle.type %s', (_, documentation) => {
@@ -15,7 +15,7 @@ describe('getCustomType', () => {
 		expect(result?.code).toBe('.$type<Address>()')
 	})
 
-	it('throws naming the field and expected syntax without ::', () => {
+	test('throws naming the field and expected syntax without ::', () => {
 		expect(() =>
 			getCustomType(
 				fieldWithDocs(
@@ -102,7 +102,7 @@ describe('createField inline $type', () => {
 })
 
 describe('getCustomDefault', () => {
-	it('reads drizzle.default after a doc line', () => {
+	test('reads drizzle.default after a doc line', () => {
 		const result = getCustomDefault(
 			fieldWithDocs('Some description\ndrizzle.default nanoid::nanoid')
 		)
