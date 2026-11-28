@@ -12,6 +12,7 @@ import {
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
 import { getNativeType, onTimeDefault, renderColumn } from './native-type'
+import { createTableExtraConfig } from '../tableExtraConfig'
 
 const coreModule = 'drizzle-orm/mysql-core'
 
@@ -145,16 +146,20 @@ export const mysqlAdapter = createAdapter({
 					.join(', ')}])`,
 			}
 		},
-		table(name, fields, extraConfigEntries) {
+		table(name, fields, _schema, extraConfigEntries) {
+			const extraConfig = createTableExtraConfig({
+				coreModule,
+				extraConfigValueType: 'MySqlTableExtraConfigValue',
+				entries: extraConfigEntries,
+			})
 			return {
-				imports: [namedImport(['mysqlTable'], coreModule)],
+				imports: [
+					namedImport(['mysqlTable'], coreModule),
+					...extraConfig.imports,
+				],
 				func: `mysqlTable('${name}', { ${fields
 					.map(({ field, func }) => `${field.name}: ${func}`)
-					.join(', ')} }${
-					extraConfigEntries.length > 0
-						? `, (table) => [${extraConfigEntries.join(', ')}]`
-						: ''
-				})`,
+					.join(', ')} }${extraConfig.code})`,
 			}
 		},
 	},

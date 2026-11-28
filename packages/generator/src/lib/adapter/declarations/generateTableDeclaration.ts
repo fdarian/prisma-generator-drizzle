@@ -24,7 +24,9 @@ export function generateTableDeclaration(
 	const name = model.getVarName()
 
 	const foreignKeys = getForeignKeys(schema, model)
-	const inlineForeignKeys = foreignKeys.filter(isInlineForeignKey)
+	const inlineForeignKeys = foreignKeys.filter((fk) =>
+		isInlineForeignKey(fk, foreignKeys)
+	)
 	const fields = parsedFields.map((field) => {
 		const foreignKey = inlineForeignKeys.find(
 			(fk) => fk.columns[0] === field.name
@@ -44,7 +46,9 @@ export function generateTableDeclaration(
 		}
 	}
 
-	const configForeignKeys = foreignKeys.filter((fk) => !isInlineForeignKey(fk))
+	const configForeignKeys = foreignKeys.filter(
+		(fk) => !inlineForeignKeys.includes(fk)
+	)
 	const extraConfigEntries = configForeignKeys.map(createForeignKeyEntry)
 
 	const tableDeclaration = adapter.getDeclarationFunc.table(
@@ -75,8 +79,14 @@ export function generateTableDeclaration(
 	}
 }
 
-function isInlineForeignKey(foreignKey: ForeignKey) {
-	return foreignKey.columns.length === 1 && foreignKey.name == null
+/** `.references()` can only attach one foreign key to a column, and cannot be named */
+function isInlineForeignKey(foreignKey: ForeignKey, foreignKeys: ForeignKey[]) {
+	if (foreignKey.columns.length !== 1 || foreignKey.name != null) return false
+	return !foreignKeys.some(
+		(other) =>
+			other !== foreignKey &&
+			other.columns.some((column) => column === foreignKey.columns[0])
+	)
 }
 
 function createInlineReferences(adapter: Adapter, foreignKey: ForeignKey) {
@@ -89,7 +99,9 @@ function createForeignKeyEntry(foreignKey: ForeignKey) {
 		? 'table'
 		: foreignKey.target.varName
 	const props = [
-		...(foreignKey.name == null ? [] : [`name: '${foreignKey.name}'`]),
+		...(foreignKey.name == null
+			? []
+			: [`name: ${JSON.stringify(foreignKey.name)}`]),
 		`columns: [${foreignKey.columns.map((c) => `table.${c}`).join(', ')}]`,
 		`foreignColumns: [${foreignKey.target.columns.map((c) => `${targetRef}.${c}`).join(', ')}]`,
 	]

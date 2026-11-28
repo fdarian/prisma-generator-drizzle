@@ -15,7 +15,7 @@ function createJson(field: SchemaField) {
 function jsonField(documentation: string, isList: boolean) {
 	return {
 		name: 'history',
-		dbName: null,
+		getDbName: () => 'history',
 		documentation,
 		isId: false,
 		isList,

@@ -18,6 +18,7 @@ import {
 	getPgSchemaVarName,
 	isPublicSchema,
 } from './pg-schemas'
+import { createTableExtraConfig } from '../tableExtraConfig'
 
 const coreModule = 'drizzle-orm/pg-core'
 
@@ -109,21 +110,22 @@ export const postgresAdapter = createAdapter({
 			}
 		},
 		table(name, fields, schema, extraConfigEntries) {
+			const extraConfig = createTableExtraConfig({
+				coreModule,
+				extraConfigValueType: 'PgTableExtraConfigValue',
+				entries: extraConfigEntries,
+			})
 			const args = `'${name}', { ${fields
 				.map((f) => `${f.field.name}: ${f.func}`)
-				.join(', ')} }${
-				extraConfigEntries.length > 0
-					? `, (table) => [${extraConfigEntries.join(', ')}]`
-					: ''
-			}`
+				.join(', ')} }${extraConfig.code}`
 			if (isPublicSchema(schema)) {
 				return {
-					imports: [namedImport(['pgTable'], coreModule)],
+					imports: [namedImport(['pgTable'], coreModule), ...extraConfig.imports],
 					func: `pgTable(${args})`,
 				}
 			}
 			return {
-				imports: [getPgSchemaImport(schema)],
+				imports: [getPgSchemaImport(schema), ...extraConfig.imports],
 				func: `${getPgSchemaVarName(schema)}.table(${args})`,
 			}
 		},

@@ -49,23 +49,61 @@ export function getForeignKeys(
 
 	return getModelFields(model).flatMap((field) => {
 		if (field.isRelationField !== true) return []
+		// The side of the relation that does not own the foreign key
 		if (field.relationFromFields.length === 0) return []
-		if (field.relationToFields.length === 0) return []
+
+		const modelName = model.dmmf.name
+		if (field.relationToFields.length === 0) {
+			throw new Error(
+				`Relation ${modelName}.${field.name} has fields but no references`
+			)
+		}
 
 		const targetModel = schema.dmmf.datamodel.models.find(
 			(m) => m.name === field.type
 		)
-		if (targetModel == null) return []
+		if (targetModel == null) {
+			/** Passes Prisma validation, but the target table is not emitted */
+			if (isIgnoredModel(schema, field.type)) return []
+			throw new Error(
+				`Relation ${modelName}.${field.name} targets unknown model ${field.type}`
+			)
+		}
 
-		const localFields = field.relationFromFields.flatMap((name) =>
-			model.dmmf.fields.filter((f) => f.name === name)
+		const localFields = model.dmmf.fields.filter((f) =>
+			field.relationFromFields.includes(f.name)
 		)
-		if (localFields.length !== field.relationFromFields.length) return []
+		const missingLocal = field.relationFromFields.filter(
+			(name) => !localFields.some((f) => f.name === name)
+		)
+		if (missingLocal.length > 0) {
+			/** Passes Prisma validation, but the column is not emitted */
+			if (
+				missingLocal.every((name) => isIgnoredField(schema, modelName, name))
+			) {
+				return []
+			}
+			throw new Error(
+				`Relation ${modelName}.${field.name} references unknown fields ${missingLocal.join(', ')}`
+			)
+		}
 
-		const targetFields = field.relationToFields.flatMap((name) =>
-			targetModel.fields.filter((f) => f.name === name)
+		const missingTarget = field.relationToFields.filter(
+			(name) => !targetModel.fields.some((f) => f.name === name)
 		)
-		if (targetFields.length !== field.relationToFields.length) return []
+		if (missingTarget.length > 0) {
+			/** Passes Prisma validation, but the column is not emitted */
+			if (
+				missingTarget.every((name) =>
+					isIgnoredField(schema, targetModel.name, name)
+				)
+			) {
+				return []
+			}
+			throw new Error(
+				`Relation ${modelName}.${field.name} references unknown fields ${missingTarget.join(', ')} of ${targetModel.name}`
+			)
+		}
 
 		const isRequired = field.isRequired || localFields.some((f) => f.isRequired)
 
@@ -92,6 +130,31 @@ export function getForeignKeys(
 	})
 }
 
+function findAstModel(schema: Schema, modelName: string) {
+	const block = schema.ast.list.find(
+		(b) => b.type === 'model' && b.name === modelName
+	)
+	return block?.type === 'model' ? block : undefined
+}
+
+function isIgnoredModel(schema: Schema, modelName: string) {
+	return (
+		findAstModel(schema, modelName)?.properties.some(
+			(prop) => prop.type === 'attribute' && prop.name === 'ignore'
+		) === true
+	)
+}
+
+function isIgnoredField(schema: Schema, modelName: string, fieldName: string) {
+	const astField = findAstModel(schema, modelName)?.properties.find(
+		(prop) => prop.type === 'field' && prop.name === fieldName
+	)
+	return (
+		astField?.type === 'field' &&
+		astField.attributes?.some((attr) => attr.name === 'ignore') === true
+	)
+}
+
 function usesPrismaRelationMode(schema: Schema) {
 	return schema.ast.list.some(
 		(block) =>
@@ -106,12 +169,15 @@ function usesPrismaRelationMode(schema: Schema) {
 }
 
 function findExplicitName(model: SchemaModel, fieldName: string) {
+	// Implicit many-to-many join tables have no AST and no `@relation(map:)`
 	if (model.ast == null) return undefined
 
 	const astField = model.ast.properties.find(
 		(prop) => prop.type === 'field' && prop.name === fieldName
 	)
-	if (astField?.type !== 'field') return undefined
+	if (astField?.type !== 'field') {
+		throw new Error(`Ast field ${model.dmmf.name}.${fieldName} not found`)
+	}
 
 	const relation = astField.attributes?.find(
 		(attr): attr is Attribute => attr.name === 'relation'

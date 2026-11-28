@@ -7,7 +7,6 @@ type DeclarationFunc = { imports: ImportValue[]; func: string }
 
 export function createAdapter<TName extends string>(impl: {
 	name: TName
-	/** Module exporting the table function and `foreignKey` */
 	coreModule: string
 	/** Type of any column of the dialect, used to annotate lazy `.references()` callbacks */
 	anyColumnType: string
