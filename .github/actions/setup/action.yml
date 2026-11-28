@@ -1,5 +1,5 @@
 name: Setup
-description: Node and pnpm (with install)
+description: Node, pnpm (with install) and Bun
 inputs:
   cache:
     description: Cache the pnpm store. Leave false in release.yml.
@@ -19,3 +19,6 @@ runs:
       with:
         cache: ${{ inputs.cache }}
         require-lockfile: true
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version-file: .bun-version

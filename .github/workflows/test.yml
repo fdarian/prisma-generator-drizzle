@@ -14,19 +14,10 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
         
-      - name: ⎔ Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v4
+      - name: ⎔ Setup
+        uses: ./.github/actions/setup
         with:
-          node-version: 24
-          cache: pnpm
-
-      - name: ⎔ Setup bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
+          cache: 'true'
 
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
@@ -77,19 +68,10 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: ⎔ Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v4
+      - name: ⎔ Setup
+        uses: ./.github/actions/setup
         with:
-          node-version: 24
-          cache: pnpm
-
-      - name: ⎔ Setup bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
+          cache: 'true'
 
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
