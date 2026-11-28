@@ -55,6 +55,7 @@ prisma generate
   - [relational query](#setting-up-relational-query)
 - [Experimental](#experimental)
   - [Customize field with `drizzle.custom`](#customize-field-with-drizzlecustom)
+  - [Typed JSON](#typed-json)
 - [Compatibility](#compatibility)
 - [Examples](#examples) 
 - [Gotchas](#gotchas)
@@ -244,6 +245,61 @@ export const users = pgTable('User', {
   ...
 })
 ```
+
+### Typed JSON
+
+Type a `Json` field with the same directives. The generated column gets `.$type<..>()`, so queries return your type instead of `unknown`.
+
+Import the type with `drizzle.type`. Everything after `::` is used as the type as written, and the names in it are imported from the module.
+
+```prisma
+model User {
+  /// drizzle.type ../my-type::Settings
+  settings  Json
+}
+```
+
+```ts
+import type { Settings } from '../my-type'
+...
+
+export const users = pgTable('User', {
+  settings: jsonb('settings').$type<Settings>().notNull(),
+})
+```
+
+For a list, write the array type yourself. `[]` is never added automatically for list fields.
+
+```prisma
+model User {
+  /// drizzle.type ../my-type::Settings[]
+  history  Json
+}
+```
+
+```ts
+import type { Settings } from '../my-type'
+...
+
+  history: jsonb('history').$type<Settings[]>().notNull(),
+```
+
+`Array<Settings>` and `Settings['key']` work the same way.
+
+For an inline type with nothing to import, use `drizzle.custom`.
+
+```prisma
+model Report {
+  /// drizzle.custom { "$type": "{ month: string, min: number }[]" }
+  usage  Json
+}
+```
+
+```ts
+  usage: jsonb('usage').$type<{ month: string, min: number }[]>().notNull(),
+```
+
+> NOTE: The `drizzle.custom` value is strict JSON, trailing commas are not allowed.
 
 
 ## Compatibility
