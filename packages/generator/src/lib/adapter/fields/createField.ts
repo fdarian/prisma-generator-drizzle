@@ -1,5 +1,6 @@
 import type { DMMF } from '@prisma/generator-helper'
 import { getDirective } from '~/lib/directive'
+import { getEnumMemberDbName } from '~/lib/prisma-helpers/enums'
 import type {
 	SchemaField,
 	SchemaFieldWithDefault,
@@ -10,6 +11,7 @@ import {
 	namedImport,
 } from '~/lib/syntaxes/imports'
 import type { ModifyType, Prettify } from '~/lib/types/utils'
+import { getDateMode } from '~/shared/date-mode'
 import { getCustomDirective } from './directives/custom'
 
 export type DefineImport = {
@@ -27,6 +29,8 @@ export interface CreateFieldInput {
 		field: FieldWithDefault
 	) => { code: string; imports?: ImportValue[] } | undefined
 	onPrimaryKey?: (field: SchemaField) => string | undefined
+	/** Returns the expression evaluated on update, when the default doesn't fit the column */
+	onUpdatedAt?: (field: SchemaField) => string | undefined
 }
 
 export type FieldFunc = ReturnType<typeof createField>
@@ -48,6 +52,12 @@ export function createField(input: CreateFieldInput) {
 	}
 
 	let func = `${typeof input.func === 'string' ? input.func : input.func(custom?.field ?? {})}`
+
+	// Before `.$type<>()`: drizzle checks the callback against the column's own
+	// data type, which a custom `$type` would otherwise narrow
+	if (field.isUpdatedAt) {
+		func += `.$onUpdate(() => ${input.onUpdatedAt?.(field) ?? getNow(field)})`
+	}
 
 	// .type<...>()
 	if (custom?.$type) {
@@ -92,6 +102,12 @@ export function createField(input: CreateFieldInput) {
 		name: field.name,
 		func: func,
 	}
+}
+
+function getNow(field: SchemaField) {
+	return getDateMode(field) === 'date'
+		? 'new Date()'
+		: 'new Date().toISOString()'
 }
 
 const DEFAULT_SYNTAX = '<module>::<function> or <module>::<function> `<code>`'
@@ -253,7 +269,7 @@ function getDefaultScalarDefinition(
 	value: DMMF.FieldDefaultScalar
 ) {
 	if (field.kind === 'enum') {
-		return `'${value}'`
+		return `'${getEnumMemberDbName(field.type, String(value))}'`
 	}
 
 	switch (field.type) {
