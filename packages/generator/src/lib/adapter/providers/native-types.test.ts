@@ -19,6 +19,7 @@ type FieldInput = {
 	nativeType?: [string, string[]]
 	isList?: boolean
 	isId?: boolean
+	isUpdatedAt?: boolean
 	default?: unknown
 	documentation?: string
 }
@@ -31,6 +32,7 @@ function makeField(input: FieldInput) {
 		nativeType: input.nativeType ?? null,
 		isList: input.isList ?? false,
 		isId: input.isId ?? false,
+		isUpdatedAt: input.isUpdatedAt ?? false,
 		isRequired: false,
 		documentation: input.documentation,
 		hasDefaultValue: input.default !== undefined,
@@ -285,6 +287,72 @@ describe('postgres native types', () => {
 		expect(() =>
 			pg({ type: 'String', nativeType: ['VarChar', ['Max']] })
 		).toThrow('Unsupported @db.VarChar argument "Max" on field "col"')
+	})
+})
+
+describe('postgres @updatedAt on native date/time columns', () => {
+	it.each<[string, string, string[], string]>([
+		[
+			'Time',
+			'Time',
+			[],
+			"time('col').$onUpdate(() => new Date().toISOString().slice(11, 23))",
+		],
+		[
+			'Time',
+			'Timetz',
+			['3'],
+			"time('col', { precision: 3, withTimezone: true }).$onUpdate(() => new Date().toISOString().slice(11, 23) + '+00')",
+		],
+	])(
+		'emits a time-of-day string for @db.%s (%s)',
+		(_, name, args, expected) => {
+			expect(
+				pg({
+					type: 'DateTime',
+					nativeType: [name, args],
+					isUpdatedAt: true,
+				}).func
+			).toBe(expected)
+		}
+	)
+
+	it('emits a time-of-day string regardless of dateMode', () => {
+		generatorConfig.dateMode = 'string'
+		expect(
+			pg({ type: 'DateTime', nativeType: ['Time', []], isUpdatedAt: true }).func
+		).toBe(
+			"time('col').$onUpdate(() => new Date().toISOString().slice(11, 23))"
+		)
+	})
+
+	it('emits a Date for @db.Date by default and a date string in string mode', () => {
+		const field = {
+			type: 'DateTime',
+			nativeType: ['Date', []] as [string, string[]],
+			isUpdatedAt: true,
+		}
+		expect(pg(field).func).toBe(
+			"date('col', { mode: 'date' }).$onUpdate(() => new Date())"
+		)
+
+		generatorConfig.dateMode = 'string'
+		expect(pg(field).func).toBe(
+			"date('col', { mode: 'string' }).$onUpdate(() => new Date().toISOString().slice(0, 10))"
+		)
+	})
+
+	it('keeps the ISO string for @db.Timestamp and @db.Timestamptz in string mode', () => {
+		generatorConfig.dateMode = 'string'
+		expect(
+			pg({
+				type: 'DateTime',
+				nativeType: ['Timestamptz', ['3']],
+				isUpdatedAt: true,
+			}).func
+		).toBe(
+			"timestamp('col', { mode: 'string', precision: 3, withTimezone: true }).$onUpdate(() => new Date().toISOString())"
+		)
 	})
 })
 

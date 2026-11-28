@@ -59,14 +59,35 @@ function createColumn(
 	field: SchemaField,
 	builder: string,
 	options?: Parameters<typeof renderColumn>[2],
-	onDefault?: CreateFieldInput['onDefault']
+	onDefault?: CreateFieldInput['onDefault'],
+	onUpdatedAt?: CreateFieldInput['onUpdatedAt']
 ) {
 	return createField({
 		field,
 		imports: [namedImport([builder], coreModule)],
 		func: renderColumn(builder, getDbName(field), options),
 		onDefault,
+		onUpdatedAt,
 	})
+}
+
+// A DATE/TIME column wants only its own part of the ISO string. `time` has no
+// mode (drizzle always types it as a string), and a `timetz` value without an
+// offset would be read in the session timezone rather than as UTC.
+const timeOfDay = 'new Date().toISOString().slice(11, 23)'
+const stringModeUpdatedAt: Record<string, string> = {
+	date: 'new Date().toISOString().slice(0, 10)',
+}
+
+function getUpdatedAtExpression(
+	field: SchemaField,
+	builder: string,
+	withTimezone?: boolean
+) {
+	if (builder === 'time') {
+		return withTimezone ? `${timeOfDay} + '+00'` : timeOfDay
+	}
+	if (getDateMode(field) === 'string') return stringModeUpdatedAt[builder]
 }
 
 export const postgresAdapter = createAdapter({
@@ -160,20 +181,24 @@ export const postgresAdapter = createAdapter({
 						withTimezone: true,
 					})
 				case 'Date':
-					return createColumn(field, 'date', { mode })
+					return createColumn(field, 'date', { mode }, undefined, () =>
+						getUpdatedAtExpression(field, 'date')
+					)
 				case 'Time':
 					return createColumn(
 						field,
 						'time',
 						{ precision: native.args[0] },
-						onTimeDefault
+						onTimeDefault,
+						() => getUpdatedAtExpression(field, 'time')
 					)
 				case 'Timetz':
 					return createColumn(
 						field,
 						'time',
 						{ precision: native.args[0], withTimezone: true },
-						onTimeDefault
+						onTimeDefault,
+						() => getUpdatedAtExpression(field, 'time', true)
 					)
 				default:
 					return createColumn(field, 'timestamp', { mode, precision: 3 })
