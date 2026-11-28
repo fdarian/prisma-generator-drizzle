@@ -1,0 +1,13 @@
+{
+	"$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+	"baseBranch": "main",
+	"access": "public",
+	"format": false,
+	"changelog": "@changesets/cli/changelog",
+	"commit": false,
+	"ignore": ["usage", "with-drizzle-prisma"],
+	"fixed": [],
+	"linked": [],
+	"updateInternalDependencies": "patch",
+	"bumpVersionsWithWorkspaceProtocolOnly": true
+}

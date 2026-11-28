@@ -1,0 +1,21 @@
+name: Setup
+description: Node and pnpm (with install)
+inputs:
+  cache:
+    description: Cache the pnpm store. Leave false in release.yml.
+    default: 'false'
+  registry-url:
+    description: npm registry for setup-node; only the npm publish channel sets it.
+    default: ''
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: '26'
+        package-manager-cache: false
+        registry-url: ${{ inputs.registry-url }}
+    - uses: pnpm/setup@v3
+      with:
+        cache: ${{ inputs.cache }}
+        require-lockfile: true
