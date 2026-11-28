@@ -9,6 +9,7 @@ import {
 } from '@prisma/generator-helper'
 import { map, reduce } from 'fp-ts/lib/Array'
 import { pipe } from 'fp-ts/lib/function'
+import { omit } from 'lodash'
 import { GENERATOR_NAME } from './constants'
 import { generateEnumModules } from './lib/adapter/modules/enums'
 import {
@@ -22,6 +23,10 @@ import {
 import { generateImplicitModules } from './lib/adapter/modules/relational'
 import type { RelationalModuleSet } from './lib/adapter/modules/relational'
 import { generateSchemaModules as generateSchemaModule } from './lib/adapter/modules/relational'
+import {
+	generateRelationsDefinitionModules,
+	generateTablesSchemaModule,
+} from './lib/adapter/modules/relations-definition'
 import { generateSchemasModule } from './lib/adapter/modules/schemas'
 import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
 import { logger } from './lib/logger'
@@ -66,7 +71,22 @@ generatorHandler({
 			models: generateModelModules(adapter, schema),
 		}
 
-		if (isRelationalQueryEnabled()) {
+		if (
+			isRelationalQueryEnabled() &&
+			getGenerator().config.relations === 'v2'
+		) {
+			const definition = generateRelationsDefinitionModules(
+				adapter,
+				schema,
+				modules.models
+			)
+			modules.implicitModels = definition.implicitModels
+			modules.relations = definition.relations
+			modules.schema = generateTablesSchemaModule({
+				models: modules.models,
+				implicitModels: definition.implicitModels,
+			})
+		} else if (isRelationalQueryEnabled()) {
 			const relational = generateRelationalModules(schema, modules.models)
 			modules.relational = relational
 
@@ -277,14 +297,17 @@ export type GeneratedModules = BaseGeneratedModules &
 		implicitModels?: ModelModule[]
 		implicitRelational?: RelationalModule[]
 		schema?: Module
+		relations?: Module
 	}
 export function flattenModules(modules: GeneratedModules) {
-	const { schema, ...rest } = modules
+	const rest = omit(modules, ['schema', 'relations'])
 	return [
 		...Object.values(rest) //
 			.flat(), //
-		// Single-file output needs the schema after the declarations it references
-		schema,
+		// Single-file output needs the schema after the declarations it references,
+		// and the relations after the schema
+		modules.schema,
+		modules.relations,
 	].filter((module): module is Module => module != null)
 }
 

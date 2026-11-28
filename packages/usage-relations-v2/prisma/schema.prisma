@@ -1,0 +1,118 @@
+generator drizzle {
+  provider = "prisma-generator-drizzle"
+  output   = "drizzle"
+  relations = "v2"
+}
+
+generator drizzleSingle {
+  provider = "prisma-generator-drizzle"
+  output   = "drizzle-single/drizzle.ts"
+  relations = "v2"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  // one-to-many
+  posts Post[]
+
+  // one-to-one, FK on the other side (required there / optional there)
+  profile  Profile?
+  passport Passport?
+
+  // two relations to the same model
+  sentTransfers     Transfer[] @relation("Transfer_from")
+  receivedTransfers Transfer[] @relation("Transfer_to")
+}
+
+model Post {
+  id       Int    @id @default(autoincrement())
+  title    String
+  authorId Int
+  author   User   @relation(fields: [authorId], references: [id])
+
+  // implicit many-to-many
+  tags Tag[]
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  label String
+  posts Post[]
+}
+
+// One-to-one, required FK
+model Profile {
+  id     Int    @id @default(autoincrement())
+  bio    String
+  userId Int    @unique
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+// One-to-one, optional FK
+model Passport {
+  id     Int    @id @default(autoincrement())
+  number String
+  userId Int?   @unique
+  user   User?  @relation(fields: [userId], references: [id])
+}
+
+// Self relation
+model Employee {
+  id        Int        @id @default(autoincrement())
+  name      String
+  managerId Int?
+  manager   Employee?  @relation("Employee_manager", fields: [managerId], references: [id])
+  reports   Employee[] @relation("Employee_manager")
+}
+
+model Transfer {
+  id     Int  @id @default(autoincrement())
+  fromId Int
+  from   User @relation("Transfer_from", fields: [fromId], references: [id])
+  toId   Int
+  to     User @relation("Transfer_to", fields: [toId], references: [id])
+}
+
+// Composite FK
+model Project {
+  orgId Int
+  code  String
+  tasks Task[]
+
+  @@id([orgId, code])
+}
+
+model Task {
+  id          Int     @id @default(autoincrement())
+  orgId       Int
+  projectCode String
+  project     Project @relation(fields: [orgId, projectCode], references: [orgId, code])
+}
+
+// Self relation with the list side declared above the FK side
+model Category {
+  id       Int        @id @default(autoincrement())
+  name     String
+  children Category[] @relation("Category_parent")
+  parentId Int?
+  parent   Category?  @relation("Category_parent", fields: [parentId], references: [id])
+}
+
+// Implicit many-to-many where declaration order (Zebra first) differs from name order (Apple first)
+model Zebra {
+  id     Int     @id @default(autoincrement())
+  name   String
+  apples Apple[]
+}
+
+model Apple {
+  id     Int     @id @default(autoincrement())
+  name   String
+  zebras Zebra[]
+}

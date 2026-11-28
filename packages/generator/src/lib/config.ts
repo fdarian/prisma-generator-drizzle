@@ -10,6 +10,7 @@ import {
 } from 'valibot'
 import { DateMode } from '~/shared/date-mode'
 import { ModuleResolution } from '~/shared/generator-context/module-resolution'
+import { RelationsVersion } from '~/shared/relations-version'
 import { BooleanInStr } from './valibot-schema'
 
 const Config = object({
@@ -19,6 +20,7 @@ const Config = object({
 	formatter: optional(string()),
 	abortOnFailedFormatting: optional(BooleanInStr, true),
 	dateMode: optional(DateMode),
+	relations: optional(RelationsVersion, 'v1'),
 })
 export type Config = InferOutput<typeof Config>
 
@@ -33,7 +35,7 @@ export function parseConfig(config: GeneratorOptions['generator']['config']) {
 	return parsing.output
 }
 
-class ConfigError extends Error {
+export class ConfigError extends Error {
 	constructor(
 		issues: [InferIssue<typeof Config>, ...InferIssue<typeof Config>[]]
 	) {
