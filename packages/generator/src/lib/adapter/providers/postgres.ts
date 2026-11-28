@@ -1,5 +1,6 @@
 import { camelCase, kebabCase } from 'lodash'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
+import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
 import { getDateMode } from '~/shared/date-mode'
@@ -16,6 +17,7 @@ import {
 	getPgSchemaVarName,
 	isPublicSchema,
 } from './pg-schemas'
+import { getNativeType, renderColumn } from './native-type'
 
 const coreModule = 'drizzle-orm/pg-core'
 
@@ -46,6 +48,18 @@ function createField(input: CreateFieldInput) {
 	}
 
 	return baseCreateField(input)
+}
+
+function createColumn(
+	field: SchemaField,
+	builder: string,
+	options?: Parameters<typeof renderColumn>[2]
+) {
+	return createField({
+		field,
+		imports: [namedImport([builder], coreModule)],
+		func: renderColumn(builder, getDbName(field), options),
+	})
 }
 
 export const postgresAdapter = createAdapter({
@@ -123,34 +137,66 @@ export const postgresAdapter = createAdapter({
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#timestamp
 		DateTime(field) {
-			return createField({
-				field,
-				imports: [namedImport(['timestamp'], coreModule)],
-				func: `timestamp('${getDbName(field)}', { mode: '${getDateMode(field)}', precision: 3 })`, // biome-ignore format: keep one line
-			})
+			const mode = `'${getDateMode(field)}'`
+			const native = getNativeType(field)
+
+			switch (native?.name) {
+				case 'Timestamp':
+					return createColumn(field, 'timestamp', {
+						mode,
+						precision: native.args[0],
+					})
+				case 'Timestamptz':
+					return createColumn(field, 'timestamp', {
+						mode,
+						precision: native.args[0],
+						withTimezone: true,
+					})
+				case 'Date':
+					return createColumn(field, 'date', { mode })
+				case 'Time':
+					return createColumn(field, 'time', { precision: native.args[0] })
+				case 'Timetz':
+					return createColumn(field, 'time', {
+						precision: native.args[0],
+						withTimezone: true,
+					})
+				default:
+					return createColumn(field, 'timestamp', { mode, precision: 3 })
+			}
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#decimal
 		Decimal(field) {
-			return createField({
-				field,
-				imports: [namedImport(['decimal'], coreModule)],
-				func: `decimal('${getDbName(field)}', { precision: 65, scale: 30 })`,
-			})
+			const native = getNativeType(field)
+
+			if (native?.name === 'Decimal') {
+				return createColumn(field, 'decimal', {
+					precision: native.args[0],
+					scale: native.args[1],
+				})
+			}
+			return createColumn(field, 'decimal', { precision: 65, scale: 30 })
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#double-precision
 		Float(field) {
-			return createField({
-				field,
-				imports: [namedImport(['doublePrecision'], coreModule)],
-				func: `doublePrecision('${getDbName(field)}')`,
-			})
+			if (getNativeType(field)?.name === 'Real') {
+				return createColumn(field, 'real')
+			}
+			return createColumn(field, 'doublePrecision')
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#integer
 		Int(field) {
-			const func =
+			const isAutoincrement =
 				field.hasDefaultValue &&
 				isDefaultFunc(field) &&
 				field.default.name === 'autoincrement'
+
+			const isSmallInt = getNativeType(field)?.name === 'SmallInt'
+			const func = isSmallInt
+				? isAutoincrement
+					? 'smallserial'
+					: 'smallint'
+				: isAutoincrement
 					? // https://arc.net/l/quote/mpimqrfn
 						'serial'
 					: 'integer'
@@ -163,19 +209,27 @@ export const postgresAdapter = createAdapter({
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#jsonb
 		Json(field) {
-			return createField({
+			return createColumn(
 				field,
-				imports: [namedImport(['jsonb'], coreModule)],
-				func: `jsonb('${getDbName(field)}')`,
-			})
+				getNativeType(field)?.name === 'Json' ? 'json' : 'jsonb'
+			)
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#text
 		String(field) {
-			return createField({
-				field,
-				imports: [namedImport(['text'], coreModule)],
-				func: `text('${getDbName(field)}')`,
-			})
+			const native = getNativeType(field)
+
+			switch (native?.name) {
+				case 'VarChar':
+					return createColumn(field, 'varchar', { length: native.args[0] })
+				case 'Char':
+					return createColumn(field, 'char', { length: native.args[0] })
+				case 'Uuid':
+					return createColumn(field, 'uuid')
+				case 'Inet':
+					return createColumn(field, 'inet')
+				default:
+					return createColumn(field, 'text')
+			}
 		},
 	},
 	extraModules: [customBytesModule],

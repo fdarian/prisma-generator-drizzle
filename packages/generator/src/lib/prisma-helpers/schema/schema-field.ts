@@ -33,6 +33,7 @@ export function createSchemaField(args: {
 		isId: dmmfField.isId,
 		isRequired: dmmfField.isRequired,
 		isUpdatedAt: dmmfField.isUpdatedAt,
+		nativeType: dmmfField.nativeType,
 		getDbName() {
 			return dmmfField?.dbName ?? dmmfField?.name
 		},
