@@ -1,6 +1,8 @@
 import { db } from '@/infra/db'
 import { users } from '../../prisma/drizzle'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
 	const result = await db.$drizzle.select().from(users)
 
