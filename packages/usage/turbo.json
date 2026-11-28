@@ -11,6 +11,11 @@
 			"dependsOn": ["^build"],
 			"env": ["VITE_PG_DATABASE_URL"]
 		},
+		"pushreset:multi-schema": {
+			"cache": false,
+			"dependsOn": ["^build"],
+			"env": ["VITE_PG_DATABASE_URL"]
+		},
 		"pushreset:mysql": {
 			"cache": false,
 			"dependsOn": ["clone:mysql", "^build"],
@@ -26,6 +31,7 @@
 			"dependsOn": [
 				"^build",
 				"pushreset:postgres",
+				"pushreset:multi-schema",
 				"pushreset:mysql",
 				"pushreset:sqlite"
 			]

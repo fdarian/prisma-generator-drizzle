@@ -15,7 +15,8 @@ export function generateTableDeclaration(adapter: Adapter, model: SchemaModel) {
 
 	const tableDeclaration = adapter.getDeclarationFunc.table(
 		model.getDbName(),
-		fields
+		fields,
+		model.getSchema()
 	)
 
 	return {

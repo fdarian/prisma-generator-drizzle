@@ -1,0 +1,57 @@
+generator drizzle {
+  provider = "prisma-generator-drizzle"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["public", "auth", "blog"]
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+
+  @@schema("auth")
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+
+  @@schema("blog")
+}
+
+model User {
+  id    String @id
+  email String @unique
+  role  Role   @default(MEMBER)
+
+  posts Post[]
+  // Tag sorts before User, so the join table `_TagToUser` lands in `public`
+  tags  Tag[]
+
+  @@schema("auth")
+}
+
+model Post {
+  id       String     @id
+  title    String
+  status   PostStatus @default(DRAFT)
+  authorId String
+  author   User       @relation(fields: [authorId], references: [id])
+
+  // Post sorts before Tag, so the join table `_PostToTag` lands in `blog`
+  tags Tag[]
+
+  @@schema("blog")
+}
+
+model Tag {
+  id   String @id
+  name String @unique
+
+  posts Post[]
+  users User[]
+
+  @@schema("public")
+}

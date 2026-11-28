@@ -22,6 +22,7 @@ import {
 import { generateImplicitModules } from './lib/adapter/modules/relational'
 import type { RelationalModuleSet } from './lib/adapter/modules/relational'
 import { generateSchemaModules as generateSchemaModule } from './lib/adapter/modules/relational'
+import { generateSchemasModule } from './lib/adapter/modules/schemas'
 import type { BaseGeneratedModules } from './lib/adapter/modules/sets/base-generated-modules'
 import { logger } from './lib/logger'
 import { createSchema } from './lib/prisma-helpers/schema/schema'
@@ -61,7 +62,7 @@ generatorHandler({
 
 		const modules: GeneratedModules = {
 			extras: adapter.extraModules,
-			enums: generateEnumModules(adapter),
+			enums: generateEnumModules(adapter, schema),
 			models: generateModelModules(adapter, schema),
 		}
 
@@ -79,6 +80,12 @@ generatorHandler({
 				implicitModels: implicit.models,
 				implicitRelational: implicit.relational,
 			})
+		}
+
+		// Leading `extras` so single-file output declares the schemas before their first use
+		const schemasModule = generateSchemasModule(adapter, modules)
+		if (schemasModule != null) {
+			modules.extras = [...(modules.extras ?? []), schemasModule]
 		}
 
 		writeModules(modules)

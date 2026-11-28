@@ -37,3 +37,66 @@ describe('postgres Json field with drizzle.type', () => {
 		expect(result.func).toBe("jsonb('history').$type<Settings>().notNull()")
 	})
 })
+
+describe('postgres table declaration', () => {
+	const fields = [
+		{
+			field: { name: 'id' },
+			func: "text('id')",
+		},
+	] as Parameters<typeof postgresAdapter.getDeclarationFunc.table>[1]
+
+	it.each([null, 'public'])('uses pgTable for schema %s', (schema) => {
+		const result = postgresAdapter.getDeclarationFunc.table(
+			'User',
+			fields,
+			schema
+		)
+
+		expect(result.func).toBe("pgTable('User', { id: text('id') })")
+		expect(result.imports.map((i) => i.render())).toEqual([
+			"import { pgTable } from 'drizzle-orm/pg-core';",
+		])
+	})
+
+	it('attaches the table to its schema variable', () => {
+		const result = postgresAdapter.getDeclarationFunc.table(
+			'User',
+			fields,
+			'auth'
+		)
+
+		expect(result.func).toBe("authSchema.table('User', { id: text('id') })")
+		expect(result.imports.map((i) => i.render())).toEqual([
+			"import { authSchema } from './pg-schemas';",
+		])
+	})
+})
+
+describe('postgres enum declaration', () => {
+	it.each([null, 'public'])('uses pgEnum for schema %s', (schema) => {
+		const result = postgresAdapter.getDeclarationFunc.enum(
+			'Role',
+			['A', 'B'],
+			schema
+		)
+
+		expect(result.func).toBe("pgEnum('Role', ['A', 'B'])")
+		expect(result.imports.map((i) => i.render())).toEqual([
+			"import { pgEnum } from 'drizzle-orm/pg-core';",
+		])
+	})
+
+	it('attaches the enum to its schema variable', () => {
+		const result = postgresAdapter.getDeclarationFunc.enum(
+			'Role',
+			['A', 'B'],
+			'auth'
+		)
+
+		expect(result.func).toBe("authSchema.enum('Role', ['A', 'B'])")
+		expect(result.imports.map((i) => i.render())).toEqual([
+			"import { authSchema } from './pg-schemas';",
+		])
+	})
+})

@@ -5,13 +5,15 @@ import type { Adapter } from '../types'
 
 export function generateEnumDeclaration(
 	adapter: Adapter,
-	prismaEnum: DMMF.DatamodelEnum
+	prismaEnum: DMMF.DatamodelEnum,
+	dbSchema: string | null
 ) {
 	const varName = getEnumVarName(prismaEnum)
 
 	const enumFuncCall = adapter.getDeclarationFunc.enum(
 		getDbName(prismaEnum),
-		prismaEnum.values.map(getDbName)
+		prismaEnum.values.map(getDbName),
+		dbSchema
 	)
 
 	return {

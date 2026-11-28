@@ -18,6 +18,9 @@ export function createSchemaModel(args: {
 		getDbName() {
 			return getDbName(dmmfModel)
 		},
+		getSchema() {
+			return dmmfModel.schema
+		},
 		getVarName() {
 			return getModelVarName(dmmfModel)
 		},
