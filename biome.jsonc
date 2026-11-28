@@ -4,13 +4,15 @@
 		"ignore": [
 			".turbo",
 			"**/dist",
+			"**/.next",
 			"strip-json-comments.ts",
 			// Generated
 			"**/.temp",
 			"packages/usage/prisma/**",
 			"!packages/usage/prisma/schema.prisma",
 			"packages/usage-relations-v2/prisma/drizzle",
-			"packages/usage-relations-v2/prisma/drizzle-single"
+			"packages/usage-relations-v2/prisma/drizzle-single",
+			"**/prisma/drizzle.ts"
 		]
 	},
 	"organizeImports": {
