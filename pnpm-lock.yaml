@@ -379,7 +379,7 @@ importers:
         version: 20.19.43
       prisma:
         specifier: 7.10.1
-        version: 7.10.1(@types/node@20.19.43)(@types/react@19.3.3)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        version: 7.10.1(@types/node@20.19.43)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(better-sqlite3@13.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       prisma-generator-drizzle:
         specifier: workspace:*
         version: link:../generator
