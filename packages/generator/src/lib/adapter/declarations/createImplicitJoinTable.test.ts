@@ -13,7 +13,9 @@ function modelIn(
 			name,
 			schema,
 			dbName: null,
-			fields: [{ name: 'id', isId: true, type: 'String', ...id }],
+			fields: [
+				{ name: 'id', kind: 'scalar', isId: true, type: 'String', ...id },
+			],
 		} as unknown as DMMF.Model,
 	})
 }
@@ -30,7 +32,8 @@ function joinTableOf(
 }
 
 function fieldOf(result: ReturnType<typeof joinTableOf>, name: string) {
-	const field = result.model.fields.find((f) => f.name === name)
+	const fields: readonly DMMF.Field[] = result.model.fields
+	const field = fields.find((f) => f.name === name)
 	if (field == null) throw new Error(`field ${name} not found`)
 	return field
 }
@@ -63,7 +66,7 @@ describe('createImplicitJoinTable', () => {
 		])
 
 		expect(fieldOf(result, 'A')).toMatchObject({ type: 'Int' })
-		expect(fieldOf(result, 'A')).not.toHaveProperty('nativeType')
+		expect(fieldOf(result, 'A').nativeType).toBeUndefined()
 		expect(fieldOf(result, 'B')).toMatchObject({
 			type: 'String',
 			nativeType: ['Uuid', []],

@@ -336,6 +336,16 @@ model UuidBook {
 }
 // end -mysql
 
+model VarcharAuthor {
+  id    String        @id @db.VarChar(40)
+  books VarcharBook[]
+}
+
+model VarcharBook {
+  id      String          @id @db.VarChar(40)
+  authors VarcharAuthor[]
+}
+
 // end -sqlite
 
 // #region Foreign keys
