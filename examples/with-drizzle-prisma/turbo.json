@@ -1,0 +1,17 @@
+{
+	"extends": ["//"],
+	"$schema": "https://turbo.build/schema.json",
+	"tasks": {
+		"generate": {
+			"dependsOn": ["^build"],
+			"env": ["DATABASE_URL"]
+		},
+		"check:biome": {},
+		"check:type": {
+			"dependsOn": ["generate"]
+		},
+		"check": {
+			"dependsOn": ["check:biome", "check:type"]
+		}
+	}
+}
