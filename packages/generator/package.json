@@ -3,7 +3,7 @@
 	"description": "A Prisma generator for generating Drizzle schema with ease",
 	"version": "0.7.6",
 	"main": "dist/generator.js",
-	"license": "MIT",
+	"license": "Apache-2.0",
 	"bin": {
 		"prisma-generator-drizzle": "dist/bin.js"
 	},
