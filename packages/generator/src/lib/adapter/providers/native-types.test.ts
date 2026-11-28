@@ -414,6 +414,38 @@ describe('mysql native types', () => {
 		)
 	})
 
+	it('maps @db.Date with now() to (CURRENT_DATE)', () => {
+		expect(
+			mysql({
+				type: 'DateTime',
+				nativeType: ['Date', []],
+				default: { name: 'now', args: [] },
+			}).func
+		).toBe(
+			"date('col', { mode: 'date' }).default(sql`(CURRENT_DATE)`).notNull()"
+		)
+	})
+
+	it('maps @db.Time(2) with now() to (CURRENT_TIME(2))', () => {
+		expect(
+			mysql({
+				type: 'DateTime',
+				nativeType: ['Time', ['2']],
+				default: { name: 'now', args: [] },
+			}).func
+		).toBe("time('col', { fsp: 2 }).default(sql`(CURRENT_TIME(2))`).notNull()")
+	})
+
+	it('maps @db.Time without precision and now() to (CURRENT_TIME)', () => {
+		expect(
+			mysql({
+				type: 'DateTime',
+				nativeType: ['Time', []],
+				default: { name: 'now', args: [] },
+			}).func
+		).toBe("time('col').default(sql`(CURRENT_TIME)`).notNull()")
+	})
+
 	it('keeps CURRENT_TIMESTAMP(3) for DateTime without @db.*', () => {
 		expect(
 			mysql({

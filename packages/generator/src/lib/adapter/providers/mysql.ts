@@ -66,16 +66,16 @@ function getUpdatedAtExpression(field: SchemaField, builder: string) {
 	if (getDateMode(field) === 'string') return stringModeUpdatedAt[builder]
 }
 
+function currentExpression(keyword: string, fsp?: number) {
+	return fsp === undefined ? keyword : `${keyword}(${fsp})`
+}
+
 function createDateTimeColumn(
 	field: SchemaField,
 	builder: string,
-	options: { mode?: string; fsp?: number }
+	options: { mode?: string; fsp?: number },
+	nowExpression = currentExpression('CURRENT_TIMESTAMP', options.fsp)
 ) {
-	const currentTimestamp =
-		options.fsp === undefined
-			? 'CURRENT_TIMESTAMP'
-			: `CURRENT_TIMESTAMP(${options.fsp})`
-
 	return createColumn(
 		field,
 		builder,
@@ -89,7 +89,7 @@ function createDateTimeColumn(
 			) {
 				return {
 					imports: [namedImport(['sql'], 'drizzle-orm')],
-					code: `.default(sql\`${currentTimestamp}\`)`,
+					code: `.default(sql\`${nowExpression}\`)`,
 				}
 			}
 
@@ -204,9 +204,15 @@ export const mysqlAdapter = createAdapter({
 						fsp: native.args[0],
 					})
 				case 'Date':
-					return createDateTimeColumn(field, 'date', { mode })
+					// MySQL rejects CURRENT_TIMESTAMP as the default of DATE and TIME columns
+					return createDateTimeColumn(field, 'date', { mode }, '(CURRENT_DATE)')
 				case 'Time':
-					return createDateTimeColumn(field, 'time', { fsp: native.args[0] })
+					return createDateTimeColumn(
+						field,
+						'time',
+						{ fsp: native.args[0] },
+						`(${currentExpression('CURRENT_TIME', native.args[0])})`
+					)
 				default:
 					return createDateTimeColumn(field, 'datetime', { mode, fsp: 3 })
 			}
