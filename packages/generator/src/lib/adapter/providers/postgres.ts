@@ -189,7 +189,7 @@ export const postgresAdapter = createAdapter({
 						field,
 						'time',
 						{ precision: native.args[0] },
-						onTimeDefault,
+						(field) => onTimeDefault(field, false),
 						() => getUpdatedAtExpression(field, 'time')
 					)
 				case 'Timetz':
@@ -197,7 +197,7 @@ export const postgresAdapter = createAdapter({
 						field,
 						'time',
 						{ precision: native.args[0], withTimezone: true },
-						onTimeDefault,
+						(field) => onTimeDefault(field, true),
 						() => getUpdatedAtExpression(field, 'time', true)
 					)
 				default:

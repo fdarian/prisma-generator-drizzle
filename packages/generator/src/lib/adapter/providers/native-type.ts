@@ -48,7 +48,7 @@ export function renderColumn(
  * becomes its UTC time of day. Defaults that aren't a datetime literal (such as
  * `now()`) are left to the caller's own handling.
  */
-export function onTimeDefault(field: FieldWithDefault) {
+export function onTimeDefault(field: FieldWithDefault, withTimezone: boolean) {
 	if (typeof field.default !== 'string') return
 
 	const date = new Date(field.default)
@@ -58,5 +58,7 @@ export function onTimeDefault(field: FieldWithDefault) {
 		)
 	}
 
-	return { code: `.default('${date.toISOString().slice(11, 23)}')` }
+	const timeOfDay = date.toISOString().slice(11, 23)
+	const value = withTimezone ? `${timeOfDay}+00` : timeOfDay
+	return { code: `.default('${value}')` }
 }

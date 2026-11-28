@@ -216,7 +216,7 @@ export const mysqlAdapter = createAdapter({
 						'time',
 						{ fsp: native.args[0] },
 						`(${currentExpression('CURRENT_TIME', native.args[0])})`,
-						onTimeDefault
+						(field) => onTimeDefault(field, false)
 					)
 				default:
 					return createDateTimeColumn(field, 'datetime', { mode, fsp: 3 })

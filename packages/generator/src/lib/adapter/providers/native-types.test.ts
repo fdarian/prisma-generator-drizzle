@@ -233,7 +233,7 @@ describe('postgres native types', () => {
 		['Time', "time('col').default('14:21:00.000').notNull()"],
 		[
 			'Timetz',
-			"time('col', { withTimezone: true }).default('14:21:00.000').notNull()",
+			"time('col', { withTimezone: true }).default('14:21:00.000+00').notNull()",
 		],
 	])('maps a fixed @default on @db.%s to a time string', (name, expected) => {
 		const result = pg({
