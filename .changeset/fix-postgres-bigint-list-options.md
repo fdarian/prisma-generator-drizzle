@@ -2,4 +2,4 @@
 "prisma-generator-drizzle": patch
 ---
 
-Postgres `BigInt[]` columns now keep their `drizzle.custom` field options (such as `mode`).
+Postgres `BigInt[]` fields now generate a valid `bigint(...).array()` column instead of invalid code.
