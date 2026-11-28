@@ -6,6 +6,10 @@
 			"dependsOn": ["^build"],
 			"env": ["DATABASE_URL"]
 		},
+		"build": {
+			"dependsOn": ["generate"],
+			"outputs": [".next/**", "!.next/cache/**"]
+		},
 		"check:biome": {},
 		"check:type": {
 			"dependsOn": ["generate"]
