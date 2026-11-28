@@ -4,7 +4,7 @@
 
 ### Tooling
 
-- pnpm installs dependencies and launches scripts (`pnpm run <script>`, `pnpm turbo ...`). Bun runs only the `.ts` scripts (`clone:*`, usage `start`) and the generator unit tests. The Prisma CLI, the generator binary, Vitest, tsup and tsc execute on Node, even when launched through `bun` or `bunx`.
+- pnpm installs dependencies and launches scripts (`pnpm run <script>`, `pnpm turbo ...`). Bun runs only the `.ts` scripts (`clone:*`, usage `start`) and the generator unit tests. The Prisma CLI, the generator binary, Vitest, tsdown and tsc execute on Node, even when launched through `bun` or `bunx`.
 
 - Generator unit tests (`packages/generator`) run with `bun test`.
 

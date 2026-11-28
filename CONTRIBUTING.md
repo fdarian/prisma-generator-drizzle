@@ -1,5 +1,10 @@
 # Contributing
 
+## Setup
+
+- Install dependencies with `pnpm install`. Never use `bun install`.
+- Install [Bun](https://bun.sh), at the version pinned in `.bun-version`. It runs the `.ts` scripts in `packages/usage` and the generator unit tests (`bun test`). Everything else runs on Node.
+
 Run the tests as described in [TESTING.md](TESTING.md).
 
 ## Releasing
