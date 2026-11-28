@@ -110,4 +110,23 @@ describe('getCustomDirective', () => {
 			)
 		).toThrow(/"\$type": 1\n\}\n—/)
 	})
+
+	it('hints at trailing commas', () => {
+		const run = () =>
+			getCustomDirective(
+				fieldWithDocs(
+					'drizzle.custom {\n  "$type": "{ month: string, min: number, max: number }[]",\n}'
+				)
+			)
+		expect(run).toThrow('field "data"')
+		expect(run).toThrow(
+			'Trailing commas are not allowed in drizzle.custom JSON'
+		)
+	})
+
+	it('does not hint at trailing commas when there are none', () => {
+		expect(() =>
+			getCustomDirective(fieldWithDocs('drizzle.custom {"$type": }'))
+		).not.toThrow('Trailing commas')
+	})
 })

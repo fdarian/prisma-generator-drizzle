@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
-import { getCustomDefault, getCustomType } from './createField'
+import { createField, getCustomDefault, getCustomType } from './createField'
 
 function fieldWithDocs(documentation: string) {
 	return { name: 'sentryTraceData', documentation } as SchemaField
@@ -25,6 +25,69 @@ describe('getCustomType', () => {
 		).toThrow(
 			'Invalid drizzle.type directive on field "sentryTraceData": expected "drizzle.type <module>::<Type>", got "\\"PrismaJson.SentryTraceData\\"". For a global or namespace type without a module, use `drizzle.custom { "$type": "<Type>" }`.'
 		)
+	})
+})
+
+describe('getCustomType type expressions', () => {
+	it.each([
+		['plain', 'mod::Item', '.$type<Item>()', ['Item']],
+		['array suffix', 'mod::Item[]', '.$type<Item[]>()', ['Item']],
+		['Array generic', 'mod::Array<Item>', '.$type<Array<Item>>()', ['Item']],
+		['indexed access', "mod::Item['key']", ".$type<Item['key']>()", ['Item']],
+		[
+			'two type names',
+			'mod::Map<Key, Value>',
+			'.$type<Map<Key, Value>>()',
+			['Key', 'Value'],
+		],
+	])('%s', (_, directive, code, names) => {
+		const result = getCustomType(fieldWithDocs(`drizzle.type ${directive}`))
+		expect(result?.code).toBe(code)
+		expect(result?.imports.names).toEqual(names)
+		expect(result?.imports.module).toBe('mod')
+		expect(result?.imports.isTypeImport).toBe(true)
+	})
+
+	it('keeps a relative module path', () => {
+		const result = getCustomType(
+			fieldWithDocs('drizzle.type ../my-type::Email')
+		)
+		expect(result?.code).toBe('.$type<Email>()')
+		expect(result?.imports.module).toBe('../my-type')
+		expect(result?.imports.names).toEqual(['Email'])
+	})
+
+	it('reads an array expression among doc lines', () => {
+		const result = getCustomType(
+			fieldWithDocs('Some description\ndrizzle.type mod::Item[]\nMore text')
+		)
+		expect(result?.code).toBe('.$type<Item[]>()')
+	})
+
+	it('throws when the expression imports nothing', () => {
+		expect(() =>
+			getCustomType(fieldWithDocs('drizzle.type mod::string[]'))
+		).toThrow(
+			/Invalid drizzle\.type directive on field "sentryTraceData".*imports nothing from the module.*drizzle\.custom \{ "\$type": "…" \}/
+		)
+	})
+})
+
+describe('createField inline $type', () => {
+	it('emits the inline type literal verbatim without imports', () => {
+		const inline = '{ month: string, min: number, max: number }[]'
+		const result = createField({
+			field: {
+				name: 'data',
+				documentation: `drizzle.custom {"$type": ${JSON.stringify(inline)}}`,
+				isId: false,
+				isRequired: false,
+				hasDefaultValue: false,
+			} as SchemaField,
+			func: 'json()',
+		})
+		expect(result.func).toBe(`json().$type<${inline}>()`)
+		expect(result.imports).toEqual([])
 	})
 })
 
