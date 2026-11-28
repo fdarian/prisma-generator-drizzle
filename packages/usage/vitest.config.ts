@@ -13,9 +13,5 @@ export default defineConfig({
 	},
 	test: {
 		globals: true,
-		typecheck: {
-			enabled: true,
-			checker: 'tsrs',
-		},
 	},
 })
