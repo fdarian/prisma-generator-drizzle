@@ -4,6 +4,7 @@ import type { Module } from '../syntaxes/module'
 import type { FieldFunc } from './fields/createField'
 
 export type IndexFeatures = {
+	operatorClass: boolean
 	sortOrder: boolean
 	method: boolean
 	primaryKeyName: boolean

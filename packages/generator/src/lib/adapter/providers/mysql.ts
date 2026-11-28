@@ -137,6 +137,7 @@ export const mysqlAdapter = createAdapter({
 	coreModule,
 	maxIdentifierLength: 64,
 	indexFeatures: {
+		operatorClass: false,
 		sortOrder: false,
 		method: false,
 		primaryKeyName: false,

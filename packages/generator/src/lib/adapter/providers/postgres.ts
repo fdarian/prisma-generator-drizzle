@@ -95,6 +95,7 @@ export const postgresAdapter = createAdapter({
 	coreModule,
 	maxIdentifierLength: 63,
 	indexFeatures: {
+		operatorClass: true,
 		sortOrder: true,
 		method: true,
 		primaryKeyName: true,

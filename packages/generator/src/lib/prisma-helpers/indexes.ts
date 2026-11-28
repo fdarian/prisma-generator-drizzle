@@ -7,13 +7,14 @@ import {
 	getImplicitJoinTableConstraintName,
 } from './constraint-names'
 import { getDbName } from './getDbName'
+import { getSqlOperatorClass } from './operator-classes'
 import { isPartialIndex } from './partial-index'
 import type { Schema } from './schema/schema'
 import type { SchemaModel } from './schema/schema-model'
 
 type ResolvedIndexShape = {
 	/** Field names (TS keys) in index order */
-	columns: { key: string; desc: boolean }[]
+	columns: { key: string; desc: boolean; operatorClass: string | undefined }[]
 	/** Lowercase access method, e.g. `hash` */
 	method: string | undefined
 }
@@ -67,8 +68,8 @@ export function resolveImplicitJoinTableIndexes(
 	const maxIdentifierLength = adapter.maxIdentifierLength
 	const key = adapter.indexFeatures.implicitJoinTableKey
 	const columnsAB = [
-		{ key: 'A', desc: false },
-		{ key: 'B', desc: false },
+		{ key: 'A', desc: false, operatorClass: undefined },
+		{ key: 'B', desc: false, operatorClass: undefined },
 	]
 
 	return [
@@ -100,7 +101,7 @@ export function resolveImplicitJoinTableIndexes(
 				suffix: '_B_index',
 				maxIdentifierLength,
 			}),
-			columns: [{ key: 'B', desc: false }],
+			columns: [{ key: 'B', desc: false, operatorClass: undefined }],
 			method: undefined,
 		},
 	]
@@ -169,14 +170,27 @@ function resolveIndex(
 	}
 	if (index.clustered != null) skip('clustered')
 
-	const canSort = kind !== 'primaryKey' && adapter.indexFeatures.sortOrder
+	const isPrimaryKey = kind === 'primaryKey'
+	const canSort = !isPrimaryKey && adapter.indexFeatures.sortOrder
+	const canUseOperatorClass =
+		!isPrimaryKey && adapter.indexFeatures.operatorClass
 	const columns = fields.map((f) => {
 		const column = f.indexField.name
 		if (f.indexField.length != null) skip(`length on ${column}`)
-		if (f.indexField.operatorClass != null) skip(`operator class on ${column}`)
+		const operatorClass = f.indexField.operatorClass
+		if (operatorClass != null && !canUseOperatorClass) {
+			skip(`operator class on ${column}`)
+		}
 		const desc = f.indexField.sortOrder === 'desc'
 		if (desc && !canSort) skip(`descending sort on ${column}`)
-		return { key: column, desc: desc && canSort }
+		return {
+			key: column,
+			desc: desc && canSort,
+			operatorClass:
+				operatorClass != null && canUseOperatorClass
+					? getSqlOperatorClass(operatorClass)
+					: undefined,
+		}
 	})
 
 	const algorithm = index.algorithm

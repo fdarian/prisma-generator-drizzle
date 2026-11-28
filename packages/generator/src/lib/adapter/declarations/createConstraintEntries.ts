@@ -23,9 +23,7 @@ function getBuilderName(index: ResolvedIndex) {
 }
 
 export function createIndexEntry(index: ResolvedIndex) {
-	const columns = index.columns.map(
-		(column) => `table.${column.key}${column.desc ? '.desc()' : ''}`
-	)
+	const columns = index.columns.map(createColumnExpression)
 
 	if (index.kind === 'primaryKey') {
 		const props = [
@@ -39,4 +37,14 @@ export function createIndexEntry(index: ResolvedIndex) {
 	return index.method == null
 		? `${builder}.on(${columns.join(', ')})`
 		: `${builder}.using('${index.method}', ${columns.join(', ')})`
+}
+
+function createColumnExpression(column: ResolvedIndex['columns'][number]) {
+	// `desc` is only set on Postgres, where Prisma's DESC is NULLS FIRST and a bare Drizzle `.desc()` is NULLS LAST
+	const sort = column.desc ? '.desc().nullsFirst()' : ''
+	const operatorClass =
+		column.operatorClass == null
+			? ''
+			: `.op(${JSON.stringify(column.operatorClass)})`
+	return `table.${column.key}${sort}${operatorClass}`
 }

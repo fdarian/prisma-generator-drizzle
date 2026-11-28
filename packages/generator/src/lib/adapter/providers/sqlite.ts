@@ -59,6 +59,7 @@ export const sqliteAdapter = createAdapter({
 	coreModule,
 	maxIdentifierLength: 10000,
 	indexFeatures: {
+		operatorClass: false,
 		sortOrder: false,
 		method: false,
 		primaryKeyName: false,

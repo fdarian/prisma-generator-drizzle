@@ -338,23 +338,53 @@ describe('index arguments', () => {
 		expect(warn).not.toHaveBeenCalled()
 	})
 
-	test('keeps the index and warns for length, operator class and clustered', () => {
+	test('keeps the index and warns for length and clustered', () => {
 		const resolved = resolve(postgresAdapter, [
-			index(
-				'normal',
-				[
-					field('title', { length: 10 }),
-					field('slug', { operatorClass: 'text_pattern_ops' }),
-				],
-				{ clustered: true, dbName: 'lookup' }
-			),
+			index('normal', [field('title', { length: 10 }), field('slug')], {
+				clustered: true,
+				dbName: 'lookup',
+			}),
 		])
 		expect(resolved).toHaveLength(1)
 		expect(resolved[0].columns.map((c) => c.key)).toEqual(['title', 'slug'])
 		expect(warn.mock.calls.map((call) => call[0])).toEqual([
 			'Skipped clustered of index "lookup" of Post, Drizzle cannot express it',
 			'Skipped length on title of index "lookup" of Post, Drizzle cannot express it',
-			'Skipped operator class on slug of index "lookup" of Post, Drizzle cannot express it',
+		])
+	})
+
+	test.each([
+		['JsonbPathOps', 'jsonb_path_ops'],
+		['InetOps', 'inet_ops'],
+		['ArrayOps', 'array_ops'],
+		['Int4MinMaxMultiOps', 'int4_minmax_multi_ops'],
+		['TimestampTzBloomOps', 'timestamptz_bloom_ops'],
+		['gin_trgm_ops', 'gin_trgm_ops'],
+	])('postgres maps operator class %s to %s', (operatorClass, sql) => {
+		const [resolved] = resolve(postgresAdapter, [
+			index('normal', [field('title', { operatorClass }), field('slug')], {
+				algorithm: 'Gin',
+			}),
+		])
+		expect(resolved.columns.map((c) => c.operatorClass)).toEqual([
+			sql,
+			undefined,
+		])
+		expect(warn).not.toHaveBeenCalled()
+	})
+
+	test.each([
+		['mysql', () => mysqlAdapter],
+		['sqlite', () => sqliteAdapter],
+	])('%s skips an operator class and warns', (_, getAdapter) => {
+		const [resolved] = resolve(getAdapter(), [
+			index('normal', [field('title', { operatorClass: 'text_pattern_ops' })], {
+				dbName: 'lookup',
+			}),
+		])
+		expect(resolved.columns[0].operatorClass).toBeUndefined()
+		expect(warn.mock.calls.map((call) => call[0])).toEqual([
+			'Skipped operator class on title of index "lookup" of Post, Drizzle cannot express it',
 		])
 	})
 
@@ -542,10 +572,29 @@ describe('generateTableDeclaration constraints', () => {
 	test('postgres emits desc, methods and a named composite primary key', () => {
 		const output = generate(postgresAdapter)
 		expect(output.code).toContain(
-			`(table): PgTableExtraConfigValue[] => [primaryKey({ name: "Post_pkey", columns: [table.authorId, table.slug] }), uniqueIndex("Post_slug_key").on(table.slug), uniqueIndex("author_title").on(table.authorId, table.title), index("Post_title_slug_idx").on(table.title.desc(), table.slug), index("Post_authorId_idx").using('hash', table.authorId)]`
+			`(table): PgTableExtraConfigValue[] => [primaryKey({ name: "Post_pkey", columns: [table.authorId, table.slug] }), uniqueIndex("Post_slug_key").on(table.slug), uniqueIndex("author_title").on(table.authorId, table.title), index("Post_title_slug_idx").on(table.title.desc().nullsFirst(), table.slug), index("Post_authorId_idx").using('hash', table.authorId)]`
 		)
 		expect(importedNames(output, postgresAdapter.coreModule)).toEqual(
 			expect.arrayContaining(['primaryKey', 'uniqueIndex', 'index'])
+		)
+	})
+
+	test('postgres emits operator classes', () => {
+		const ctx = setup(model, [
+			index('normal', [field('title', { operatorClass: 'gin_trgm_ops' })], {
+				algorithm: 'Gin',
+			}),
+			index('normal', [field('slug', { operatorClass: 'JsonbPathOps' })], {
+				dbName: 'slug_ops',
+			}),
+		])
+		const output = generateTableDeclaration(
+			postgresAdapter,
+			ctx.schema,
+			ctx.model
+		)
+		expect(output.code).toContain(
+			`index("Post_title_idx").using('gin', table.title.op("gin_trgm_ops")), index("slug_ops").on(table.slug.op("jsonb_path_ops"))`
 		)
 	})
 
