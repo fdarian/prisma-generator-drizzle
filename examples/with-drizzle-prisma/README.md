@@ -4,6 +4,8 @@ This example demonstrates how to use [Drizzle ORM](https://orm.drizzle.team/) wi
 
 ## Getting Started
 
+Inside this repo the example uses the workspace generator, so build it first: `pnpm turbo build --filter prisma-generator-drizzle` (or just run `pnpm turbo generate`).
+
 1. Install dependencies:
 
 ```bash
@@ -61,8 +63,9 @@ export const db = new PrismaClient({ adapter }).$extends(drizzle())
 
 6. Use the Drizzle schema for querying and mutations:
 ```ts
+// src/app/page.tsx
 import { db } from '@/infra/db'
-import { users } from '../prisma/drizzle'
+import { users } from '../../prisma/drizzle'
 
 await db.$drizzle.insert(users).values({ email: 'john@doe.com', name: 'John' })
 const result = await db.$drizzle.select().from(users)
