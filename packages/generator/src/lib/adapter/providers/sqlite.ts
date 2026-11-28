@@ -1,4 +1,3 @@
-import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
 import { getDateMode } from '~/shared/date-mode'
@@ -89,7 +88,7 @@ export const sqliteAdapter = createAdapter({
 				imports: [
 					namedImport(['customBigInt'], `./${customBigIntModule.name}`),
 				],
-				func: `customBigInt('${getDbName(field)}')`,
+				func: `customBigInt('${field.getDbName()}')`,
 			})
 		},
 		// Prisma: https://arc.net/l/quote/jurqgcxd
@@ -98,14 +97,14 @@ export const sqliteAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['integer'], coreModule)],
-				func: `integer('${getDbName(field)}', { mode: 'boolean' })`,
+				func: `integer('${field.getDbName()}', { mode: 'boolean' })`,
 			})
 		},
 		Bytes(field) {
 			return createField({
 				field,
 				imports: [namedImport(['blob'], coreModule)],
-				func: `blob('${getDbName(field)}', { mode: 'buffer' })`,
+				func: `blob('${field.getDbName()}', { mode: 'buffer' })`,
 			})
 		},
 		// Prisma: https://arc.net/l/quote/grwnsumx
@@ -118,7 +117,7 @@ export const sqliteAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['integer'], coreModule)],
-				func: `integer('${getDbName(field)}', { mode: 'timestamp' })`, // biome-ignore format: keep one line
+				func: `integer('${field.getDbName()}', { mode: 'timestamp' })`, // biome-ignore format: keep one line
 			})
 		},
 		// Prisma: https://arc.net/l/quote/sgkjrpxh
@@ -129,7 +128,7 @@ export const sqliteAdapter = createAdapter({
 				imports: [
 					namedImport(['customDecimal'], `./${customDecimalModule.name}`),
 				],
-				func: `customDecimal('${getDbName(field)}')`,
+				func: `customDecimal('${field.getDbName()}')`,
 			})
 		},
 		// Prisma: https://arc.net/l/quote/ozmbgwfq
@@ -138,7 +137,7 @@ export const sqliteAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['real'], coreModule)],
-				func: `real('${getDbName(field)}')`,
+				func: `real('${field.getDbName()}')`,
 			})
 		},
 		// Prisma: https://arc.net/l/quote/rwenryvc
@@ -147,7 +146,7 @@ export const sqliteAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['integer'], coreModule)],
-				func: `integer('${getDbName(field)}', { mode: 'number' })`,
+				func: `integer('${field.getDbName()}', { mode: 'number' })`,
 				onPrimaryKey(field) {
 					if (
 						field.hasDefaultValue &&
@@ -164,7 +163,7 @@ export const sqliteAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['text'], coreModule)],
-				func: `text('${getDbName(field)}')`,
+				func: `text('${field.getDbName()}')`,
 			})
 		},
 	},

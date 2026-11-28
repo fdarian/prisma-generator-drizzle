@@ -1,5 +1,4 @@
 import { camelCase, kebabCase } from 'lodash'
-import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
@@ -66,7 +65,7 @@ function createColumn(
 	return createField({
 		field,
 		imports: [namedImport([builder], coreModule)],
-		func: renderColumn(builder, getDbName(field), options),
+		func: renderColumn(builder, field.getDbName(), options),
 		onDefault,
 		onUpdatedAt,
 	})
@@ -139,7 +138,7 @@ export const postgresAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport([func], `./${kebabCase(field.type)}-enum`)],
-				func: `${func}('${getDbName(field)}')`,
+				func: `${func}('${field.getDbName()}')`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#bigint
@@ -155,7 +154,7 @@ export const postgresAdapter = createAdapter({
 				field,
 				imports: [namedImport([func], coreModule)],
 				func: (opts: { mode?: BigIntMode }) =>
-					`${func}('${getDbName(field)}', { mode: '${opts?.mode ?? 'bigint'}' })`,
+					`${func}('${field.getDbName()}', { mode: '${opts?.mode ?? 'bigint'}' })`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#boolean
@@ -163,7 +162,7 @@ export const postgresAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['boolean'], coreModule)],
-				func: `boolean('${getDbName(field)}')`,
+				func: `boolean('${field.getDbName()}')`,
 			})
 		},
 		// Prisma: https://www.prisma.io/docs/orm/reference/prisma-schema-reference#bytes:~:text=Default%20mapping-,PostgreSQL,-bytea
@@ -171,7 +170,7 @@ export const postgresAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['customBytes'], `./${customBytesModule.name}`)],
-				func: `customBytes('${getDbName(field)}')`,
+				func: `customBytes('${field.getDbName()}')`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#timestamp
@@ -254,7 +253,7 @@ export const postgresAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport([func], coreModule)],
-				func: `${func}('${getDbName(field)}')`,
+				func: `${func}('${field.getDbName()}')`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#jsonb
