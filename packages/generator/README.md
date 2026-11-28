@@ -204,7 +204,7 @@ export const users = pgTable('User', {
 > ⚠️ This may potentially be removed and replaced by `drizzle.custom` directive
 
 
-Add `/// drizzle.type <module>::<named-import>` directive above the field definition.
+Add `/// drizzle.type <module>::<Type>` directive above the field definition.
 
 ```prisma
 model Wallet {
@@ -217,7 +217,7 @@ model Wallet {
 This will result to:
 
 ```ts
-import { Wallet } from 'viem'
+import type { Address } from 'viem'
 ...
 
 export const wallets = pgTable('Wallet', {
@@ -237,7 +237,7 @@ model User {
 ```
 
 ```ts
-import { Email } from '../my-type'
+import type { Email } from '../my-type'
 ...
 
 export const users = pgTable('User', {
@@ -250,7 +250,7 @@ export const users = pgTable('User', {
 
 Type a `Json` field with the same directives. The generated column gets `.$type<..>()`, so queries return your type instead of `unknown`.
 
-Import the type with `drizzle.type`. Everything after `::` is used as the type as written, and the names in it are imported from the module.
+Import the type with `drizzle.type`. After `::` write a type name, optionally with generics, `[]`, `['key']`, `|` or `&`. It is used as written, and the names in it are imported from the module (built-in types such as `Array` and `Record`, and primitives such as `string`, are not).
 
 ```prisma
 model User {
@@ -268,12 +268,12 @@ export const users = pgTable('User', {
 })
 ```
 
-For a list, write the array type yourself. `[]` is never added automatically for list fields.
+The type is the column's whole type and nothing is appended to it, so for a list field write the array yourself. `Array<Settings>` and `Settings['key']` work too.
 
 ```prisma
 model User {
   /// drizzle.type ../my-type::Settings[]
-  history  Json
+  history  Json[]
 }
 ```
 
@@ -281,10 +281,8 @@ model User {
 import type { Settings } from '../my-type'
 ...
 
-  history: jsonb('history').$type<Settings[]>().notNull(),
+  history: jsonb('history').array().$type<Settings[]>().notNull(),
 ```
-
-`Array<Settings>` and `Settings['key']` work the same way.
 
 For an inline type with nothing to import, use `drizzle.custom`.
 
@@ -300,6 +298,25 @@ model Report {
 ```
 
 > NOTE: The `drizzle.custom` value is strict JSON, trailing commas are not allowed.
+
+For anything more complex, such as an object type that uses imported names, use `drizzle.custom` with `imports` and `$type`.
+
+```prisma
+model Report {
+  /// drizzle.custom {
+  ///   "imports": [{ "name": ["Item"], "module": "../my-type", "type": true }],
+  ///   "$type": "{ items: Item[] }"
+  /// }
+  data  Json
+}
+```
+
+```ts
+import type { Item } from '../my-type'
+...
+
+  data: jsonb('data').$type<{ items: Item[] }>().notNull(),
+```
 
 
 ## Compatibility
