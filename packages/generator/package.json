@@ -35,7 +35,6 @@
 		"prisma": "7.10.1",
 		"tsdown": "^0.23.7",
 		"tsrs": "7.1.0-beta.tsrs5",
-		"typescript": "5.5.3",
 		"vitest": "^1.6.0"
 	},
 	"repository": {
