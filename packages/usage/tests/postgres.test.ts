@@ -4,6 +4,7 @@ import { testDefault } from './shared/testDefault'
 import { testDisambiguatingRelationship } from './shared/testDisambiguatingRelationship'
 import { testEnumMap } from './shared/testEnumMap'
 import { testFieldCustomization } from './shared/testFieldCustomization'
+import { testFieldMap } from './shared/testFieldMap'
 import { testFields } from './shared/testFields'
 import { testForeignKeys } from './shared/testForeignKeys'
 import { testIgnoreDecorator } from './shared/testIgnoreDecorator'
@@ -26,6 +27,7 @@ testSelfReferring(ctx)
 testIgnoreDecorator(ctx)
 testDefault(ctx)
 testFieldCustomization(ctx)
+testFieldMap(ctx)
 testEnumMap(ctx)
 testUpdatedAt(ctx)
 testNativeTypes(ctx)
