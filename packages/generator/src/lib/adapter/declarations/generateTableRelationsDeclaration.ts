@@ -346,7 +346,7 @@ function createJoinColumn(name: 'A' | 'B', pkField: DMMF.Field) {
 	} satisfies DMMF.Field
 }
 
-function countImplicitManyToManyRelations(
+export function countImplicitManyToManyRelations(
 	schema: Schema,
 	names: [string, string]
 ) {
