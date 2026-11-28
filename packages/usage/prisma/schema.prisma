@@ -66,29 +66,6 @@ model MappedTag {
   @@map("a_tags")
 }
 
-// start -sqlite
-enum MappedFieldStatus {
-  Active
-  Inactive
-}
-
-// end -sqlite
-
-// Every column is renamed with a field level @map, including the one the foreign key is made on
-model MappedField {
-  id       Int                @id @map("mapped_id")
-  label    String             @map("mapped_label")
-  status   MappedFieldStatus  @map("mapped_status") // -sqlite
-  parentId Int?               @map("parent_id")
-  parent   MappedFieldParent? @relation(fields: [parentId], references: [id])
-}
-
-model MappedFieldParent {
-  id       Int           @id @map("parent_pk")
-  name     String        @map("parent_name")
-  children MappedField[]
-}
-
 // Join table columns take the type of the ids they reference
 model IntAuthor {
   id    Int       @id
@@ -134,6 +111,33 @@ model Book {
   id      String   @id
   likedBy Author[] @relation("Likes")
   savedBy Author[] @relation("Saves")
+}
+
+// #endregion
+
+// #region Field level @map
+
+// start -sqlite
+enum MappedFieldStatus {
+  Active
+  Inactive
+}
+
+// end -sqlite
+
+// Every column is renamed with a field level @map, including the one the foreign key is made on
+model MappedField {
+  id       Int                @id @map("mapped_id")
+  label    String             @map("mapped_label")
+  status   MappedFieldStatus  @map("mapped_status") // -sqlite
+  parentId Int?               @map("parent_id")
+  parent   MappedFieldParent? @relation(fields: [parentId], references: [id])
+}
+
+model MappedFieldParent {
+  id       Int           @id @map("parent_pk")
+  name     String        @map("parent_name")
+  children MappedField[]
 }
 
 // #endregion
