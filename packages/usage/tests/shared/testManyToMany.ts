@@ -151,6 +151,7 @@ export async function testManyToMany({ db, schema }: TestContext) {
 			expect(schema).toHaveProperty('categoriesToPosts')
 			expect(schema).toHaveProperty('mappedArticlesToMappedTags')
 			expect(schema).toHaveProperty('peopleToPeople')
+			expect(schema).toHaveProperty('nodesToNodes')
 			expect(schema).toHaveProperty('accountsToAccountsBlocks')
 			expect(schema).toHaveProperty('accountsToAccountsMutes')
 			expect(schema).not.toHaveProperty('accountsToAccounts')
@@ -171,7 +172,7 @@ export async function testManyToMany({ db, schema }: TestContext) {
 			await db.insert(schema.peopleToPeople).values({ A: y.id, B: x.id })
 
 			const x_result = await db.query.people.findFirst({
-				where: (Person, { eq }) => eq(Person.id, x.id),
+				where: (Person, operators) => operators.eq(Person.id, x.id),
 				with: {
 					followers: { with: { personB: true } },
 					following: { with: { personA: true } },
@@ -183,7 +184,7 @@ export async function testManyToMany({ db, schema }: TestContext) {
 			)
 
 			const y_result = await db.query.people.findFirst({
-				where: (Person, { eq }) => eq(Person.id, y.id),
+				where: (Person, operators) => operators.eq(Person.id, y.id),
 				with: {
 					followers: { with: { personB: true } },
 					following: { with: { personA: true } },
@@ -193,6 +194,41 @@ export async function testManyToMany({ db, schema }: TestContext) {
 				[x]
 			)
 			expect(y_result?.following).toStrictEqual([])
+		})
+
+		// Prisma sorts by byte order, so `Zeta` is side A even though `beta` sorts first by locale order.
+		// Side A reads the owner's id from column A and the related id from column B
+		test('implicit self m-n picks the sides by byte order of the field names', async () => {
+			await db.delete(schema.nodesToNodes)
+			await db.delete(schema.nodes)
+			// --
+
+			const x = { id: 1 }
+			const y = { id: 2 }
+			await db.insert(schema.nodes).values([x, y])
+
+			// y is in x.Zeta
+			await db.insert(schema.nodesToNodes).values({ A: x.id, B: y.id })
+
+			const x_result = await db.query.nodes.findFirst({
+				where: (Node, operators) => operators.eq(Node.id, x.id),
+				with: {
+					Zeta: { with: { nodeB: true } },
+					beta: { with: { nodeA: true } },
+				},
+			})
+			expect(x_result?.Zeta.map((joined) => joined.nodeB)).toStrictEqual([y])
+			expect(x_result?.beta).toStrictEqual([])
+
+			const y_result = await db.query.nodes.findFirst({
+				where: (Node, operators) => operators.eq(Node.id, y.id),
+				with: {
+					Zeta: { with: { nodeB: true } },
+					beta: { with: { nodeA: true } },
+				},
+			})
+			expect(y_result?.Zeta).toStrictEqual([])
+			expect(y_result?.beta.map((joined) => joined.nodeA)).toStrictEqual([x])
 		})
 
 		test('multiple implicit self m-n on the same model', async () => {
@@ -214,7 +250,7 @@ export async function testManyToMany({ db, schema }: TestContext) {
 				.values({ A: y.id, B: x.id })
 
 			const x_result = await db.query.accounts.findFirst({
-				where: (Account, { eq }) => eq(Account.id, x.id),
+				where: (Account, operators) => operators.eq(Account.id, x.id),
 				with: {
 					blocked: { with: { accountB: true } },
 					mutedBy: { with: { accountA: true } },
@@ -261,7 +297,7 @@ export async function testManyToMany({ db, schema }: TestContext) {
 				.values({ A: author.id, B: saved.id })
 
 			const author_result = await db.query.authors.findFirst({
-				where: (Author, { eq }) => eq(Author.id, author.id),
+				where: (Author, operators) => operators.eq(Author.id, author.id),
 				with: {
 					liked: { with: { book: true } },
 					saved: { with: { book: true } },
@@ -275,7 +311,7 @@ export async function testManyToMany({ db, schema }: TestContext) {
 			])
 
 			const liked_result = await db.query.books.findFirst({
-				where: (Book, { eq }) => eq(Book.id, liked.id),
+				where: (Book, operators) => operators.eq(Book.id, liked.id),
 				with: {
 					likedBy: { with: { author: true } },
 					savedBy: true,

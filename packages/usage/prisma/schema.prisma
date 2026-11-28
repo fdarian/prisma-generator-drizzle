@@ -18,6 +18,16 @@ model SelfReference {
   referredUnique    SelfReference? @relation("SelfReference_referringUnique")
 }
 
+// Self one-to-many whose list field is declared before the foreign key side, which must not be mistaken for an implicit m-n relation
+model Tree {
+  id String @id
+
+  children Tree[] @relation("TreeParent")
+
+  parentId String?
+  parent   Tree?   @relation("TreeParent", fields: [parentId], references: [id])
+}
+
 // #region Implicit relationship purposes
 
 model TransactionHeader {
@@ -72,6 +82,13 @@ model Person {
   id        Int      @id
   following Person[] @relation("Follows")
   followers Person[] @relation("Follows")
+}
+
+// Self relation whose field names sort differently by byte order (`Zeta` < `beta`) and by locale order (`beta` < `Zeta`)
+model Node {
+  id   Int    @id
+  Zeta Node[] @relation("Links")
+  beta Node[] @relation("Links")
 }
 
 // Two self relations on the same model

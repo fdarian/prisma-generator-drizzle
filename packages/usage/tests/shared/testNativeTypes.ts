@@ -221,7 +221,8 @@ export function testNativeTypes({ db, schema, provider }: TestContext) {
 				.values({ A: author.id, B: book.id })
 
 			const result = await db.query.varcharAuthors.findFirst({
-				where: (VarcharAuthor, { eq }) => eq(VarcharAuthor.id, author.id),
+				where: (VarcharAuthor, operators) =>
+					operators.eq(VarcharAuthor.id, author.id),
 				with: { books: true },
 			})
 			expect(result).toStrictEqual({
