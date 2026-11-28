@@ -82,6 +82,9 @@ class InvalidDirectiveShapeError extends Error {
 	}
 }
 
+/** Not string-aware: a `,}` inside a string only adds a hint to an error already being thrown. */
+const TRAILING_COMMA = /,\s*[}\]]/
+
 /**
  * Doc lines may follow the JSON block, so the JSON ends at the first
  * line count where the accumulated text parses.
@@ -102,7 +105,11 @@ function parseJson(field: SchemaField, directiveLines: string[]) {
 		}
 	}
 
+	const hint = TRAILING_COMMA.test(jsonLines.join('\n'))
+		? '\nTrailing commas are not allowed in drizzle.custom JSON.\n'
+		: ''
+
 	throw new Error(
-		`Invalid ${DIRECTIVE} JSON shape on field "${field.name}"\n\n— Error:\n${getErrorMessage(lastError)}\n—\n\n— Your Input\n${directiveLines.join('\n')}\n—`
+		`Invalid ${DIRECTIVE} JSON shape on field "${field.name}"\n\n— Error:\n${getErrorMessage(lastError)}\n${hint}—\n\n— Your Input\n${directiveLines.join('\n')}\n—`
 	)
 }

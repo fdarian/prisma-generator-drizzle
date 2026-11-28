@@ -13,6 +13,7 @@ import {
 import type { ModifyType, Prettify } from '~/lib/types/utils'
 import { getDateMode } from '~/shared/date-mode'
 import { getCustomDirective } from './directives/custom'
+import { parseTypeExpression } from './directives/type-expression'
 
 export type DefineImport = {
 	module: string
@@ -123,6 +124,10 @@ function invalidDirective(
 	return new Error(hint ? `${message}. ${hint}` : message)
 }
 
+function exampleCustom(module: string, type: string) {
+	return `\`drizzle.custom { "imports": [{ "name": ["<ImportedName>"], "module": ${JSON.stringify(module)}, "type": true }], "$type": ${JSON.stringify(type)} }\``
+}
+
 export function getCustomType(field: SchemaField) {
 	const directive = getDirective(field, 'drizzle.type')
 	if (directive == null) return
@@ -140,8 +145,28 @@ export function getCustomType(field: SchemaField) {
 
 	const [module, type] = splits
 
+	const parsed = parseTypeExpression(type)
+	if (!parsed.supported)
+		throw invalidDirective(
+			field,
+			'drizzle.type',
+			'<module>::<Type>',
+			directive,
+			`"${type}" is too complex to find its imports. For complex types, use \`drizzle.custom\` with explicit "imports" and "$type", e.g. ${exampleCustom(module, type)}`
+		)
+
+	const names = parsed.names
+	if (names.length === 0)
+		throw invalidDirective(
+			field,
+			'drizzle.type',
+			'<module>::<Type>',
+			directive,
+			`"${type}" imports nothing from "${module}". For an inline type, use \`drizzle.custom { "$type": ${JSON.stringify(type)} }\`.`
+		)
+
 	return {
-		imports: namedImport([type], module, true),
+		imports: namedImport(names, module, true),
 		code: `.$type<${type}>()`,
 	}
 }
