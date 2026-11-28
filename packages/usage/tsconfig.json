@@ -7,7 +7,9 @@
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"paths": {
-			"~/tests/*": ["./tests/*"]
+			"~/tests/*": ["./tests/*"],
+			"src/*": ["./src/*"],
+			"prisma/*": ["./prisma/*"]
 		},
 		"moduleResolution": "bundler",
 		"types": ["vitest/globals"]
