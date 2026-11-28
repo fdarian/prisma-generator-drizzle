@@ -121,9 +121,9 @@ test('implicit many-to-many through the join table', async () => {
 	])
 	// Prisma names the join columns A (first model alphabetically: Post) and B (Tag)
 	await db.insert(schema.postsToTags).values([
-		{ A: '1', B: '1' },
-		{ A: '1', B: '2' },
-		{ A: '2', B: '2' },
+		{ A: 1, B: 1 },
+		{ A: 1, B: 2 },
+		{ A: 2, B: 2 },
 	])
 
 	const post = await db.query.posts.findFirst({
@@ -198,9 +198,9 @@ test('implicit many-to-many where declaration order differs from name order', as
 	])
 	// Prisma sorts model names, so A is Apple and B is Zebra even though Zebra is declared first
 	await db.insert(schema.applesToZebras).values([
-		{ A: '1', B: '10' },
-		{ A: '1', B: '20' },
-		{ A: '2', B: '20' },
+		{ A: 1, B: 10 },
+		{ A: 1, B: 20 },
+		{ A: 2, B: 20 },
 	])
 
 	const apple = await db.query.apples.findFirst({
