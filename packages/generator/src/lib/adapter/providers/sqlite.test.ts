@@ -16,7 +16,7 @@ async function loadSqliteAdapter() {
 
 // Prisma has no enums on SQLite, so there is no enum column to cover
 describe('sqlite @map on a field', () => {
-	test('names an Int column after the mapped db name', async () => {
+	test('names an Int column after the mapped db name and keeps the field name as the key', async () => {
 		const sqliteAdapter = await loadSqliteAdapter()
 		const result = sqliteAdapter.parseField(
 			createMappedField({ kind: 'scalar', type: 'Int' })
@@ -27,12 +27,21 @@ describe('sqlite @map on a field', () => {
 		expect(result.name).toBe('successorId')
 	})
 
-	test('names a String column after the mapped db name', async () => {
+	test.each([
+		'String',
+		'BigInt',
+		'Boolean',
+		'Bytes',
+		'DateTime',
+		'Decimal',
+		'Float',
+	] as const)('names a %s column after the mapped db name', async (type) => {
 		const sqliteAdapter = await loadSqliteAdapter()
 		const result = sqliteAdapter.parseField(
-			createMappedField({ kind: 'scalar', type: 'String' })
+			createMappedField({ kind: 'scalar', type })
 		)
-		expect(result.func).toBe("text('successor_id').notNull()")
+		expect(result.func).toContain("'successor_id'")
+		expect(result.func).not.toContain('successorId')
 	})
 
 	test('falls back to the field name without @map', async () => {

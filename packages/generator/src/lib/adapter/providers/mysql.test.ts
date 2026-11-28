@@ -15,7 +15,7 @@ async function loadMysqlAdapter() {
 }
 
 describe('mysql @map on a field', () => {
-	test('names an Int column after the mapped db name', async () => {
+	test('names an Int column after the mapped db name and keeps the field name as the key', async () => {
 		const mysqlAdapter = await loadMysqlAdapter()
 		const result = mysqlAdapter.parseField(
 			createMappedField({ kind: 'scalar', type: 'Int' })
@@ -24,13 +24,17 @@ describe('mysql @map on a field', () => {
 		expect(result.name).toBe('successorId')
 	})
 
-	test('names a Boolean column after the mapped db name', async () => {
-		const mysqlAdapter = await loadMysqlAdapter()
-		const result = mysqlAdapter.parseField(
-			createMappedField({ kind: 'scalar', type: 'Boolean' })
-		)
-		expect(result.func).toBe("boolean('successor_id').notNull()")
-	})
+	test.each(['Int', 'Boolean', 'BigInt', 'Json', 'Bytes'] as const)(
+		'names a %s column after the mapped db name',
+		async (type) => {
+			const mysqlAdapter = await loadMysqlAdapter()
+			const result = mysqlAdapter.parseField(
+				createMappedField({ kind: 'scalar', type })
+			)
+			expect(result.func).toContain("'successor_id'")
+			expect(result.func).not.toContain('successorId')
+		}
+	)
 
 	test('names an enum column after the mapped db name', async () => {
 		const mysqlAdapter = await loadMysqlAdapter()

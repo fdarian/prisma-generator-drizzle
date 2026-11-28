@@ -164,7 +164,7 @@ describe('postgres list fields', () => {
 })
 
 describe('postgres @map on a field', () => {
-	test('names an Int column after the mapped db name', async () => {
+	test('names an Int column after the mapped db name and keeps the field name as the key', async () => {
 		const postgresAdapter = await loadPostgresAdapter()
 		const result = postgresAdapter.parseField(
 			createMappedField({ kind: 'scalar', type: 'Int' })
@@ -173,13 +173,17 @@ describe('postgres @map on a field', () => {
 		expect(result.name).toBe('successorId')
 	})
 
-	test('names a String column after the mapped db name', async () => {
-		const postgresAdapter = await loadPostgresAdapter()
-		const result = postgresAdapter.parseField(
-			createMappedField({ kind: 'scalar', type: 'String' })
-		)
-		expect(result.func).toBe("text('successor_id').notNull()")
-	})
+	test.each(['Int', 'String', 'BigInt', 'Boolean', 'Bytes'] as const)(
+		'names a %s column after the mapped db name',
+		async (type) => {
+			const postgresAdapter = await loadPostgresAdapter()
+			const result = postgresAdapter.parseField(
+				createMappedField({ kind: 'scalar', type })
+			)
+			expect(result.func).toContain("'successor_id'")
+			expect(result.func).not.toContain('successorId')
+		}
+	)
 
 	test('names an enum column after the mapped db name', async () => {
 		const postgresAdapter = await loadPostgresAdapter()
