@@ -5,18 +5,31 @@ import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 const DIRECTIVE = 'drizzle.custom'
 
 export function getCustomDirective(field: SchemaField) {
-	const directiveInput = field.documentation
-	if (directiveInput == null || !directiveInput.startsWith(DIRECTIVE)) {
-		return
-	}
+	if (field.documentation == null) return
 
-	const parsing = v.safeParse(DirectiveSchema, parseJson(directiveInput))
-	if (!parsing.success)
+	const lines = field.documentation.split('\n')
+	const start = lines.findIndex(isDirectiveLine)
+	if (start === -1) return
+
+	const directiveLines = lines.slice(start)
+	const parsed = parseJson(field, directiveLines)
+	const shape = v.safeParse(DirectiveSchema, parsed.json)
+	if (!shape.success)
 		throw new InvalidDirectiveShapeError({
-			input: directiveInput,
-			issues: parsing.issues,
+			field,
+			input: directiveLines.slice(0, parsed.consumedLines).join('\n'),
+			issues: shape.issues,
 		})
-	return parsing.output
+	return shape.output
+}
+
+/** Ignores prose such as `drizzle.custom is not used here` or `drizzle.customType`. */
+function isDirectiveLine(line: string) {
+	const trimmed = line.trimStart()
+	if (!trimmed.startsWith(DIRECTIVE)) return false
+
+	const rest = trimmed.slice(DIRECTIVE.length).trim()
+	return rest === '' || rest.startsWith('{')
 }
 
 const NamedImportSchema = v.pipe(
@@ -59,21 +72,37 @@ const DirectiveSchema = v.object({
 
 class InvalidDirectiveShapeError extends Error {
 	constructor(args: {
+		field: SchemaField
 		input: string
 		issues: [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]]
 	}) {
 		super(
-			`Invalid ${DIRECTIVE} definition:\n\n— Error:${JSON.stringify(v.flatten(args.issues), null, 2)}\n—\n\n— Your Input\n${args.input}\n—`
+			`Invalid ${DIRECTIVE} definition on field "${args.field.name}":\n\n— Error:${JSON.stringify(v.flatten(args.issues), null, 2)}\n—\n\n— Your Input\n${args.input}\n—`
 		)
 	}
 }
 
-function parseJson(directiveInput: string) {
-	try {
-		return JSON.parse(directiveInput.replace(DIRECTIVE, ''))
-	} catch (err) {
-		throw new Error(
-			`Invalid ${DIRECTIVE} JSON shape\n\n— Error:\n${getErrorMessage(err)}\n—\n\n— Your Input\n${directiveInput}\n—`
-		)
+/**
+ * Doc lines may follow the JSON block, so the JSON ends at the first
+ * line count where the accumulated text parses.
+ */
+function parseJson(field: SchemaField, directiveLines: string[]) {
+	const firstLine = directiveLines[0].trimStart().slice(DIRECTIVE.length)
+	const jsonLines = [firstLine, ...directiveLines.slice(1)]
+
+	let lastError: unknown
+	for (let count = 1; count <= jsonLines.length; count++) {
+		try {
+			return {
+				json: JSON.parse(jsonLines.slice(0, count).join('\n')),
+				consumedLines: count,
+			}
+		} catch (err) {
+			lastError = err
+		}
 	}
+
+	throw new Error(
+		`Invalid ${DIRECTIVE} JSON shape on field "${field.name}"\n\n— Error:\n${getErrorMessage(lastError)}\n—\n\n— Your Input\n${directiveLines.join('\n')}\n—`
+	)
 }

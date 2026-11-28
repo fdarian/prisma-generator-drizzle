@@ -4,6 +4,7 @@
 	"tasks": {
 		"check:biome": {},
 		"check:type": {},
+		"test": {},
 		"check": {
 			"dependsOn": ["check:biome", "check:type"]
 		}
