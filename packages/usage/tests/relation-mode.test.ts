@@ -8,14 +8,14 @@ afterAll(async () => {
 	await tempHandler.cleanup()
 })
 
-test('relationMode = "prisma" emits no foreign keys', async () => {
+async function generate(relationMode: string | undefined) {
 	const temp = await tempHandler.prepare()
 
 	fs.writeFileSync(
 		`${temp.basePath}/schema.prisma`,
 		`datasource db {
 			provider = "postgresql"
-			relationMode = "prisma"
+			${relationMode == null ? '' : `relationMode = "${relationMode}"`}
 		}
 
 		generator drizzle {
@@ -60,7 +60,18 @@ test('relationMode = "prisma" emits no foreign keys', async () => {
 	)
 	execSync(`pnpm exec prisma generate --schema ${temp.basePath}/schema.prisma`)
 
-	const output = fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
+	return fs.readFileSync(`${temp.basePath}/drizzle.ts`, 'utf-8')
+}
+
+test('the same schema emits foreign keys without relationMode', async () => {
+	const output = await generate(undefined)
+	expect(output).toContain("pgTable('Post'")
+	expect(output).toContain('.references(')
+	expect(output).toContain('foreignKey(')
+})
+
+test('relationMode = "prisma" emits no foreign keys', async () => {
+	const output = await generate('prisma')
 	expect(output).toContain("pgTable('Post'")
 	expect(output).not.toContain('.references(')
 	expect(output).not.toContain('foreignKey(')

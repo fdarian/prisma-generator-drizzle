@@ -1,7 +1,16 @@
 import { Table, getTableName, is } from 'drizzle-orm'
-import { getTableConfig as getMysqlTableConfig } from 'drizzle-orm/mysql-core'
-import { getTableConfig as getPgTableConfig } from 'drizzle-orm/pg-core'
-import { getTableConfig as getSqliteTableConfig } from 'drizzle-orm/sqlite-core'
+import {
+	MySqlTable,
+	getTableConfig as getMysqlTableConfig,
+} from 'drizzle-orm/mysql-core'
+import {
+	PgTable,
+	getTableConfig as getPgTableConfig,
+} from 'drizzle-orm/pg-core'
+import {
+	SQLiteTable,
+	getTableConfig as getSqliteTableConfig,
+} from 'drizzle-orm/sqlite-core'
 import type { TestContext } from 'tests/utils/types'
 import { describe, expect, test } from 'vitest'
 
@@ -33,19 +42,24 @@ type ForeignKeyShape = {
 
 export function testForeignKeys(ctx: TestContext) {
 	function getTable(key: string): Table {
-		const table = (ctx.schema as unknown as Record<string, unknown>)[key]
-		if (!is(table, Table)) throw new Error(`${key} is not a table`)
-		return table
+		const entry = Object.entries(ctx.schema).find(([name]) => name === key)
+		if (entry == null || !is(entry[1], Table)) {
+			throw new Error(`${key} is not a table`)
+		}
+		return entry[1]
 	}
 
 	function getConfiguredForeignKeys(table: Table): ForeignKeyLike[] {
 		switch (ctx.provider) {
 			case 'postgres':
-				return getPgTableConfig(table as never).foreignKeys as never
+				if (!is(table, PgTable)) throw new Error('Expected a PgTable')
+				return getPgTableConfig(table).foreignKeys
 			case 'mysql':
-				return getMysqlTableConfig(table as never).foreignKeys as never
+				if (!is(table, MySqlTable)) throw new Error('Expected a MySqlTable')
+				return getMysqlTableConfig(table).foreignKeys
 			case 'sqlite':
-				return getSqliteTableConfig(table as never).foreignKeys as never
+				if (!is(table, SQLiteTable)) throw new Error('Expected a SQLiteTable')
+				return getSqliteTableConfig(table).foreignKeys
 		}
 	}
 
@@ -201,6 +215,48 @@ export function testForeignKeys(ctx: TestContext) {
 					},
 				])
 			})
+		})
+
+		test('single-column foreign keys across a module import cycle', () => {
+			expect(getShapes('foreignKeyChickens')).toStrictEqual([
+				{
+					columns: ['eggId'],
+					foreignTable: 'fk_eggs',
+					foreignColumns: ['id'],
+					onDelete: 'set null',
+					onUpdate: 'cascade',
+				},
+			])
+			expect(getShapes('foreignKeyEggs')).toStrictEqual([
+				{
+					columns: ['chickenId'],
+					foreignTable: 'fk_chickens',
+					foreignColumns: ['id'],
+					onDelete: 'set null',
+					onUpdate: 'cascade',
+				},
+			])
+		})
+
+		test('composite foreign keys referencing each other', () => {
+			expect(getShapes('foreignKeyHosts')).toStrictEqual([
+				{
+					columns: ['guestA', 'guestB'],
+					foreignTable: 'fk_guests',
+					foreignColumns: ['a', 'b'],
+					onDelete: 'set null',
+					onUpdate: 'cascade',
+				},
+			])
+			expect(getShapes('foreignKeyGuests')).toStrictEqual([
+				{
+					columns: ['hostA', 'hostB'],
+					foreignTable: 'fk_hosts',
+					foreignColumns: ['a', 'b'],
+					onDelete: 'set null',
+					onUpdate: 'cascade',
+				},
+			])
 		})
 
 		// Foreign key targets are lazy callbacks, so a broken import cycle only

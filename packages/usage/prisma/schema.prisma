@@ -373,6 +373,50 @@ model ForeignKey_Shelf {
   @@map("fk_shelves")
 }
 
+// Single-column foreign keys pointing at each other: lazy `.references()` across a module import cycle
+model ForeignKey_Chicken {
+  id      String             @id
+  eggId   String?
+  egg     ForeignKey_Egg?    @relation("ForeignKey_Chicken_egg", fields: [eggId], references: [id])
+  layedBy ForeignKey_Egg[]   @relation("ForeignKey_Egg_chicken")
+
+  @@map("fk_chickens")
+}
+
+model ForeignKey_Egg {
+  id        String               @id
+  chickenId String?
+  chicken   ForeignKey_Chicken?  @relation("ForeignKey_Egg_chicken", fields: [chickenId], references: [id])
+  hatchedBy ForeignKey_Chicken[] @relation("ForeignKey_Chicken_egg")
+
+  @@map("fk_eggs")
+}
+
+// Composite foreign keys pointing at each other: the `foreignKey()` config callbacks reference each other
+model ForeignKey_Host {
+  a      String
+  b      String
+  guestA String?
+  guestB String?
+  guest  ForeignKey_Guest?  @relation("ForeignKey_Host_guest", fields: [guestA, guestB], references: [a, b])
+  hosted ForeignKey_Guest[] @relation("ForeignKey_Guest_host")
+
+  @@id([a, b])
+  @@map("fk_hosts")
+}
+
+model ForeignKey_Guest {
+  a     String
+  b     String
+  hostA String?
+  hostB String?
+  host  ForeignKey_Host?   @relation("ForeignKey_Guest_host", fields: [hostA, hostB], references: [a, b])
+  hosts ForeignKey_Host[]  @relation("ForeignKey_Host_guest")
+
+  @@id([a, b])
+  @@map("fk_guests")
+}
+
 // #endregion
 
 model FieldCustomization {
