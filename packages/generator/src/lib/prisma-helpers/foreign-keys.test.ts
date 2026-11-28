@@ -111,9 +111,9 @@ describe('getForeignKeys', () => {
 			],
 			'Post'
 		)
-		expect(() =>
-			getForeignKeys(schema, model, sqliteAdapter.maxIdentifierLength)
-		).toThrow(/unknown model Author/)
+		expect(() => getForeignKeys(schema, model, sqliteAdapter)).toThrow(
+			/unknown model Author/
+		)
 	})
 
 	test('skips a relation whose local column is @ignore d', () => {
@@ -135,9 +135,7 @@ describe('getForeignKeys', () => {
 			],
 			'Post'
 		)
-		expect(
-			getForeignKeys(schema, model, sqliteAdapter.maxIdentifierLength)
-		).toEqual([])
+		expect(getForeignKeys(schema, model, sqliteAdapter)).toEqual([])
 	})
 
 	test('throws when a local column is missing and not @ignore d', () => {
@@ -159,9 +157,9 @@ describe('getForeignKeys', () => {
 			],
 			'Post'
 		)
-		expect(() =>
-			getForeignKeys(schema, model, sqliteAdapter.maxIdentifierLength)
-		).toThrow(/references unknown fields authorId/)
+		expect(() => getForeignKeys(schema, model, sqliteAdapter)).toThrow(
+			/references unknown fields authorId/
+		)
 	})
 
 	test('throws when the AST field of a regular model is missing', () => {
@@ -177,9 +175,9 @@ describe('getForeignKeys', () => {
 			],
 			'Post'
 		)
-		expect(() =>
-			getForeignKeys(schema, model, sqliteAdapter.maxIdentifierLength)
-		).toThrow(/Ast field authorId not found/)
+		expect(() => getForeignKeys(schema, model, sqliteAdapter)).toThrow(
+			/Ast field authorId not found/
+		)
 	})
 })
 
@@ -289,14 +287,15 @@ describe('foreign key names', () => {
 					]),
 					dbName: 'fk_offices',
 				},
-				dmmfModel('Region', [scalar('code'), scalar('country')]),
+				{
+					...dmmfModel('Region', [scalar('code'), scalar('country')]),
+					primaryKey: { name: null, fields: ['country', 'code'] },
+				},
 			],
 			'Office'
 		)
 		expect(
-			getForeignKeys(schema, model, postgresAdapter.maxIdentifierLength).map(
-				(fk) => fk.name
-			)
+			getForeignKeys(schema, model, postgresAdapter).map((fk) => fk.name)
 		).toEqual(['fk_offices_region_code_country_code_fkey'])
 	})
 
@@ -323,11 +322,9 @@ describe('foreign key names', () => {
 		test('names the default constraint after the mapped column', () => {
 			const mapped = mappedSuccessor()
 			expect(
-				getForeignKeys(
-					mapped.schema,
-					mapped.model,
-					postgresAdapter.maxIdentifierLength
-				).map((fk) => fk.name)
+				getForeignKeys(mapped.schema, mapped.model, postgresAdapter).map(
+					(fk) => fk.name
+				)
 			).toEqual(['MappedField_successor_id_fkey'])
 		})
 
@@ -336,7 +333,7 @@ describe('foreign key names', () => {
 			const foreignKey = getForeignKeys(
 				mapped.schema,
 				mapped.model,
-				postgresAdapter.maxIdentifierLength
+				postgresAdapter
 			)[0]
 			expect(foreignKey.columns).toEqual(['successorId'])
 			expect(createForeignKeyEntry(foreignKey)).toContain(
@@ -363,9 +360,7 @@ describe('foreign key names', () => {
 			'Post'
 		)
 		expect(
-			getForeignKeys(schema, model, postgresAdapter.maxIdentifierLength).map(
-				(fk) => fk.name
-			)
+			getForeignKeys(schema, model, postgresAdapter).map((fk) => fk.name)
 		).toEqual(['custom'])
 	})
 })
@@ -402,11 +397,7 @@ describe('foreign key targets', () => {
 			],
 			'Office'
 		)
-		const foreignKeys = getForeignKeys(
-			schema,
-			model,
-			postgresAdapter.maxIdentifierLength
-		)
+		const foreignKeys = getForeignKeys(schema, model, postgresAdapter)
 		expect(foreignKeys).toHaveLength(1)
 		expect(createForeignKeyEntry(foreignKeys[0])).toBe(
 			`foreignKey({ name: "Office_country_code_fkey", columns: [table.country, table.code], foreignColumns: [regions.country, regions.code] }).onDelete('restrict').onUpdate('cascade')`
@@ -416,8 +407,8 @@ describe('foreign key targets', () => {
 		).toContain('foreignKey(')
 	})
 
-	test('emits a foreign key to a single-column @unique target', () => {
-		const { schema, model } = setup(
+	function uniqueTarget() {
+		return setup(
 			`model Post {
 				id String @id
 				authorEmail String
@@ -433,17 +424,10 @@ describe('foreign key targets', () => {
 			],
 			'Post'
 		)
-		const foreignKeys = getForeignKeys(
-			schema,
-			model,
-			postgresAdapter.maxIdentifierLength
-		)
-		expect(foreignKeys).toHaveLength(1)
-		expect(foreignKeys[0].target.columns).toEqual(['email'])
-	})
+	}
 
-	test('emits a foreign key to a @@unique target', () => {
-		const { schema, model } = setup(
+	function compositeUniqueTarget() {
+		return setup(
 			`model Office {
 				id String @id
 				country String
@@ -469,10 +453,76 @@ describe('foreign key targets', () => {
 			],
 			'Office'
 		)
-		expect(
-			getForeignKeys(schema, model, postgresAdapter.maxIdentifierLength)
-		).toHaveLength(1)
+	}
+
+	function captureWarnings<T>(run: () => T) {
+		const warnings: string[] = []
+		const original = console.log
+		console.log = (message: string) => {
+			warnings.push(message)
+		}
+		try {
+			return { result: run(), warnings }
+		} finally {
+			console.log = original
+		}
+	}
+
+	test('skips a foreign key to a single-column @unique target on postgres with a warning', () => {
+		const { schema, model } = uniqueTarget()
+		const run = captureWarnings(() =>
+			getForeignKeys(schema, model, postgresAdapter)
+		)
+		expect(run.result).toEqual([])
+		expect(run.warnings).toHaveLength(1)
+		expect(run.warnings[0]).toContain('Post_authorEmail_fkey')
+		expect(run.warnings[0]).toContain('Post')
+		expect(run.warnings[0]).toContain('unique indexes')
 	})
+
+	test('skips a foreign key to a @@unique target on postgres with a warning', () => {
+		const { schema, model } = compositeUniqueTarget()
+		const run = captureWarnings(() =>
+			getForeignKeys(schema, model, postgresAdapter)
+		)
+		expect(run.result).toEqual([])
+		expect(run.warnings).toHaveLength(1)
+		expect(run.warnings[0]).toContain('Office_country_code_fkey')
+	})
+
+	test('does not emit the skipped foreign key in the table declaration', () => {
+		const { schema, model } = uniqueTarget()
+		const run = captureWarnings(() =>
+			generateTableDeclaration(postgresAdapter, schema, model)
+		)
+		expect(run.result.code).not.toContain('foreignKey(')
+		expect(run.result.imports).not.toContainEqual(
+			expect.objectContaining({ name: 'foreignKey' })
+		)
+	})
+
+	test.each(['mysql', 'sqlite'] as const)(
+		'emits a foreign key to a single-column @unique target on %s',
+		(provider) => {
+			const { schema, model } = uniqueTarget()
+			const adapter = provider === 'mysql' ? mysqlAdapter : sqliteAdapter
+			const run = captureWarnings(() => getForeignKeys(schema, model, adapter))
+			expect(run.warnings).toEqual([])
+			expect(run.result).toHaveLength(1)
+			expect(run.result[0].target.columns).toEqual(['email'])
+		}
+	)
+
+	test.each(['mysql', 'sqlite'] as const)(
+		'emits a foreign key to a @@unique target on %s',
+		(provider) => {
+			const { schema, model } = compositeUniqueTarget()
+			const adapter = provider === 'mysql' ? mysqlAdapter : sqliteAdapter
+			const run = captureWarnings(() => getForeignKeys(schema, model, adapter))
+			expect(run.warnings).toEqual([])
+			expect(run.result).toHaveLength(1)
+		}
+	)
 
 	test('emits a foreign key to a single-column @id target', () => {
 		const { schema, model } = setup(
@@ -491,9 +541,7 @@ describe('foreign key targets', () => {
 			],
 			'Post'
 		)
-		expect(
-			getForeignKeys(schema, model, postgresAdapter.maxIdentifierLength)
-		).toHaveLength(1)
+		expect(getForeignKeys(schema, model, postgresAdapter)).toHaveLength(1)
 	})
 })
 

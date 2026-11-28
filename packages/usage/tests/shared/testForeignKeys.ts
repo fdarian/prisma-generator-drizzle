@@ -42,6 +42,13 @@ type ForeignKeyShape = {
 	onUpdate: ForeignKeyAction | undefined
 }
 
+// drizzle-kit creates foreign keys before unique indexes, so the generator skips
+// foreign keys to a @unique / @@unique target on postgres. Prisma still creates them
+const FOREIGN_KEYS_SKIPPED_ON_POSTGRES = [
+	'fk_shelves_zone_aisle_fkey',
+	'fk_sessions_account_email_fkey',
+]
+
 export function testForeignKeys(ctx: TestContext) {
 	function getTable(key: string): Table {
 		const entry = Object.entries(ctx.schema).find(([name]) => name === key)
@@ -154,29 +161,37 @@ export function testForeignKeys(ctx: TestContext) {
 		})
 
 		test('optional composite foreign key referencing a composite @@unique', () => {
-			expect(getShapes('foreignKeyShelves')).toStrictEqual([
-				{
-					name: 'fk_shelves_zone_aisle_fkey',
-					columns: ['zone', 'aisle'],
-					foreignTable: 'fk_warehouses',
-					foreignColumns: ['zone', 'aisle'],
-					onDelete: 'set null',
-					onUpdate: 'cascade',
-				},
-			])
+			expect(getShapes('foreignKeyShelves')).toStrictEqual(
+				ctx.provider === 'postgres'
+					? []
+					: [
+							{
+								name: 'fk_shelves_zone_aisle_fkey',
+								columns: ['zone', 'aisle'],
+								foreignTable: 'fk_warehouses',
+								foreignColumns: ['zone', 'aisle'],
+								onDelete: 'set null',
+								onUpdate: 'cascade',
+							},
+						]
+			)
 		})
 
 		test('foreign key referencing a single-column @unique', () => {
-			expect(getShapes('foreignKeySessions')).toStrictEqual([
-				{
-					name: 'fk_sessions_account_email_fkey',
-					columns: ['account_email'],
-					foreignTable: 'fk_accounts',
-					foreignColumns: ['email'],
-					onDelete: 'restrict',
-					onUpdate: 'cascade',
-				},
-			])
+			expect(getShapes('foreignKeySessions')).toStrictEqual(
+				ctx.provider === 'postgres'
+					? []
+					: [
+							{
+								name: 'fk_sessions_account_email_fkey',
+								columns: ['account_email'],
+								foreignTable: 'fk_accounts',
+								foreignColumns: ['email'],
+								onDelete: 'restrict',
+								onUpdate: 'cascade',
+							},
+						]
+			)
 		})
 
 		test('composite foreign keys referencing each other', () => {
@@ -374,9 +389,14 @@ export function testForeignKeys(ctx: TestContext) {
 					expect(drizzle.has(table)).toBe(true)
 				}
 				for (const [table, names] of drizzle) {
-					expect([...names].sort(), table).toStrictEqual(
-						[...(prisma.get(table) ?? [])].sort()
+					const expected = (prisma.get(table) ?? []).filter(
+						(name) =>
+							!(
+								ctx.provider === 'postgres' &&
+								FOREIGN_KEYS_SKIPPED_ON_POSTGRES.includes(name)
+							)
 					)
+					expect([...names].sort(), table).toStrictEqual([...expected].sort())
 				}
 			})
 		})

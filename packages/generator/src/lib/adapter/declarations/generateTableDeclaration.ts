@@ -25,7 +25,7 @@ export function generateTableDeclaration(
 		.map(adapter.parseField)
 	const name = model.getVarName()
 
-	const foreignKeys = getForeignKeys(schema, model, adapter.maxIdentifierLength)
+	const foreignKeys = getForeignKeys(schema, model, adapter)
 
 	const constraints = createConstraintEntries({
 		coreModule: adapter.coreModule,

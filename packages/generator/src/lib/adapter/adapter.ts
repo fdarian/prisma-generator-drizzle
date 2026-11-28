@@ -17,6 +17,8 @@ export function createAdapter<TName extends string>(impl: {
 	name: TName
 	coreModule: string
 	maxIdentifierLength: number
+	/** drizzle-kit migrations on this dialect create foreign keys before unique indexes, and the database rejects a foreign key to a column without one */
+	createsForeignKeysBeforeUniqueIndexes: boolean
 	indexFeatures: IndexFeatures
 	getDeclarationFunc: {
 		enum: (

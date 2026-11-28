@@ -1,5 +1,6 @@
 import type { Attribute, KeyValue } from '@mrleebo/prisma-ast'
 import type { DMMF } from '@prisma/generator-helper'
+import { logger } from '../logger'
 import { getDefaultConstraintName } from './constraint-names'
 import { getDbName } from './getDbName'
 import { getModelModuleName, getModelVarName } from './model'
@@ -53,11 +54,18 @@ export function getDefaultForeignKeyName(args: {
 	return getDefaultConstraintName({ ...args, suffix: '_fkey' })
 }
 
+type ForeignKeyAdapter = {
+	maxIdentifierLength: number
+	createsForeignKeysBeforeUniqueIndexes: boolean
+}
+
 export function getForeignKeys(
 	schema: Schema,
 	model: SchemaModel,
-	maxIdentifierLength: number
+	adapter: ForeignKeyAdapter
 ): ForeignKey[] {
+	const maxIdentifierLength = adapter.maxIdentifierLength
+
 	if (usesPrismaRelationMode(schema)) return []
 
 	return getModelFields(model).flatMap((field) => {
@@ -121,14 +129,29 @@ export function getForeignKeys(
 
 		const isRequired = field.isRequired || localFields.some((f) => f.isRequired)
 
+		const name =
+			findExplicitName(model, field.name) ??
+			getDefaultForeignKeyName({
+				tableName: model.getDbName(),
+				columnNames: localFields.map((f) => getDbName(f)),
+				maxIdentifierLength,
+			})
+
+		if (
+			!canMigrationCreateForeignKey({
+				adapter,
+				targetModel,
+				targetColumns: field.relationToFields,
+			})
+		) {
+			logger.warn(
+				`Skipped foreign key "${name}" of ${modelName}, it references ${targetModel.name}(${field.relationToFields.join(', ')}), which is not the primary key, and drizzle-kit creates foreign keys before unique indexes`
+			)
+			return []
+		}
+
 		return {
-			name:
-				findExplicitName(model, field.name) ??
-				getDefaultForeignKeyName({
-					tableName: model.getDbName(),
-					columnNames: localFields.map((f) => getDbName(f)),
-					maxIdentifierLength,
-				}),
+			name,
 			columns: [...field.relationFromFields],
 			target: {
 				isSelf: targetModel.name === model.dmmf.name,
@@ -149,6 +172,30 @@ export function getForeignKeys(
 					: 'cascade',
 		} satisfies ForeignKey
 	})
+}
+
+/**
+ * drizzle-kit (verified with 0.31.11) emits `ALTER TABLE ... ADD CONSTRAINT <fk>`
+ * before `CREATE UNIQUE INDEX` in the same migration. Where that order matters,
+ * a foreign key to a `@unique` / `@@unique` target fails the migration with
+ * "there is no unique constraint matching given keys". A primary key is created
+ * inline in `CREATE TABLE`, so it is always in place first.
+ */
+function canMigrationCreateForeignKey(args: {
+	adapter: ForeignKeyAdapter
+	targetModel: DMMF.Model
+	targetColumns: readonly string[]
+}) {
+	if (!args.adapter.createsForeignKeysBeforeUniqueIndexes) return true
+
+	const primaryKey =
+		args.targetModel.primaryKey != null
+			? args.targetModel.primaryKey.fields
+			: args.targetModel.fields.filter((f) => f.isId).map((f) => f.name)
+	return (
+		primaryKey.length === args.targetColumns.length &&
+		args.targetColumns.every((column) => primaryKey.includes(column))
+	)
 }
 
 function findAstModel(schema: Schema, modelName: string) {

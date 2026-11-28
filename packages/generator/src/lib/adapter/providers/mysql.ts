@@ -136,6 +136,7 @@ export const mysqlAdapter = createAdapter({
 	name: 'mysql',
 	coreModule,
 	maxIdentifierLength: 64,
+	createsForeignKeysBeforeUniqueIndexes: false,
 	indexFeatures: {
 		operatorClass: false,
 		sortOrder: false,
