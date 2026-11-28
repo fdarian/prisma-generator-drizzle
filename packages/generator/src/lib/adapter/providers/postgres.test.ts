@@ -1,14 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
+import { postgresAdapter } from './postgres'
 
 vi.mock('~/shared/generator-context', () => ({
 	getModuleResolution: () => undefined,
 }))
 
-const postgres = await import('./postgres')
-
 function createJson(field: SchemaField) {
-	const json = postgres.postgresAdapter.fields.Json
+	const json = postgresAdapter.fields.Json
 	if (json == null) throw new Error('postgres adapter has no Json field')
 	return json(field)
 }
@@ -22,7 +21,7 @@ function jsonField(documentation: string, isList: boolean) {
 		isList,
 		isRequired: true,
 		hasDefaultValue: false,
-	} as SchemaField
+	} as unknown as SchemaField
 }
 
 describe('postgres Json field with drizzle.type', () => {
