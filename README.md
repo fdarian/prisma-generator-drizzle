@@ -12,6 +12,7 @@ https://github.com/farreldarian/prisma-generator-drizzle/assets/62016900/35b5713
 
 - 🤝 **Compatibility**: 1:1 Prisma to Drizzle schema generation*
 - ✅ **Relational Query Support**: Generates relational query definitions.  
+- 🗂️ **Multi-schema**: Models and enums with `@@schema` on PostgreSQL. See [Compatibility](#multi-schema).
 - 📦 **Cutomizability**: Includes tools for customizing drizzle-specific features.
 
 _\*Only supports default scalar for now and more constraints will be added in future_
@@ -330,6 +331,20 @@ import type { Item } from '../my-type'
 
 > **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
 
+
+### Multi-schema
+
+Models and enums with `@@schema("name")` are supported on PostgreSQL and CockroachDB (which uses the Postgres adapter). The generator emits a `pg-schemas.ts` module with one `pgSchema` per non-`public` schema:
+
+```ts
+export const authSchema = pgSchema('auth')
+```
+
+Tables and enums in that schema are declared with `authSchema.table(...)` and `authSchema.enum(...)`. Models and enums in `public` keep using `pgTable` and `pgEnum`.
+
+Implicit many-to-many join tables follow Prisma and live in the schema of the model whose name sorts first.
+
+MySQL and SQLite don't support `schemas` / `@@schema` in Prisma, so there is nothing to generate for them.
 
 ### Postgres
   1. String [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L73)
