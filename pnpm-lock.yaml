@@ -270,8 +270,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.0
       valibot:
-        specifier: ^v0.31.0-rc.12
-        version: 0.31.1
+        specifier: ^1.5.0
+        version: 1.5.0(typescript@5.5.3)
     devDependencies:
       '@types/lodash':
         specifier: ^4.14.202
@@ -4415,6 +4415,14 @@ packages:
 
   valibot@1.4.2:
     resolution: {integrity: sha512-gjdCvJ6d3RyHAneqxMYMW9QMCwYMb3jpOO0IyHZV1bnRHFBHrX3VkIILt5XYR0WhwHiH7Mty8ovuPZ/O3gamrg==}
+    peerDependencies:
+      typescript: '>=5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  valibot@1.5.0:
+    resolution: {integrity: sha512-nil6AkP2TChWL43Z5uJ6GTxX01CUA+g8LWUM+N/rB9NBbkUMaUsi9PUNzlUPgoKASgmx9f7eGOYpJ04/fSa6FQ==}
     peerDependencies:
       typescript: '>=5'
     peerDependenciesMeta:
@@ -8790,6 +8798,10 @@ snapshots:
   valibot@0.31.1: {}
 
   valibot@1.4.2(typescript@5.5.3):
+    optionalDependencies:
+      typescript: 5.5.3
+
+  valibot@1.5.0(typescript@5.5.3):
     optionalDependencies:
       typescript: 5.5.3
 
