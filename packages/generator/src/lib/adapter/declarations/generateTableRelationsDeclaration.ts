@@ -280,7 +280,7 @@ export function createImplicitJoinTable(
 		isGenerated: false,
 	} satisfies DMMF.Model
 
-	return { varName, baseName, model }
+	return { varName, baseName, model, modelA, modelB }
 }
 
 /** Prisma types a join table column like the id it references */
@@ -301,14 +301,14 @@ function createJoinColumn(name: 'A' | 'B', pkField: DMMF.Field) {
 	} satisfies DMMF.Field
 }
 
-function findModelPrimaryKey(model: SchemaModel) {
+export function findModelPrimaryKey(model: SchemaModel) {
 	const pkField = model.dmmf.fields.find((field) => field.isId)
 	if (pkField == null)
 		throw new Error(`Primary key not found in model ${model.dmmf.name}`)
 	return pkField
 }
 
-function findOpposingRelationModel(
+export function findOpposingRelationModel(
 	field: SchemaFieldRelational,
 	schema: Schema
 ) {
@@ -342,7 +342,7 @@ function findOpposingRelationField(
  * Not a derived relation in which the model holds the reference.
  * Can be one-to-one or one-to-many
  */
-function hasReference(field: SchemaFieldRelational) {
+export function hasReference(field: SchemaFieldRelational) {
 	return (
 		field.relationFromFields.length > 0 && field.relationToFields.length > 0
 	)
