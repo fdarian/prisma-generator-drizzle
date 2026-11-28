@@ -4,7 +4,7 @@ Prisma generator (`prisma-generator-drizzle`) that emits a Drizzle ORM schema fr
 
 - **pnpm** is the package manager: `pnpm install`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`. Never `bun install` or `bun add`.
 - **Bun** runs the `.ts` scripts (`clone:*` in `packages/usage/scripts` and the usage `start`) and the generator unit tests (`bun test`).
-- Everything else executes on **Node**, even when launched with `bun` or `bunx`: the Prisma CLI, the generator binary (`dist/bin.js`, reached through pnpm's `.bin` shell wrappers, which `exec node`), Vitest, tsdown and tsc.
+- Everything else executes on **Node**, even when launched with `bun` or `bunx`: the Prisma CLI, the generator binary (`dist/bin.js`, reached through pnpm's `.bin` shell wrappers, which `exec node`), Vitest and tsdown.
 - Launch scripts through pnpm (`pnpm run <script>`, `pnpm turbo <task>`).
 - The published generator must keep working on Node: keep the `#!/usr/bin/env node` shebang, `engines.node` and the tsdown build target as they are, and don't use `Bun.*` APIs in `packages/generator/src`. Usage tests run on Node too, so `Bun.*` APIs belong only in `packages/usage/scripts`.
 
@@ -21,7 +21,7 @@ Prisma generator (`prisma-generator-drizzle`) that emits a Drizzle ORM schema fr
 | Install | `pnpm install` |
 | Build the generator | `pnpm turbo build --filter=prisma-generator-drizzle` |
 | Generate the usage schema | `pnpm turbo run generate --filter=usage` (needs `VITE_PG_DATABASE_URL`) |
-| Typecheck + lint | `pnpm turbo check`, covering `packages/generator` only (`check:type` is `tsc --noEmit` plus a second pass over `tsconfig.test.json` with Bun types, `check:biome` is `biome ci`); `packages/usage` has no `check:*` scripts |
+| Typecheck + lint | `pnpm turbo check` (`check:type` is `tsrs --noEmit`; in `packages/generator` a second pass covers `tsconfig.test.json` with Bun types; `check:biome` is `biome ci`). `packages/usage` has no `check:*` scripts |
 | Format | `pnpm exec biome check --write .` |
 | Test | `pnpm turbo test` |
 | Add a changeset for a generator change | `pnpm changeset` (see [CONTRIBUTING.md](./CONTRIBUTING.md)) |
