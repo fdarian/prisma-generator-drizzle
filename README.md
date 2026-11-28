@@ -129,6 +129,8 @@ Prisma's implicit many-to-many relations are generated as a join table named aft
 | Only one | `<plural A>To<plural B>`, e.g. `categoriesToPosts` |
 | Two or more | `<plural A>To<plural B><RelationName>`, e.g. `authorsToBooksLikes` and `authorsToBooksSaves` for `@relation("Likes")` and `@relation("Saves")` |
 
+Like other table variables, the whole variable name is pluralized, so `@relation("Person")` gives `...People` and `@relation("Like")` gives `...Likes`. Relation names that collide after normalization (e.g. `"post_likes"` and `"PostLikes"`, or `"Like"` and `"Likes"`) are rejected with an error, so rename one of them.
+
 The join table's relations are named after the models, e.g. `category` and `post`.
 
 For a model related to itself (`followers Person[] @relation("Follows")` and `following Person[] @relation("Follows")`):
