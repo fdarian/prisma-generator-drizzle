@@ -114,7 +114,7 @@ We will make sure to keep the syntaxes compatible with future versions.
 
 Customize the generated field definition using `drizzle.custom` directive in a json format.
 
-This will override any built-in mapping such as `@default(...)` or `@db.*` modifiers.
+This will override any `@default(...)` mapping. It is applied on top of the column generated from `@db.*`, so the native type is kept.
 
 Available options:
 
@@ -329,8 +329,9 @@ import type { Item } from '../my-type'
 | Prisma      | `7.10.1` (pinned)  | `prisma` and `@prisma/generator-helper`             |
 | drizzle-orm | `^0.45.4` (tested) | the `usage` test project; no peer range is declared |
 
-> **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
+This generator follows the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types) and maps native `@db.*` attributes to the matching Drizzle column where one exists. Native types without a Drizzle equivalent fall back to the default column of their scalar.
 
+Arguments carry over to the column (`@db.VarChar(255)` becomes `varchar('col', { length: 255 })`) and are omitted when the attribute has none. `DateTime` columns respect [`dateMode`](#configuration) unless noted. `Unsupported` fields are not supported yet.
 
 ### Multi-schema
 
@@ -347,22 +348,99 @@ Implicit many-to-many join tables follow Prisma and live in the schema of the mo
 MySQL and SQLite don't support `schemas` / `@@schema` in Prisma, so there is nothing to generate for them.
 
 ### Postgres
-  1. String [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L73)
-  2. Boolean [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L89)
-  3. Int [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L129) 
-  4. BigInt [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L73)
-  5. Float [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L121)
-  6. Decimal [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L113)
-  7. JSON [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L145)
-  8. Bytes [\[def\]](https://github.com/fdarian/prisma-generator-drizzle/blob/672f0aa99f3a86f0c0ab138728932f5cb13cfb83/packages/generator/src/lib/adapter/providers/postgres.ts#L97)  
 
-  #### Unsupported:
-  1. Unsupported (🏗️ soon)
+Default mapping, without `@db.*`:
+
+| Prisma | Drizzle |
+| --- | --- |
+| `String` | `text` |
+| `Boolean` | `boolean` |
+| `Int` | `integer` (`serial` with `autoincrement()`) |
+| `BigInt` | `bigint` (`bigserial` with `autoincrement()`) |
+| `Float` | `doublePrecision` |
+| `Decimal` | `decimal` (precision 65, scale 30) |
+| `DateTime` | `timestamp` (precision 3) |
+| `Json` | `jsonb` |
+| `Bytes` | `bytea` through a custom type |
+| `enum` | `pgEnum` |
+
+Native types:
+
+| Prisma | `@db.*` | Drizzle |
+| --- | --- | --- |
+| `String` | `VarChar(n)` | `varchar` |
+| `String` | `Char(n)` | `char` |
+| `String` | `Uuid` | `uuid` |
+| `String` | `Inet` | `inet` |
+| `Int` | `SmallInt` | `smallint` (`smallserial` with `autoincrement()`) |
+| `Float` | `Real` | `real` |
+| `Decimal` | `Decimal(p, s)` | `decimal` |
+| `DateTime` | `Timestamp(x)` | `timestamp` |
+| `DateTime` | `Timestamptz(x)` | `timestamp` with `withTimezone` |
+| `DateTime` | `Date` | `date` |
+| `DateTime` | `Time(x)` | `time` (no `dateMode`, values are strings) |
+| `DateTime` | `Timetz(x)` | `time` with `withTimezone` (no `dateMode`, values are strings) |
+| `Json` | `Json` | `json` |
+
+Native types that match the default column (`Text`, `Integer`, `BigInt`, `DoublePrecision`, `JsonB`, `ByteA`) are unchanged. `Bit`, `VarBit`, `Xml`, `Citext`, `Oid` and `Money` fall back to the default column.
 
 ### MySQL
-  > todo docs
+
+Default mapping, without `@db.*`:
+
+| Prisma | Drizzle |
+| --- | --- |
+| `String` | `text` |
+| `Boolean` | `boolean` |
+| `Int` | `int` |
+| `BigInt` | `bigint` |
+| `Float` | `float` |
+| `Decimal` | `decimal` (precision 65, scale 30) |
+| `DateTime` | `datetime` (fsp 3) |
+| `Json` | `json` |
+| `Bytes` | `longblob` through a custom type |
+| `enum` | `mysqlEnum` |
+
+Native types:
+
+| Prisma | `@db.*` | Drizzle |
+| --- | --- | --- |
+| `String` | `VarChar(n)` | `varchar` |
+| `String` | `Char(n)` | `char` |
+| `String` | `TinyText` / `MediumText` / `LongText` | `tinytext` / `mediumtext` / `longtext` |
+| `Int` | `UnsignedInt` | `int` with `unsigned` |
+| `Int` | `SmallInt` / `UnsignedSmallInt` | `smallint` / `smallint` with `unsigned` |
+| `Int` | `MediumInt` / `UnsignedMediumInt` | `mediumint` / `mediumint` with `unsigned` |
+| `Int` | `TinyInt` / `UnsignedTinyInt` | `tinyint` / `tinyint` with `unsigned` |
+| `Int` | `Year` | `year` |
+| `BigInt` | `UnsignedBigInt` | `bigint` with `unsigned` |
+| `Float` | `Double` | `double` |
+| `Decimal` | `Decimal(p, s)` | `decimal` |
+| `DateTime` | `DateTime(x)` | `datetime` |
+| `DateTime` | `Timestamp(x)` | `timestamp` |
+| `DateTime` | `Date` | `date` |
+| `DateTime` | `Time(x)` | `time` (no `dateMode`, values are strings) |
+
+Native types that match the default column (`Text`, `Int`, `BigInt`, `Float`, `Json`, `LongBlob`, and `TinyInt(1)` on `Boolean`) are unchanged. `Bit`, `Binary`, `VarBinary`, `TinyBlob`, `Blob` and `MediumBlob` fall back to the default column, because Drizzle's `binary` and `varbinary` return strings rather than `Buffer`.
+
+With `@default(now())`, `Date` and `Time` columns use `(CURRENT_DATE)` and `(CURRENT_TIME(x))`, since MySQL rejects `CURRENT_TIMESTAMP` there.
+
 ### SQLite
-  > todo docs
+
+SQLite has no `@db.*` attributes, so only the default mapping applies:
+
+| Prisma | Drizzle |
+| --- | --- |
+| `String` | `text` |
+| `Boolean` | `integer` (boolean mode) |
+| `Int` | `integer` |
+| `BigInt` | `integer` through a custom type |
+| `Float` | `real` |
+| `Decimal` | `decimal` through a custom type |
+| `DateTime` | `integer` (timestamp mode, `dateMode` must be `date`) |
+| `Bytes` | `blob` (buffer mode) |
+
+`Json` and enums are not supported.
 
 
 ## Examples
