@@ -427,6 +427,87 @@ describe('fields without a column', () => {
 	})
 })
 
+describe('partial indexes', () => {
+	const fields = ['id', 'title', 'slug']
+	function resolveWith(declarations: string, indexes: DMMF.Index[]) {
+		const ctx = setup(
+			dmmfModel(
+				'Post',
+				fields.map((name) => scalar(name))
+			),
+			indexes,
+			`model Post {\n id String @id\n title String\n slug String ${declarations}\n}`
+		)
+		return resolveIndexes(ctx.schema, ctx.model, postgresAdapter)
+	}
+
+	test('skips an @@unique with where and warns', () => {
+		const resolved = resolveWith(
+			'\n @@unique([title], where: raw("slug is not null"))\n @@index([slug])',
+			[index('unique', [field('title')]), index('normal', [field('slug')])]
+		)
+		expect(resolved.map((i) => i.name)).toEqual(['Post_slug_idx'])
+		expect(warn.mock.calls.map((call) => call[0])).toEqual([
+			'Skipped index "Post_title_key" of Post, its where: predicate is not generated and a full index would be wrong',
+		])
+	})
+
+	test('skips an @@index with where, matching fields in order and map:', () => {
+		const resolved = resolveWith(
+			'\n @@index([title, slug], where: raw("x"), map: "partial")\n @@index([slug, title], map: "full")',
+			[
+				index('normal', [field('title'), field('slug')], { dbName: 'partial' }),
+				index('normal', [field('slug'), field('title')], { dbName: 'full' }),
+			]
+		)
+		expect(resolved.map((i) => i.name)).toEqual(['full'])
+	})
+
+	test('skips a field-level @unique with where', () => {
+		const resolved = resolveWith('@unique(where: raw("x"))', [
+			index('unique', [field('slug')]),
+		])
+		expect(resolved).toEqual([])
+		expect(warn).toHaveBeenCalledTimes(1)
+	})
+
+	test('reads fields: with sort arguments', () => {
+		const resolved = resolveWith(
+			'\n @@unique(fields: [title(sort: Desc), slug], where: raw("x"))',
+			[index('unique', [field('title', { sortOrder: 'desc' }), field('slug')])]
+		)
+		expect(resolved).toEqual([])
+	})
+
+	test('keeps an index of another kind on the same fields', () => {
+		const resolved = resolveWith(
+			'\n @@unique([title], where: raw("x"))\n @@index([title])',
+			[index('unique', [field('title')]), index('normal', [field('title')])]
+		)
+		expect(resolved.map((i) => i.kind)).toEqual(['index'])
+	})
+
+	test('keeps a same-kind index on the same fields with a different map:', () => {
+		const resolved = resolveWith(
+			'\n @@index([title], where: raw("x"), map: "partial")\n @@index([title], map: "full")',
+			[
+				index('normal', [field('title')], { dbName: 'partial' }),
+				index('normal', [field('title')], { dbName: 'full' }),
+			]
+		)
+		expect(resolved.map((i) => i.name)).toEqual(['full'])
+	})
+
+	test('does not skip an index without where', () => {
+		const resolved = resolveWith('@unique\n @@index([title])', [
+			index('unique', [field('slug')]),
+			index('normal', [field('title')]),
+		])
+		expect(resolved).toHaveLength(2)
+		expect(warn).not.toHaveBeenCalled()
+	})
+})
+
 describe('generateTableDeclaration constraints', () => {
 	const model = dmmfModel('Post', [
 		scalar('id'),

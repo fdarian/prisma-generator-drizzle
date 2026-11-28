@@ -7,6 +7,7 @@ import {
 	getImplicitJoinTableConstraintName,
 } from './constraint-names'
 import { getDbName } from './getDbName'
+import { isPartialIndex } from './partial-index'
 import type { Schema } from './schema/schema'
 import type { SchemaModel } from './schema/schema-model'
 
@@ -46,7 +47,7 @@ export function resolveIndexes(
 
 	const resolved = schema.dmmf.datamodel.indexes.flatMap((index) => {
 		if (index.model !== model.dmmf.name) return []
-		const result = resolveIndex(schema, model, adapter, index)
+		const result = resolveIndex(model, adapter, index)
 		return result == null ? [] : [result]
 	})
 
@@ -106,7 +107,6 @@ export function resolveImplicitJoinTableIndexes(
 }
 
 function resolveIndex(
-	schema: Schema,
 	model: SchemaModel,
 	adapter: IndexAdapter,
 	index: DMMF.Index
@@ -159,6 +159,12 @@ function resolveIndex(
 
 	if (index.type === 'fulltext') {
 		skip('the whole fulltext index')
+		return undefined
+	}
+	if (isPartialIndex(model.ast, index)) {
+		logger.warn(
+			`Skipped ${label}, its where: predicate is not generated and a full index would be wrong`
+		)
 		return undefined
 	}
 	if (index.clustered != null) skip('clustered')
