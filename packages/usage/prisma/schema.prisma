@@ -67,6 +67,35 @@ model IntBook {
   authors IntAuthor[]
 }
 
+// Self relation, `following` is declared first to show that Prisma assigns side A by field name order, not declaration order
+model Person {
+  id        Int      @id
+  following Person[] @relation("Follows")
+  followers Person[] @relation("Follows")
+}
+
+// Two self relations on the same model
+model Account {
+  id        Int       @id
+  blocked   Account[] @relation("Blocks")
+  blockedBy Account[] @relation("Blocks")
+  muted     Account[] @relation("Mutes")
+  mutedBy   Account[] @relation("Mutes")
+}
+
+// Multiple relations between the same pair of models
+model Author {
+  id    String @id
+  liked Book[] @relation("Likes")
+  saved Book[] @relation("Saves")
+}
+
+model Book {
+  id      String   @id
+  likedBy Author[] @relation("Likes")
+  savedBy Author[] @relation("Saves")
+}
+
 // #endregion
 
 // #region Ignore

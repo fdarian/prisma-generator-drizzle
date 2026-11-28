@@ -1,4 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
+import { getTableName } from 'drizzle-orm'
 import type { TestContext } from 'tests/utils/types'
 import { describe, expect, test } from 'vitest'
 
@@ -143,6 +144,147 @@ export async function testManyToMany({ db, schema }: TestContext) {
 					tag_result?.articles.map((joined) => joined.mappedArticle)
 				).toStrictEqual([article])
 			}
+		})
+
+		test('implicit m-n join table names are unchanged when it is the only relation between a pair', () => {
+			expect(schema).toHaveProperty('productDetailsToTransactionHeaders')
+			expect(schema).toHaveProperty('categoriesToPosts')
+			expect(schema).toHaveProperty('mappedArticlesToMappedTags')
+			expect(schema).toHaveProperty('peopleToPeople')
+			expect(schema).toHaveProperty('accountsToAccountsBlocks')
+			expect(schema).toHaveProperty('accountsToAccountsMutes')
+			expect(schema).not.toHaveProperty('accountsToAccounts')
+		})
+
+		// Prisma assigns side A to the self relation field whose name sorts first (`followers`),
+		// and stores the owner of the side A field in column A
+		test('implicit self m-n', async () => {
+			await db.delete(schema.peopleToPeople)
+			await db.delete(schema.people)
+			// --
+
+			const x = { id: 1 }
+			const y = { id: 2 }
+			await db.insert(schema.people).values([x, y])
+
+			// x follows y => x is in y.followers
+			await db.insert(schema.peopleToPeople).values({ A: y.id, B: x.id })
+
+			const x_result = await db.query.people.findFirst({
+				where: (Person, { eq }) => eq(Person.id, x.id),
+				with: {
+					followers: { with: { personB: true } },
+					following: { with: { personA: true } },
+				},
+			})
+			expect(x_result?.followers).toStrictEqual([])
+			expect(x_result?.following.map((joined) => joined.personA)).toStrictEqual(
+				[y]
+			)
+
+			const y_result = await db.query.people.findFirst({
+				where: (Person, { eq }) => eq(Person.id, y.id),
+				with: {
+					followers: { with: { personB: true } },
+					following: { with: { personA: true } },
+				},
+			})
+			expect(y_result?.followers.map((joined) => joined.personB)).toStrictEqual(
+				[x]
+			)
+			expect(y_result?.following).toStrictEqual([])
+		})
+
+		test('multiple implicit self m-n on the same model', async () => {
+			await db.delete(schema.accountsToAccountsBlocks)
+			await db.delete(schema.accountsToAccountsMutes)
+			await db.delete(schema.accounts)
+			// --
+
+			const x = { id: 1 }
+			const y = { id: 2 }
+			await db.insert(schema.accounts).values([x, y])
+
+			// x blocks y, y mutes x
+			await db
+				.insert(schema.accountsToAccountsBlocks)
+				.values({ A: x.id, B: y.id })
+			await db
+				.insert(schema.accountsToAccountsMutes)
+				.values({ A: y.id, B: x.id })
+
+			const x_result = await db.query.accounts.findFirst({
+				where: (Account, { eq }) => eq(Account.id, x.id),
+				with: {
+					blocked: { with: { accountB: true } },
+					mutedBy: { with: { accountA: true } },
+					muted: true,
+					blockedBy: true,
+				},
+			})
+			expect(x_result?.blocked.map((joined) => joined.accountB)).toStrictEqual([
+				y,
+			])
+			expect(x_result?.mutedBy.map((joined) => joined.accountA)).toStrictEqual([
+				y,
+			])
+			expect(x_result?.muted).toStrictEqual([])
+			expect(x_result?.blockedBy).toStrictEqual([])
+		})
+
+		test('multiple implicit m-n between the same pair of models', async () => {
+			expect(schema).toHaveProperty('authorsToBooksLikes')
+			expect(schema).toHaveProperty('authorsToBooksSaves')
+			expect(schema).not.toHaveProperty('authorsToBooks')
+			expect(getTableName(schema.authorsToBooksLikes)).not.toBe(
+				getTableName(schema.authorsToBooksSaves)
+			)
+
+			await db.delete(schema.authorsToBooksLikes)
+			await db.delete(schema.authorsToBooksSaves)
+			await db.delete(schema.authors)
+			await db.delete(schema.books)
+			// --
+
+			const author = { id: createId() }
+			await db.insert(schema.authors).values(author)
+
+			const liked = { id: createId() }
+			const saved = { id: createId() }
+			await db.insert(schema.books).values([liked, saved])
+
+			await db
+				.insert(schema.authorsToBooksLikes)
+				.values({ A: author.id, B: liked.id })
+			await db
+				.insert(schema.authorsToBooksSaves)
+				.values({ A: author.id, B: saved.id })
+
+			const author_result = await db.query.authors.findFirst({
+				where: (Author, { eq }) => eq(Author.id, author.id),
+				with: {
+					liked: { with: { book: true } },
+					saved: { with: { book: true } },
+				},
+			})
+			expect(author_result?.liked.map((joined) => joined.book)).toStrictEqual([
+				liked,
+			])
+			expect(author_result?.saved.map((joined) => joined.book)).toStrictEqual([
+				saved,
+			])
+
+			const liked_result = await db.query.books.findFirst({
+				where: (Book, { eq }) => eq(Book.id, liked.id),
+				with: {
+					likedBy: { with: { author: true } },
+					savedBy: true,
+				},
+			})
+			expect(
+				liked_result?.likedBy.map((joined) => joined.author)
+			).toStrictEqual([author])
+			expect(liked_result?.savedBy).toStrictEqual([])
 		})
 	})
 }
