@@ -43,11 +43,16 @@ const customBytesModule = createModule({
 })
 
 function createField(input: CreateFieldInput) {
-	if (input.field.isList) {
-		input.func += '.array()'
-	}
+	if (!input.field.isList) return baseCreateField(input)
 
-	return baseCreateField(input)
+	const func = input.func
+	return baseCreateField({
+		...input,
+		func:
+			typeof func === 'string'
+				? `${func}.array()`
+				: (opts) => `${func(opts)}.array()`,
+	})
 }
 
 function createColumn(
