@@ -8,13 +8,23 @@ type DeclarationFunc = { imports: ImportValue[]; func: string }
 export function createAdapter<TName extends string>(impl: {
 	name: TName
 	getDeclarationFunc: {
-		enum: (name: string, values: string[]) => DeclarationFunc
-		table: (name: string, fields: FieldFunc[]) => DeclarationFunc
+		enum: (
+			name: string,
+			values: string[],
+			schema: string | null
+		) => DeclarationFunc
+		table: (
+			name: string,
+			fields: FieldFunc[],
+			schema: string | null
+		) => DeclarationFunc
 	}
 	fields: Partial<
 		Record<SchemaField['type'] | 'enum', (field: SchemaField) => FieldFunc>
 	>
 	extraModules?: Module[]
+	/** Declares the database schemas (from `@@schema`) that tables and enums are attached to */
+	createSchemasModule?: (schemas: string[]) => Module | undefined
 }) {
 	return {
 		...impl,

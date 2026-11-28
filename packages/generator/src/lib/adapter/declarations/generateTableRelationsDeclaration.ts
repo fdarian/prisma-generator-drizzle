@@ -217,7 +217,7 @@ function createRelationOpts(input: {
  * @param baseName The `field.relationName` referring to the generated join table
  * @param models Two models having a many-to-many relationship
  */
-function createImplicitJoinTable(
+export function createImplicitJoinTable(
 	baseName: string,
 	models: [SchemaModel, SchemaModel]
 ) {
@@ -236,7 +236,8 @@ function createImplicitJoinTable(
 	const model = {
 		name: name,
 		dbName: `_${baseName}`,
-		schema: null,
+		// `prisma migrate diff` places the join table in the schema of the model sorting first
+		schema: modelA.dmmf.schema,
 		fields: [
 			{
 				name: 'A',

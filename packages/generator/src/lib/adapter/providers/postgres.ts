@@ -10,6 +10,12 @@ import {
 	isDefaultFunc,
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
+import {
+	createPgSchemasModule,
+	getPgSchemaImport,
+	getPgSchemaVarName,
+	isPublicSchema,
+} from './pg-schemas'
 
 const coreModule = 'drizzle-orm/pg-core'
 
@@ -45,18 +51,32 @@ function createField(input: CreateFieldInput) {
 export const postgresAdapter = createAdapter({
 	name: 'postgres',
 	getDeclarationFunc: {
-		enum(name, values) {
+		enum(name, values, schema) {
+			const args = `'${name}', [${values.map((v) => `'${v}'`).join(', ')}]`
+			if (isPublicSchema(schema)) {
+				return {
+					imports: [namedImport(['pgEnum'], coreModule)],
+					func: `pgEnum(${args})`,
+				}
+			}
 			return {
-				imports: [namedImport(['pgEnum'], coreModule)],
-				func: `pgEnum('${name}', [${values.map((v) => `'${v}'`).join(', ')}])`,
+				imports: [getPgSchemaImport(schema)],
+				func: `${getPgSchemaVarName(schema)}.enum(${args})`,
 			}
 		},
-		table(name, fields) {
+		table(name, fields, schema) {
+			const args = `'${name}', { ${fields
+				.map(({ field, func }) => `${field.name}: ${func}`)
+				.join(', ')} }`
+			if (isPublicSchema(schema)) {
+				return {
+					imports: [namedImport(['pgTable'], coreModule)],
+					func: `pgTable(${args})`,
+				}
+			}
 			return {
-				imports: [namedImport(['pgTable'], coreModule)],
-				func: `pgTable('${name}', { ${fields
-					.map(({ field, func }) => `${field.name}: ${func}`)
-					.join(', ')} })`,
+				imports: [getPgSchemaImport(schema)],
+				func: `${getPgSchemaVarName(schema)}.table(${args})`,
 			}
 		},
 	},
@@ -159,4 +179,7 @@ export const postgresAdapter = createAdapter({
 		},
 	},
 	extraModules: [customBytesModule],
+	createSchemasModule(schemas) {
+		return createPgSchemasModule(coreModule, schemas)
+	},
 })

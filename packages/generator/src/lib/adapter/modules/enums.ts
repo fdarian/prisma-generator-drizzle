@@ -1,14 +1,19 @@
 import { getEnumModuleName } from '~/lib/prisma-helpers/enums'
+import type { Schema } from '~/lib/prisma-helpers/schema/schema'
+import { findEnumSchema } from '~/lib/prisma-helpers/schema/schema-enum'
 import { createModule } from '~/lib/syntaxes/module'
-import { getGenerator } from '~/shared/generator-context'
 import { generateEnumDeclaration } from '../declarations/generateEnumDeclaration'
 import type { Adapter } from '../types'
 
-export function generateEnumModules(adapter: Adapter) {
-	return (getGenerator().dmmf.datamodel.enums ?? []).map((prismaEnum) =>
-		createModule({
+export function generateEnumModules(adapter: Adapter, schema: Schema) {
+	return schema.dmmf.datamodel.enums.map((prismaEnum) => {
+		const dbSchema = findEnumSchema(schema.ast, prismaEnum)
+		return createModule({
 			name: getEnumModuleName(prismaEnum),
-			declarations: [generateEnumDeclaration(adapter, prismaEnum)],
+			dbSchema,
+			declarations: [generateEnumDeclaration(adapter, prismaEnum, dbSchema)],
 		})
-	)
+	})
 }
+
+export type EnumModule = ReturnType<typeof generateEnumModules>[number]
