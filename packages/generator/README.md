@@ -323,6 +323,11 @@ import type { Item } from '../my-type'
 
 **prisma-generator-drizzle** aims for 1:1 compatibility with Prisma, this means that you can use the generated Drizzle schema as a complete and familiar drop-in replacement for the Prisma client.
 
+| Dependency  | Version            | Source                                              |
+| ----------- | ------------------ | --------------------------------------------------- |
+| Prisma      | `7.10.1` (pinned)  | `prisma` and `@prisma/generator-helper`             |
+| drizzle-orm | `^0.45.4` (tested) | the `usage` test project; no peer range is declared |
+
 > **Note:** This generator will use the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types), meaning any `@db.*` modifiers will be ignored for now.
 
 
