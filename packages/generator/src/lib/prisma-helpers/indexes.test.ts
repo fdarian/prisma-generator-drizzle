@@ -530,6 +530,17 @@ describe('implicit join table', () => {
 		).toEqual(['unique', 'index'])
 	})
 
+	test('truncates the join table name by characters, not bytes', () => {
+		const ctx = joinTable(`_${'é'.repeat(80)}`)
+		const names = resolveIndexes(ctx.schema, ctx.model, postgresAdapter).map(
+			(i) => i.name
+		)
+		expect(names).toEqual([
+			`_${'é'.repeat(63 - '_AB_pkey'.length - 1)}_AB_pkey`,
+			`_${'é'.repeat(63 - '_B_index'.length - 1)}_B_index`,
+		])
+	})
+
 	test.each([
 		['postgres', () => postgresAdapter, 63],
 		['mysql', () => mysqlAdapter, 64],
