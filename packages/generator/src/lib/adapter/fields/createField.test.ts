@@ -68,7 +68,7 @@ describe('getCustomType type expressions', () => {
 		expect(() =>
 			getCustomType(fieldWithDocs('drizzle.type mod::string[]'))
 		).toThrow(
-			/Invalid drizzle\.type directive on field "sentryTraceData".*imports nothing from the module.*drizzle\.custom \{ "\$type": "…" \}/
+			'Invalid drizzle.type directive on field "sentryTraceData": expected "drizzle.type <module>::<Type>", got "mod::string[]". "string[]" imports nothing from "mod". For an inline type, use `drizzle.custom { "$type": "string[]" }`.'
 		)
 	})
 })

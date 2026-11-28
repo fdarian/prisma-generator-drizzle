@@ -13,6 +13,7 @@ import {
 import type { ModifyType, Prettify } from '~/lib/types/utils'
 import { getDateMode } from '~/shared/date-mode'
 import { getCustomDirective } from './directives/custom'
+import { getImportedTypeNames } from './directives/type-expression'
 
 export type DefineImport = {
 	module: string
@@ -140,8 +141,18 @@ export function getCustomType(field: SchemaField) {
 
 	const [module, type] = splits
 
+	const names = getImportedTypeNames(type)
+	if (names.length === 0)
+		throw invalidDirective(
+			field,
+			'drizzle.type',
+			'<module>::<Type>',
+			directive,
+			`"${type}" imports nothing from "${module}". For an inline type, use \`drizzle.custom { "$type": "${type}" }\`.`
+		)
+
 	return {
-		imports: namedImport([type], module, true),
+		imports: namedImport(names, module, true),
 		code: `.$type<${type}>()`,
 	}
 }
