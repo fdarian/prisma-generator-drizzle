@@ -12,13 +12,12 @@
 		"forceConsistentCasingInFileNames": true,
 		"removeComments": true,
 		"sourceMap": true,
-		"baseUrl": ".",
-		"moduleResolution": "Node",
+		"moduleResolution": "bundler",
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"newLine": "lf",
 		"paths": {
-			"~/*": ["src/*"]
+			"~/*": ["./src/*"]
 		}
 	},
 	"include": ["src/**/*"],

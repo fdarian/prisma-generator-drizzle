@@ -6,11 +6,13 @@
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
-		"baseUrl": ".",
 		"paths": {
-			"~/tests/*": ["./tests/*"]
+			"~/tests/*": ["./tests/*"],
+			"src/*": ["./src/*"],
+			"tests/*": ["./tests/*"],
+			"prisma/*": ["./prisma/*"]
 		},
-		"moduleResolution": "Node",
+		"moduleResolution": "bundler",
 		"types": ["vitest/globals"]
 	}
 }

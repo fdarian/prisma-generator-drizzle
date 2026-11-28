@@ -15,7 +15,7 @@
 		"start": "node dist/bin.js",
 		"dev": "tsdown --watch",
 		"check:biome": "biome ci .",
-		"check:type": "tsc --noEmit",
+		"check:type": "tsrs --noEmit",
 		"build": "tsdown",
 		"test": "vitest run"
 	},
@@ -26,7 +26,7 @@
 		"fp-ts": "^2.16.2",
 		"lodash": "^4.17.21",
 		"pluralize": "^8.0.0",
-		"valibot": "^v0.31.0-rc.12"
+		"valibot": "^1.5.0"
 	},
 	"devDependencies": {
 		"@types/lodash": "^4.14.202",
@@ -34,7 +34,7 @@
 		"@types/pluralize": "^0.0.33",
 		"prisma": "7.10.1",
 		"tsdown": "^0.23.7",
-		"typescript": "5.5.3",
+		"tsrs": "7.1.0-beta.tsrs5",
 		"vitest": "^1.6.0"
 	},
 	"repository": {
