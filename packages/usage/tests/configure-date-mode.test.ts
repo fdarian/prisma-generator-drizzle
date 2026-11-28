@@ -139,7 +139,7 @@ describe('@updatedAt', () => {
 		// Drizzle checks the `$onUpdate` callback against the `$type`, so the
 		// generated file only type-checks when `$onUpdate` comes first
 		execSync(
-			`pnpm exec tsc --noEmit --strict --skipLibCheck --moduleResolution node --target esnext ${temp.basePath}/drizzle.ts`
+			`pnpm exec tsrs --ignoreConfig --noEmit --strict --skipLibCheck --module esnext --moduleResolution bundler --target esnext --types node ${temp.basePath}/drizzle.ts`
 		)
 	})
 
