@@ -639,6 +639,52 @@ describe('generateTableDeclaration constraints', () => {
 		expect(output.code).not.toContain('.using(')
 	})
 
+	describe('single-column @id(map:)', () => {
+		const named = [index('id', [field('id')], { dbName: 'post_pk' })]
+
+		test('postgres moves it to a table-level primaryKey and the column keeps notNull', () => {
+			const ctx = setup(model, named)
+			const output = generateTableDeclaration(
+				postgresAdapter,
+				ctx.schema,
+				ctx.model
+			)
+			expect(output.code).toContain(
+				'[primaryKey({ name: "post_pk", columns: [table.id] })]'
+			)
+			expect(output.code).not.toContain('.primaryKey()')
+			expect(output.code).toMatch(/id: text\('id'\)\.notNull\(\)/)
+			expect(importedNames(output, postgresAdapter.coreModule)).toContain(
+				'primaryKey'
+			)
+		})
+
+		test('postgres keeps the column-level primaryKey without a map:', () => {
+			const ctx = setup(model, [index('id', [field('id')])])
+			const output = generateTableDeclaration(
+				postgresAdapter,
+				ctx.schema,
+				ctx.model
+			)
+			expect(output.code).toMatch(/id: text\('id'\)\.primaryKey\(\)/)
+			expect(output.code).not.toContain('ExtraConfigValue')
+		})
+
+		test.each([
+			['mysql', () => mysqlAdapter],
+			['sqlite', () => sqliteAdapter],
+		])('%s keeps the column-level primaryKey', (_, getAdapter) => {
+			const ctx = setup(model, named)
+			const output = generateTableDeclaration(
+				getAdapter(),
+				ctx.schema,
+				ctx.model
+			)
+			expect(output.code).toContain('.primaryKey()')
+			expect(output.code).not.toContain('ExtraConfigValue')
+		})
+	})
+
 	test('imports only the builders in use', () => {
 		const ctx = setup(model, [index('unique', [field('slug')])])
 		const output = generateTableDeclaration(

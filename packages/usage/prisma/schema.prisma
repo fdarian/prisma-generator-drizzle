@@ -588,6 +588,16 @@ model Index_Composite {
   @@id([a, b])
 }
 
+// Only Postgres names primary keys, MySQL and SQLite reject @id(map:)
+// start -sqlite
+// start -mysql
+model Index_NamedId {
+  id    String @id(map: "index_named_id_custom_pk")
+  label String
+}
+// end -mysql
+// end -sqlite
+
 // #endregion
 
 model FieldCustomization {

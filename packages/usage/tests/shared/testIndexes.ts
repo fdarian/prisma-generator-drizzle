@@ -250,10 +250,10 @@ export function testIndexes(ctx: TestContext) {
 			})
 
 			test.skipIf(ctx.provider !== 'postgres')(
-				'composite primary keys match the ones of the database created by Prisma',
+				'named primary keys match the ones of the database created by Prisma',
 				async () => {
 					const prisma = await getPrismaNames(
-						sql`select tc.table_name as table_name, tc.constraint_name as name from information_schema.table_constraints tc join information_schema.key_column_usage kcu on kcu.constraint_name = tc.constraint_name and kcu.table_schema = tc.table_schema and kcu.table_name = tc.table_name where tc.constraint_type = 'PRIMARY KEY' and tc.table_schema = current_schema() group by tc.table_name, tc.constraint_name having count(*) > 1`
+						sql`select tc.table_name as table_name, tc.constraint_name as name from information_schema.table_constraints tc join information_schema.key_column_usage kcu on kcu.constraint_name = tc.constraint_name and kcu.table_schema = tc.table_schema and kcu.table_name = tc.table_name where tc.constraint_type = 'PRIMARY KEY' and tc.table_schema = current_schema() group by tc.table_name, tc.constraint_name having count(*) > 1 or tc.constraint_name <> tc.table_name || '_pkey'`
 					)
 					const drizzle = new Map<string, string[]>()
 					for (const table of getTables()) {

@@ -7,6 +7,7 @@ import {
 } from '~/lib/prisma-helpers/foreign-keys'
 import { resolveIndexes } from '~/lib/prisma-helpers/indexes'
 import type { Schema } from '~/lib/prisma-helpers/schema/schema'
+import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import {
 	type SchemaModel,
 	getModelFields,
@@ -20,16 +21,29 @@ export function generateTableDeclaration(
 	schema: Schema,
 	model: SchemaModel
 ) {
+	const indexes = resolveIndexes(schema, model, adapter)
+	const tablePrimaryKeyColumns = new Set(
+		indexes
+			.filter((index) => index.kind === 'primaryKey')
+			.flatMap((index) => index.columns.map((column) => column.key))
+	)
 	const parsedFields = getModelFields(model)
 		.filter(pipe(isKind('scalar'), or(isKind('enum'))))
-		.map(adapter.parseField)
+		.map((field: SchemaField) =>
+			// A named single-column @id is emitted as a table-level primaryKey, which the column must not repeat
+			adapter.parseField(
+				tablePrimaryKeyColumns.has(field.name)
+					? { ...field, isId: false }
+					: field
+			)
+		)
 	const name = model.getVarName()
 
 	const foreignKeys = getForeignKeys(schema, model, adapter)
 
 	const constraints = createConstraintEntries({
 		coreModule: adapter.coreModule,
-		indexes: resolveIndexes(schema, model, adapter),
+		indexes,
 	})
 
 	const tableDeclaration = adapter.getDeclarationFunc.table(

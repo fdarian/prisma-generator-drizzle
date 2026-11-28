@@ -113,8 +113,14 @@ function resolveIndex(
 	index: DMMF.Index
 ): ResolvedIndex | undefined {
 	const modelName = model.dmmf.name
-	// A single-column @id stays on the column
-	if (index.type === 'id' && index.fields.length < 2) return undefined
+	// A single-column @id stays on the column unless it is named, which only a table-level primaryKey can express
+	if (
+		index.type === 'id' &&
+		index.fields.length < 2 &&
+		!(index.dbName != null && adapter.indexFeatures.primaryKeyName)
+	) {
+		return undefined
+	}
 
 	const fields: { indexField: DMMF.IndexField; field: DMMF.Field }[] = []
 	const missing: string[] = []
