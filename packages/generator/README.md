@@ -506,10 +506,11 @@ Unique, index and composite primary key declarations are emitted in the table's 
 | composite `@@id` | `primaryKey` | `{table}_pkey` |
 
 - `map: "..."` overrides the name. Default names are truncated to the database's identifier limit, like Prisma does.
-- Implicit many-to-many join tables get what Prisma creates for them: a primary key on `(A, B)` on Postgres (a unique index on MySQL and SQLite) and an index on `B`.
+- On Postgres, a single-column `@id(map: "...")` is emitted as a table-level `primaryKey({ name, columns })` so the name is kept. Without `map`, the column keeps `.primaryKey()`.
+- Implicit many-to-many join tables get what Prisma creates for them: a primary key on `(A, B)` on Postgres (a unique index on MySQL, SQLite and CockroachDB) and an index on `B`.
 - Index arguments are honoured where Drizzle supports them on Postgres: sort order (`.desc().nullsFirst()`, as Prisma's `DESC` is `NULLS FIRST`), operator classes (`ops`, as `.op(...)`) and the index `type` (`.using(...)`).
-- A warning is printed and the argument is skipped for `length` and `clustered`, and for sort order and `ops` on MySQL and SQLite.
-- A warning is printed and the whole index is skipped for `@@fulltext`, for a `where:` predicate (preview feature `partialIndexes`) and for an index on a field the generator does not emit (`@ignore` or `Unsupported(...)`).
+- A warning is printed and the argument is skipped for `clustered`, and for sort order and `ops` on MySQL and SQLite.
+- A warning is printed and the whole index is skipped for `@@fulltext`, for a MySQL `length` (a prefix index is invalid without it, and MySQL rejects an index on a `TEXT` or `BLOB` column without one), for a `where:` predicate (preview feature `partialIndexes`) and for an index on a field the generator does not emit (`@ignore` or `Unsupported(...)`).
 
 ### Relations and foreign keys
 
@@ -519,6 +520,7 @@ Each relation that has `fields` and `references` becomes a foreign key constrain
 - `onDelete` and `onUpdate` follow the schema. When they're not set, Prisma's defaults are used: `onDelete` is `restrict` for required relations and `set null` for optional ones, and `onUpdate` is `cascade`.
 - Implicit many-to-many join tables get `cascade` foreign keys on both columns. They're only generated when `relationalQuery` is enabled.
 - With `relationMode = "prisma"` in the datasource, no foreign keys are generated, matching Prisma.
+- On Postgres, a foreign key to a `@unique` or `@@unique` target is skipped with a warning, because `drizzle-kit` creates foreign keys before unique indexes and the migration would fail. Foreign keys to the primary key (`@id` or `@@id`) are emitted, and so are all foreign keys on MySQL and SQLite.
 
 ## Examples
 1. [with-drizzle-prisma](./examples/with-drizzle-prisma/): using drizzle's prisma extension
