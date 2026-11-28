@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import type { GeneratorOptions } from '@prisma/generator-helper'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { initializeGenerator } from '~/shared/generator-context'
+import { createMappedField } from './mapped-field-fixture'
 
 initializeGenerator({
 	generator: { config: {}, output: { value: 'drizzle.ts' } },
@@ -128,7 +129,7 @@ describe('postgres list fields', () => {
 	function bigIntField(documentation?: string) {
 		return {
 			name: 'ids',
-			dbName: null,
+			getDbName: () => 'ids',
 			documentation,
 			isId: false,
 			isList: true,
@@ -159,5 +160,40 @@ describe('postgres list fields', () => {
 		expect(result.func).toBe(
 			"bigint('ids', { mode: 'number' }).array().notNull()"
 		)
+	})
+})
+
+describe('postgres @map on a field', () => {
+	test('names an Int column after the mapped db name', async () => {
+		const postgresAdapter = await loadPostgresAdapter()
+		const result = postgresAdapter.parseField(
+			createMappedField({ kind: 'scalar', type: 'Int' })
+		)
+		expect(result.func).toBe("integer('successor_id').notNull()")
+		expect(result.name).toBe('successorId')
+	})
+
+	test('names a String column after the mapped db name', async () => {
+		const postgresAdapter = await loadPostgresAdapter()
+		const result = postgresAdapter.parseField(
+			createMappedField({ kind: 'scalar', type: 'String' })
+		)
+		expect(result.func).toBe("text('successor_id').notNull()")
+	})
+
+	test('names an enum column after the mapped db name', async () => {
+		const postgresAdapter = await loadPostgresAdapter()
+		const result = postgresAdapter.parseField(
+			createMappedField({ kind: 'enum', type: 'MappedFieldStatus' })
+		)
+		expect(result.func).toBe("mappedFieldStatusEnum('successor_id').notNull()")
+	})
+
+	test('falls back to the field name without @map', async () => {
+		const postgresAdapter = await loadPostgresAdapter()
+		const result = postgresAdapter.parseField(
+			createMappedField({ kind: 'scalar', type: 'Int', dbName: null })
+		)
+		expect(result.func).toBe("integer('successorId').notNull()")
 	})
 })
