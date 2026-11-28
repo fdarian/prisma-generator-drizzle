@@ -9,6 +9,7 @@
 		"paths": {
 			"~/tests/*": ["./tests/*"],
 			"src/*": ["./src/*"],
+			"tests/*": ["./tests/*"],
 			"prisma/*": ["./prisma/*"]
 		},
 		"moduleResolution": "bundler",

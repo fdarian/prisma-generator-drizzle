@@ -328,8 +328,8 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       valibot:
-        specifier: 0.31.0-rc.12
-        version: 0.31.0-rc.12
+        specifier: ^1.5.0
+        version: 1.5.0(typescript@5.5.3)
     devDependencies:
       '@types/better-sqlite3':
         specifier: ^9.6.0
@@ -4406,9 +4406,6 @@ packages:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
     deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
-
-  valibot@0.31.0-rc.12:
-    resolution: {integrity: sha512-vAI18A65Og1BwuVqC3Zvr0+yNxOANLHDVo3r5VOTsVItfBl6KcykmY7fioSU5CVSlrj2JgViHjcsfAofO2h0rw==}
 
   valibot@0.31.1:
     resolution: {integrity: sha512-2YYIhPrnVSz/gfT2/iXVTrSj92HwchCt9Cga/6hX4B26iCz9zkIsGTS0HjDYTZfTi1Un0X6aRvhBi1cfqs/i0Q==}
@@ -8792,8 +8789,6 @@ snapshots:
   uuid@8.3.2: {}
 
   uuid@9.0.1: {}
-
-  valibot@0.31.0-rc.12: {}
 
   valibot@0.31.1: {}
 
