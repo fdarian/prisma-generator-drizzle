@@ -377,20 +377,53 @@ describe('index arguments', () => {
 	})
 })
 
-describe('unresolvable fields', () => {
-	test('skips an index whose columns are all @ignore d', () => {
+describe('fields without a column', () => {
+	test('skips an index on an @ignore d field and warns', () => {
 		const ctx = setup(
 			dmmfModel('Post', [scalar('id')]),
 			[index('normal', [field('hidden')])],
 			'model Post {\n id String @id\n hidden String @ignore\n}'
 		)
 		expect(resolveIndexes(ctx.schema, ctx.model, postgresAdapter)).toEqual([])
+		expect(warn.mock.calls.map((call) => call[0])).toEqual([
+			'Skipped index on Post(hidden), column hidden is not generated (@ignore or Unsupported)',
+		])
 	})
 
-	test('throws for an unknown field', () => {
-		expect(() =>
-			resolve(postgresAdapter, [index('normal', [field('nope')])])
-		).toThrow(/unknown fields nope/)
+	test('skips an index on an Unsupported field without throwing', () => {
+		const ctx = setup(
+			dmmfModel('Post', [scalar('id')]),
+			[index('normal', [field('geom')], { algorithm: 'Gist' })],
+			'model Post {\n id String @id\n geom Unsupported("geometry")?\n}'
+		)
+		expect(resolveIndexes(ctx.schema, ctx.model, postgresAdapter)).toEqual([])
+		expect(warn).toHaveBeenCalledTimes(1)
+	})
+
+	test('skips the whole index when only some fields are missing', () => {
+		const ctx = setup(
+			dmmfModel('Post', [scalar('id'), scalar('title')]),
+			[
+				index('normal', [field('title'), field('hidden')]),
+				index('unique', [field('title')]),
+			],
+			'model Post {\n id String @id\n title String\n hidden String @ignore\n}'
+		)
+		const resolved = resolveIndexes(ctx.schema, ctx.model, postgresAdapter)
+		expect(resolved.map((i) => i.name)).toEqual(['Post_title_key'])
+		expect(warn.mock.calls.map((call) => call[0])).toEqual([
+			'Skipped index on Post(title, hidden), column hidden is not generated (@ignore or Unsupported)',
+		])
+	})
+
+	test('skips a composite primary key that includes a missing field', () => {
+		const ctx = setup(
+			dmmfModel('Post', [scalar('id')]),
+			[index('id', [field('id'), field('hidden')])],
+			'model Post {\n id String\n hidden String @ignore\n @@id([id, hidden])\n}'
+		)
+		expect(resolveIndexes(ctx.schema, ctx.model, postgresAdapter)).toEqual([])
+		expect(warn.mock.calls[0][0]).toContain('Skipped primary key on Post')
 	})
 })
 

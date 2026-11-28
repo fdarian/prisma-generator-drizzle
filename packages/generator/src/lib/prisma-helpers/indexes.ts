@@ -6,7 +6,6 @@ import {
 	getDefaultPrimaryKeyName,
 	getImplicitJoinTableConstraintName,
 } from './constraint-names'
-import { isIgnoredField } from './foreign-keys'
 import { getDbName } from './getDbName'
 import type { Schema } from './schema/schema'
 import type { SchemaModel } from './schema/schema-model'
@@ -116,26 +115,22 @@ function resolveIndex(
 	// A single-column @id stays on the column
 	if (index.type === 'id' && index.fields.length < 2) return undefined
 
-	const fields = index.fields.map((indexField) => ({
-		indexField,
-		field: model.dmmf.fields.find((f) => f.name === indexField.name),
-	}))
-	const missing = fields.filter((f) => f.field == null)
+	const fields: { indexField: DMMF.IndexField; field: DMMF.Field }[] = []
+	const missing: string[] = []
+	for (const indexField of index.fields) {
+		const field = model.dmmf.fields.find((f) => f.name === indexField.name)
+		if (field == null) missing.push(indexField.name)
+		else fields.push({ indexField, field })
+	}
 	if (missing.length > 0) {
-		/** Passes Prisma validation, but the column is not emitted */
-		if (
-			missing.every((f) => isIgnoredField(schema, modelName, f.indexField.name))
-		) {
-			return undefined
-		}
-		throw new Error(
-			`Index on ${modelName} references unknown fields ${missing.map((f) => f.indexField.name).join(', ')}`
+		// DMMF omits @ignore and Unsupported(...) fields, so there is no column to point at
+		logger.warn(
+			`Skipped ${index.type === 'id' ? 'primary key' : 'index'} on ${modelName}(${index.fields.map((f) => f.name).join(', ')}), column ${missing.join(', ')} is not generated (@ignore or Unsupported)`
 		)
+		return undefined
 	}
 
-	const columnNames = fields.flatMap((f) =>
-		f.field == null ? [] : [getDbName(f.field)]
-	)
+	const columnNames = fields.map((f) => getDbName(f.field))
 	const kind =
 		index.type === 'id'
 			? 'primaryKey'
@@ -169,14 +164,13 @@ function resolveIndex(
 	if (index.clustered != null) skip('clustered')
 
 	const canSort = kind !== 'primaryKey' && adapter.indexFeatures.sortOrder
-	const columns = fields.flatMap((f) => {
-		if (f.field == null) return []
+	const columns = fields.map((f) => {
 		const column = f.indexField.name
 		if (f.indexField.length != null) skip(`length on ${column}`)
 		if (f.indexField.operatorClass != null) skip(`operator class on ${column}`)
 		const desc = f.indexField.sortOrder === 'desc'
 		if (desc && !canSort) skip(`descending sort on ${column}`)
-		return [{ key: column, desc: desc && canSort }]
+		return { key: column, desc: desc && canSort }
 	})
 
 	const algorithm = index.algorithm
