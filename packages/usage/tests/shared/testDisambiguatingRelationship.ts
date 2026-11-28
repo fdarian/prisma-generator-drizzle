@@ -29,8 +29,16 @@ export function testDisambiguatingRelationship(ctx: TestContext) {
 			await db.insert(schema.disambiguatingUsers).values(taxReceiver)
 			await db.insert(schema.disambiguatingUsers).values(merchant)
 			await db.insert(schema.disambiguatingUsers).values(customer)
-			await db.insert(schema.disambiguatingTransfers).values(taxTransfer)
-			await db.insert(schema.disambiguatingTransfers).values(paymentTransfer)
+			// Inserted out of createdAt order so the ordered relations assert the sort,
+			// with whole seconds apart since sqlite timestamps have second precision
+			await db.insert(schema.disambiguatingTransfers).values({
+				...paymentTransfer,
+				createdAt: new Date('2024-01-01T00:00:02Z'),
+			})
+			await db.insert(schema.disambiguatingTransfers).values({
+				...taxTransfer,
+				createdAt: new Date('2024-01-01T00:00:01Z'),
+			})
 			await db.insert(schema.disambiguatingSales).values(sale)
 		})
 

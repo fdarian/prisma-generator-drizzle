@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"start": "bun run src/index.ts",
-		"test": "vitest run",
+		"test": "vitest run && tsrs --noEmit",
 		"generate": "prisma generate --config prisma.config.ts",
 		"pushreset:postgres": "bun prisma db push --config prisma.config.ts --force-reset --accept-data-loss && bun prisma generate --config prisma.config.ts",
 		"pushreset:multi-schema": "bun prisma db push --config prisma.multi-schema.config.ts --force-reset --accept-data-loss && bun prisma generate --config prisma.multi-schema.config.ts",

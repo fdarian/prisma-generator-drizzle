@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"target": "ES2020",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"lib": ["esnext"],
+		"types": ["node"],
+		"strict": true,
+		"noEmit": true,
+		"skipLibCheck": true
+	},
+	"include": ["src/__tests__/__snapshots__/**/*.ts"],
+	"exclude": ["src/__tests__/__snapshots__/*/config-relations-v2/**"]
+}

@@ -1,0 +1,4 @@
+import { mysqlTable, int, foreignKey } from 'drizzle-orm/mysql-core';
+import type { MySqlTableExtraConfigValue } from 'drizzle-orm/mysql-core';
+
+export const employees = mysqlTable('Employee', { id: int('id').primaryKey(), managerId: int('managerId'), mentorId: int('mentorId') }, (table): MySqlTableExtraConfigValue[] => [foreignKey({ name: "Employee_managerId_fkey", columns: [table.managerId], foreignColumns: [table.id] }).onDelete('set null').onUpdate('cascade'), foreignKey({ name: "Employee_mentorId_fkey", columns: [table.mentorId], foreignColumns: [table.id] }).onDelete('set null').onUpdate('cascade')]);

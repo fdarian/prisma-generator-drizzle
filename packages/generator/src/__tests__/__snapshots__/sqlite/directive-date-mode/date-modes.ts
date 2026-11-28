@@ -1,0 +1,3 @@
+import { sqliteTable, integer } from 'drizzle-orm/sqlite-core';
+
+export const dateModes = sqliteTable('DateModes', { id: integer('id', { mode: 'number' }).primaryKey(), defaultMode: integer('defaultMode', { mode: 'timestamp' }).notNull(), asDate: integer('asDate', { mode: 'timestamp' }).notNull(), createdDate: integer('createdDate', { mode: 'timestamp' }).defaultNow().notNull(), updatedDate: integer('updatedDate', { mode: 'timestamp' }).$onUpdate(() => new Date()).notNull() });

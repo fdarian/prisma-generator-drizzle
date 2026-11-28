@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 export function testIgnoreDecorator({ schema }: TestContext) {
 	describe('@ignore', async () => {
 		test('should not have ignored model', () => {
-			expect(schema).not.toHaveProperty('IgnoredModel')
+			expect(schema).not.toHaveProperty('ignoredModels')
 		})
 	})
 

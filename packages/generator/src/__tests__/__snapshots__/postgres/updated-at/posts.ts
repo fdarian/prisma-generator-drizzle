@@ -1,0 +1,3 @@
+import { pgTable, integer, timestamp } from 'drizzle-orm/pg-core';
+
+export const posts = pgTable('Post', { id: integer('id').primaryKey(), createdAt: timestamp('createdAt', { mode: 'date', precision: 3 }).defaultNow().notNull(), updatedAt: timestamp('updatedAt', { mode: 'date', precision: 3 }).$onUpdate(() => new Date()).notNull(), mappedAt: timestamp('mapped_at', { mode: 'date', precision: 3 }).$onUpdate(() => new Date()).notNull(), optionalAt: timestamp('optionalAt', { mode: 'date', precision: 3 }).$onUpdate(() => new Date()) });

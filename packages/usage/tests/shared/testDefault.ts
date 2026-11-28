@@ -145,5 +145,41 @@ export function testDefault({ db, schema, provider }: TestContext) {
 					.where(inArray(schema.autoIncrementBigInts.ref, refs))
 			})
 		})
+
+		describe('uuid() and cuid()', () => {
+			type GeneratedIdInsert = typeof schema.generatedIds.$inferInsert
+
+			async function insertAndRead(values: Partial<GeneratedIdInsert>) {
+				const ref = createId()
+				// The cast is needed while the generated insert type requires every column
+				await db
+					.insert(schema.generatedIds)
+					.values({ ...values, ref } as GeneratedIdInsert)
+				const result = await db.query.generatedIds
+					.findFirst({
+						where: (generatedIds, { eq }) => eq(generatedIds.ref, ref),
+					})
+					.then(throwIfnull)
+				await db
+					.delete(schema.generatedIds)
+					.where(eq(schema.generatedIds.ref, ref))
+				return result
+			}
+
+			// The generator emits no drizzle default for `uuid()`: no branch for it in
+			// packages/generator/src/lib/adapter/fields/createField.ts (onDefault)
+			test.fails('uuid() generates the id when omitted', async () => {
+				const result = await insertAndRead({ cuid: createId() })
+
+				expect(validateUuid(result.id)).toBe(true)
+			})
+
+			// Same gap as `uuid()` above, for `cuid()`
+			test.fails('cuid() generates the value when omitted', async () => {
+				const result = await insertAndRead({ id: createId() })
+
+				expect(isCuid(result.cuid)).toBe(true)
+			})
+		})
 	})
 }

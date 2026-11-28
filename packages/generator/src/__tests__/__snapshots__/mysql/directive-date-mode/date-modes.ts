@@ -1,0 +1,4 @@
+import { mysqlTable, int, datetime } from 'drizzle-orm/mysql-core';
+import { sql } from 'drizzle-orm';
+
+export const dateModes = mysqlTable('DateModes', { id: int('id').primaryKey(), defaultMode: datetime('defaultMode', { mode: 'date', fsp: 3 }).notNull(), asDate: datetime('asDate', { mode: 'date', fsp: 3 }).notNull(), createdDate: datetime('createdDate', { mode: 'date', fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).notNull(), updatedDate: datetime('updatedDate', { mode: 'date', fsp: 3 }).$onUpdate(() => new Date()).notNull(), asString: datetime('asString', { mode: 'string', fsp: 3 }).notNull(), createdString: datetime('createdString', { mode: 'string', fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).notNull(), updatedString: datetime('updatedString', { mode: 'string', fsp: 3 }).$onUpdate(() => new Date().toISOString().replace('T', ' ').replace('Z', '')).notNull() });

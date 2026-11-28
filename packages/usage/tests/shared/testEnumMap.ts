@@ -39,5 +39,24 @@ export function testEnumMap({ db, schema, provider }: TestContext) {
 				.delete(schema.enumMappedDefaults)
 				.where(eq(schema.enumMappedDefaults.id, data.id))
 		})
+
+		test('explicitly written mapped value roundtrips', async () => {
+			const data = { id: createId(), value: 'db_mapped' as const }
+			await db.insert(schema.enumMappedDefaults).values(data)
+			// --
+
+			const result = await db.query.enumMappedDefaults
+				.findFirst({
+					where: (table, { eq }) => eq(table.id, data.id),
+				})
+				.then(throwIfnull)
+
+			expect(result.value).toBe('db_mapped')
+
+			// --
+			await db
+				.delete(schema.enumMappedDefaults)
+				.where(eq(schema.enumMappedDefaults.id, data.id))
+		})
 	})
 }
