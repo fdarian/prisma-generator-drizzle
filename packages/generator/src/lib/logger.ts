@@ -24,7 +24,8 @@ function createTask() {
 }
 
 function warn(message: string) {
-	baseLogger.warn(`${GENERATOR_NAME}: ${message}`)
+	// Prisma 7's CLI reads the generator's stderr as JSON-RPC and drops other lines; stdout is inherited.
+	console.log(`${GENERATOR_NAME}: warning: ${message}`)
 }
 
 export const logger = {
