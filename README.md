@@ -329,7 +329,9 @@ import type { Item } from '../my-type'
 | Prisma      | `7.10.1` (pinned)  | `prisma` and `@prisma/generator-helper`             |
 | drizzle-orm | `^0.45.4` (tested) | the `usage` test project; no peer range is declared |
 
-This generator follows the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types) and maps native `@db.*` attributes to the matching Drizzle column where one exists. Native types without a Drizzle equivalent fall back to the default column of their scalar.
+Native `@db.*` attributes map to the matching Drizzle column where one exists. Native types without a Drizzle equivalent fall back to the default column of their scalar.
+
+On Postgres the default columns follow the [default Prisma field mapping](https://www.prisma.io/docs/orm/reference/prisma-schema-reference#model-field-scalar-types). On MySQL they do not in two places: `String` maps to `text` where Prisma creates `VARCHAR(191)`, and `Float` maps to `float` where Prisma creates `DOUBLE`. Use `@db.VarChar(191)` and `@db.Double` to match Prisma's columns.
 
 Arguments carry over to the column (`@db.VarChar(255)` becomes `varchar('col', { length: 255 })`) and are omitted when the attribute has none. `DateTime` columns respect [`dateMode`](#configuration) unless noted. `Unsupported` fields are not supported yet.
 
@@ -421,7 +423,9 @@ Native types:
 | `DateTime` | `Date` | `date` |
 | `DateTime` | `Time(x)` | `time` (no `dateMode`, values are strings) |
 
-Native types that match the default column (`Text`, `Int`, `BigInt`, `Float`, `Json`, `LongBlob`, and `TinyInt(1)` on `Boolean`) are unchanged. `Bit`, `Binary`, `VarBinary`, `TinyBlob`, `Blob` and `MediumBlob` fall back to the default column, because Drizzle's `binary` and `varbinary` return strings rather than `Buffer`.
+Native types that match the default column (`Text`, `Int`, `BigInt`, `Json`, `LongBlob`, and `TinyInt(1)` on `Boolean`) are unchanged. `@db.Float` maps to `float`, which is also the generator's default for `Float`, so a plain `Float` gets `float` even though Prisma creates `DOUBLE` for it. `Binary`, `VarBinary`, `TinyBlob`, `Blob` and `MediumBlob` fall back to the default column, because Drizzle's `binary` and `varbinary` return strings rather than `Buffer`.
+
+`Boolean @db.Bit(1)` is not supported. The generator still emits the default `boolean` column, but mysql2 returns `BIT` values as a `Buffer`, so the column always reads as `false`.
 
 With `@default(now())`, `Date` and `Time` columns use `(CURRENT_DATE)` and `(CURRENT_TIME(x))`, since MySQL rejects `CURRENT_TIMESTAMP` there.
 
@@ -457,6 +461,14 @@ When `moduleResolution` isn't set in the tsconfig, `compilerOptions.module` (`no
 You can explicitly set the `moduleResolution` option in the [generator configuration](#configuration).
 
 Check also [the discussion](https://github.com/farreldarian/prisma-generator-drizzle/issues/18)
+
+### MySQL `@db.Date` stores the wrong day in some timezones
+
+With the default `dateMode` of `date`, Drizzle's MySQL `date` column hands the JavaScript `Date` to mysql2 unconverted, and mysql2 formats it in the local timezone of the process. A `Date` of `2024-01-23T00:00:00Z` is stored as `2024-01-22` when the process runs in a timezone behind UTC. Either run the process in UTC, or set mysql2's `timezone` option so it formats in UTC:
+
+```ts
+const connection = await mysql.createConnection({ uri: DATABASE_URL, timezone: 'Z' })
+```
 
 ### SqliteError: NOT NULL constraint failed: \<table-name\>.id
 
