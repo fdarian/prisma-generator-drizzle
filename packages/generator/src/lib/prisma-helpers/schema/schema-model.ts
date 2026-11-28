@@ -9,12 +9,15 @@ export type SchemaModel = ReturnType<typeof createSchemaModel>
 export function createSchemaModel(args: {
 	astModel?: Model
 	dmmfModel: DMMF.Model
+	/** Synthetic join table of an implicit many-to-many relation */
+	isImplicitJoinTable?: true
 }) {
 	const { astModel, dmmfModel } = args
 
 	return {
 		ast: astModel,
 		dmmf: dmmfModel,
+		isImplicitJoinTable: args.isImplicitJoinTable === true,
 		getDbName() {
 			return getDbName(dmmfModel)
 		},

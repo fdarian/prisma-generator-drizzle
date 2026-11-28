@@ -535,6 +535,71 @@ model ForeignKey_LongName {
 
 // #endregion
 
+// #region Indexes
+
+// Default constraint names: field @unique, @@unique and @@index
+model Index_User {
+  id        String @id
+  email     String @unique
+  firstName String
+  lastName  String
+  city      String
+
+  @@unique([firstName, lastName])
+  @@index([city, lastName])
+}
+
+// Names are built from @@map and @map database names
+model Index_Mapped {
+  id        String @id
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
+
+  @@unique([firstName, lastName])
+  @@index([lastName])
+  @@map("idx_mapped")
+}
+
+// Explicit names via map
+model Index_Named {
+  id     String @id
+  code   String
+  label  String
+  bucket String
+
+  @@unique([code], map: "idx_named_code_unique")
+  @@index([label], map: "idx_named_label_custom")
+  @@index([bucket], type: Hash) // -mysql -sqlite
+}
+
+model Index_Sorted {
+  id        String   @id
+  createdAt DateTime
+
+  @@index([createdAt(sort: Desc)])
+}
+
+// Composite primary key
+model Index_Composite {
+  a     String
+  b     String
+  label String
+
+  @@id([a, b])
+}
+
+// Only Postgres names primary keys, MySQL and SQLite reject @id(map:)
+// start -sqlite
+// start -mysql
+model Index_NamedId {
+  id    String @id(map: "index_named_id_custom_pk")
+  label String
+}
+// end -mysql
+// end -sqlite
+
+// #endregion
+
 model FieldCustomization {
   id        Int    @id @default(autoincrement())
   /// drizzle.custom {

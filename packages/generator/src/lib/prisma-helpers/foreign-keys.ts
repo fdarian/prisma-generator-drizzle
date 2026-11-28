@@ -1,5 +1,7 @@
 import type { Attribute, KeyValue } from '@mrleebo/prisma-ast'
 import type { DMMF } from '@prisma/generator-helper'
+import { logger } from '../logger'
+import { getDefaultConstraintName } from './constraint-names'
 import { getDbName } from './getDbName'
 import { getModelModuleName, getModelVarName } from './model'
 import type { Schema } from './schema/schema'
@@ -44,55 +46,26 @@ function parseAction(value: string): ForeignKeyAction {
 	return action
 }
 
-/** Foreign keys that migrations can create, see `isTargetConstraintEmitted` */
-export function getForeignKeys(
-	schema: Schema,
-	model: SchemaModel,
-	maxIdentifierLength: number
-): ForeignKey[] {
-	return resolveForeignKeys(schema, model, maxIdentifierLength).filter(
-		isTargetConstraintEmitted
-	)
-}
-
-/** The generator does not emit composite `@@id`, `@@unique` or `@unique` constraints yet (#79), so only a single-column `@id` target is safe to reference; #79 removes this. */
-export function isTargetConstraintEmitted(foreignKey: ForeignKey) {
-	const target = foreignKey.target
-	if (target.model.primaryKey != null) return false
-	if (target.columns.length !== 1) return false
-	return target.model.fields.some(
-		(field) => field.name === target.columns[0] && field.isId
-	)
-}
-
-/**
- * Mirrors `foreign_key_constraint_name` in prisma-engines, where lengths are
- * UTF-8 bytes and truncation backs off to a character boundary.
- */
 export function getDefaultForeignKeyName(args: {
 	tableName: string
 	columnNames: string[]
 	maxIdentifierLength: number
 }) {
-	const joined = new TextEncoder().encode(
-		`${args.tableName}_${args.columnNames.join('_')}`
-	)
-	const limit = args.maxIdentifierLength - 5
-	if (joined.length < limit) {
-		return `${new TextDecoder().decode(joined)}_fkey`
-	}
-
-	let end = limit
-	// Continuation bytes (0b10xxxxxx) are not the start of a character
-	while (end > 0 && (joined[end] & 0xc0) === 0x80) end--
-	return `${new TextDecoder().decode(joined.subarray(0, end))}_fkey`
+	return getDefaultConstraintName({ ...args, suffix: '_fkey' })
 }
 
-export function resolveForeignKeys(
+type ForeignKeyAdapter = {
+	maxIdentifierLength: number
+	createsForeignKeysBeforeUniqueIndexes: boolean
+}
+
+export function getForeignKeys(
 	schema: Schema,
 	model: SchemaModel,
-	maxIdentifierLength: number
+	adapter: ForeignKeyAdapter
 ): ForeignKey[] {
+	const maxIdentifierLength = adapter.maxIdentifierLength
+
 	if (usesPrismaRelationMode(schema)) return []
 
 	return getModelFields(model).flatMap((field) => {
@@ -156,14 +129,29 @@ export function resolveForeignKeys(
 
 		const isRequired = field.isRequired || localFields.some((f) => f.isRequired)
 
+		const name =
+			findExplicitName(model, field.name) ??
+			getDefaultForeignKeyName({
+				tableName: model.getDbName(),
+				columnNames: localFields.map((f) => getDbName(f)),
+				maxIdentifierLength,
+			})
+
+		if (
+			!canMigrationCreateForeignKey({
+				adapter,
+				targetModel,
+				targetColumns: field.relationToFields,
+			})
+		) {
+			logger.warn(
+				`Skipped foreign key "${name}" of ${modelName}, it references ${targetModel.name}(${field.relationToFields.join(', ')}), which is not the primary key, and drizzle-kit creates foreign keys before unique indexes`
+			)
+			return []
+		}
+
 		return {
-			name:
-				findExplicitName(model, field.name) ??
-				getDefaultForeignKeyName({
-					tableName: model.getDbName(),
-					columnNames: localFields.map((f) => getDbName(f)),
-					maxIdentifierLength,
-				}),
+			name,
 			columns: [...field.relationFromFields],
 			target: {
 				isSelf: targetModel.name === model.dmmf.name,
@@ -186,6 +174,30 @@ export function resolveForeignKeys(
 	})
 }
 
+/**
+ * drizzle-kit (verified with 0.31.11) emits `ALTER TABLE ... ADD CONSTRAINT <fk>`
+ * before `CREATE UNIQUE INDEX` in the same migration. Where that order matters,
+ * a foreign key to a `@unique` / `@@unique` target fails the migration with
+ * "there is no unique constraint matching given keys". A primary key is created
+ * inline in `CREATE TABLE`, so it is always in place first.
+ */
+function canMigrationCreateForeignKey(args: {
+	adapter: ForeignKeyAdapter
+	targetModel: DMMF.Model
+	targetColumns: readonly string[]
+}) {
+	if (!args.adapter.createsForeignKeysBeforeUniqueIndexes) return true
+
+	const primaryKey =
+		args.targetModel.primaryKey != null
+			? args.targetModel.primaryKey.fields
+			: args.targetModel.fields.filter((f) => f.isId).map((f) => f.name)
+	return (
+		primaryKey.length === args.targetColumns.length &&
+		args.targetColumns.every((column) => primaryKey.includes(column))
+	)
+}
+
 function findAstModel(schema: Schema, modelName: string) {
 	const block = schema.ast.list.find(
 		(b) => b.type === 'model' && b.name === modelName
@@ -201,7 +213,11 @@ function isIgnoredModel(schema: Schema, modelName: string) {
 	)
 }
 
-function isIgnoredField(schema: Schema, modelName: string, fieldName: string) {
+export function isIgnoredField(
+	schema: Schema,
+	modelName: string,
+	fieldName: string
+) {
 	const astField = findAstModel(schema, modelName)?.properties.find(
 		(prop) => prop.type === 'field' && prop.name === fieldName
 	)

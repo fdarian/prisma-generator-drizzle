@@ -3,13 +3,23 @@ import type { ImportValue } from '../syntaxes/imports'
 import type { Module } from '../syntaxes/module'
 import type { FieldFunc } from './fields/createField'
 
+export type IndexFeatures = {
+	operatorClass: boolean
+	sortOrder: boolean
+	method: boolean
+	primaryKeyName: boolean
+	implicitJoinTableKey: 'primaryKey' | 'unique'
+}
+
 type DeclarationFunc = { imports: ImportValue[]; func: string }
 
 export function createAdapter<TName extends string>(impl: {
 	name: TName
 	coreModule: string
-	/** Identifier length limit of the database, constraint names are truncated to it */
 	maxIdentifierLength: number
+	/** drizzle-kit migrations on this dialect create foreign keys before unique indexes, and the database rejects a foreign key to a column without one */
+	createsForeignKeysBeforeUniqueIndexes: boolean
+	indexFeatures: IndexFeatures
 	getDeclarationFunc: {
 		enum: (
 			name: string,

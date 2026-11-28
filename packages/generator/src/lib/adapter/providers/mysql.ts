@@ -136,6 +136,14 @@ export const mysqlAdapter = createAdapter({
 	name: 'mysql',
 	coreModule,
 	maxIdentifierLength: 64,
+	createsForeignKeysBeforeUniqueIndexes: false,
+	indexFeatures: {
+		operatorClass: false,
+		sortOrder: false,
+		method: false,
+		primaryKeyName: false,
+		implicitJoinTableKey: 'unique',
+	},
 	getDeclarationFunc: {
 		enum(_, values) {
 			return {
