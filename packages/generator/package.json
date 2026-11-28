@@ -15,7 +15,7 @@
 		"start": "node dist/bin.js",
 		"dev": "tsdown --watch",
 		"check:biome": "biome ci .",
-		"check:type": "tsc --noEmit",
+		"check:type": "tsrs --noEmit",
 		"build": "tsdown",
 		"test": "vitest run"
 	},
@@ -34,6 +34,7 @@
 		"@types/pluralize": "^0.0.33",
 		"prisma": "7.10.1",
 		"tsdown": "^0.23.7",
+		"tsrs": "7.1.0-beta.tsrs5",
 		"typescript": "5.5.3",
 		"vitest": "^1.6.0"
 	},

@@ -6,11 +6,10 @@
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
-		"baseUrl": ".",
 		"paths": {
 			"~/tests/*": ["./tests/*"]
 		},
-		"moduleResolution": "Node",
+		"moduleResolution": "bundler",
 		"types": ["vitest/globals"]
 	}
 }
