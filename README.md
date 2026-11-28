@@ -71,6 +71,7 @@ prisma generate
 |    | Generate single output file                 |  | "drizzle.ts" |
 | formatter       | Run formatter after generation     | -           | "prettier"  |
 | relationalQuery | Flag to generate relational query | true        | false       |
+| relations       | Relations output: `"v1"` (per-table `relations()` for drizzle-orm 0.x) or `"v2"` (one `defineRelations` call for drizzle-orm 1.0, _experimental_) | "v1" | "v2" |
 | moduleResolution         | Specify the [module resolution](https://www.typescriptlang.org/tsconfig#moduleResolution) that will affect the import style | _*auto_           | nodenext        |
 | verbose         | Flag to enable verbose logging    | -           | true        |
 | abortOnFailedFormatting | Flag to throw exception when formatting fails | true | false |
@@ -91,6 +92,33 @@ import { schema } from 'prisma/drizzle/schema'
 const client = ... // database client
 const db = drizzle(client, { schema })
 ```
+
+### Drizzle 1.0 relations (experimental)
+
+Set `relations = "v2"` to generate a single [`defineRelations`](https://orm.drizzle.team/docs/relations-v2) call for drizzle-orm 1.0. It is experimental until Drizzle 1.0 is stable, and is only tested against `drizzle-orm@1.0.0-rc.6`.
+
+```prisma
+generator drizzle {
+  provider  = "prisma-generator-drizzle"
+  relations = "v2"
+}
+```
+
+The output is `schema` (tables only) and `relations`, which lives in `relations.ts` (or in a section of the file when using a single output file).
+
+```ts
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { relations } from './drizzle/relations'
+
+const client = ... // database client
+const db = drizzle({ client, relations })
+
+await db.query.users.findMany({ with: { posts: true } })
+```
+
+Implicit many-to-many relations are queried directly (`with: { categories: true }`) rather than through the join table as in v1.
+
+`relationalQuery = false` disables this output as well.
 
 ### Setting up [drizzle-kit](https://orm.drizzle.team/kit-docs/overview)
 
