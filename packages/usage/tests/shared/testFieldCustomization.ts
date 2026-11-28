@@ -1,16 +1,28 @@
-import fs, { readFileSync } from 'node:fs'
+import fs from 'node:fs'
 import type { TestContext } from 'tests/utils/types'
 import { beforeAll, describe, expect, test } from 'vitest'
 
 export type SomeBigInt = bigint
 
-export const OUTPUT_FILE = './prisma/drizzle/field-customizations.ts'
+const OUTPUT_DIRS = {
+	postgres: './prisma/drizzle',
+	mysql: './prisma/mysql/drizzle',
+	sqlite: './prisma/sqlite/drizzle',
+} satisfies Record<TestContext['provider'], string>
 
-export function testFieldCustomization({ db, schema, provider }: TestContext) {
+// sqlite has no native bigint column, so the generator emits a custom one
+const BIGINT_COLUMNS = {
+	postgres: "bigint('allFields', { mode: 'number' })",
+	mysql: "bigint('allFields', { mode: 'number' })",
+	sqlite: "customBigInt('allFields')",
+} satisfies Record<TestContext['provider'], string>
+
+export function testFieldCustomization(ctx: TestContext) {
+	const outputFile = `${OUTPUT_DIRS[ctx.provider]}/field-customizations.ts`
 	let content: string
 	beforeAll(async () => {
-		expect(fs.existsSync(OUTPUT_FILE)).toBe(true)
-		content = readFileSync(OUTPUT_FILE, 'utf-8')
+		expect(fs.existsSync(outputFile)).toBe(true)
+		content = fs.readFileSync(outputFile, 'utf-8')
 	})
 
 	describe('allFields', () => {
@@ -22,7 +34,7 @@ export function testFieldCustomization({ db, schema, provider }: TestContext) {
 
 		test('should contain correct field definition', () => {
 			expect(content).include(
-				"allFields: bigint('allFields', { mode: 'number' }).$type<SomeBigInt>().$defaultFn(() => 1n)"
+				`allFields: ${BIGINT_COLUMNS[ctx.provider]}.$type<SomeBigInt>().$defaultFn(() => 1n)`
 			)
 		})
 	})

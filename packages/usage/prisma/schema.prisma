@@ -213,6 +213,12 @@ model AutoIncrementBigInt {
   ref String @unique
 }
 
+model GeneratedId {
+  id   String @id @default(uuid())
+  cuid String @default(cuid())
+  ref  String @unique
+}
+
 // #endregion
 
 // #region UpdatedAt

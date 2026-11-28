@@ -9,6 +9,7 @@ export function createTempHandler() {
 		async prepare(): Promise<TempDirectory> {
 			const name = createId()
 			await fs.mkdir(`.temp/${name}`, { recursive: true })
+			temps.push(name)
 
 			return {
 				name,
@@ -19,7 +20,9 @@ export function createTempHandler() {
 		},
 		async cleanup() {
 			await Promise.all(
-				temps.map((name) => fs.rmdir(`.temp/${name}`, { recursive: true }))
+				temps.map((name) =>
+					fs.rm(`.temp/${name}`, { recursive: true, force: true })
+				)
 			)
 		},
 	}

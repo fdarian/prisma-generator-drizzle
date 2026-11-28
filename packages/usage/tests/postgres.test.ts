@@ -13,6 +13,7 @@ import { testNativeTypes } from './shared/testNativeTypes'
 import { testOneToMany } from './shared/testOneToMany'
 import { testOneToOne } from './shared/testOneToOne'
 import { testSelfReferring } from './shared/testSelfReferring'
+import { testUniqueConstraint } from './shared/testUniqueConstraint'
 import { testUpdatedAt } from './shared/testUpdatedAt'
 import type { TestContext } from './utils/types'
 
@@ -30,5 +31,6 @@ testFieldCustomization(ctx)
 testFieldMap(ctx)
 testEnumMap(ctx)
 testUpdatedAt(ctx)
+testUniqueConstraint(ctx)
 testNativeTypes(ctx)
 testForeignKeys(ctx)

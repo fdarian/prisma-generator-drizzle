@@ -85,7 +85,7 @@ export function testSelfReferring({ db, schema }: TestContext) {
 			expect(referring1_result?.referringMany).toStrictEqual(referred)
 
 			const referring2_result = await db.query.selfReferences.findFirst({
-				where: (selfReferences, { eq }) => eq(selfReferences.id, referring1.id),
+				where: (selfReferences, { eq }) => eq(selfReferences.id, referring2.id),
 				with: { referringMany: true, referredMany: true },
 			})
 			expect(referring2_result).not.toBeUndefined()

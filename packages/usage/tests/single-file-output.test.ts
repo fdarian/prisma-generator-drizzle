@@ -5,8 +5,8 @@ import { createTempHandler } from './utils/temp'
 
 const tempHandler = createTempHandler()
 
-afterAll(() => {
-	tempHandler.cleanup()
+afterAll(async () => {
+	await tempHandler.cleanup()
 })
 
 test('generates drizzle.ts', async () => {
