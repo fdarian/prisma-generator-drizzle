@@ -66,7 +66,7 @@ export const postgresAdapter = createAdapter({
 		},
 		table(name, fields, schema) {
 			const args = `'${name}', { ${fields
-				.map(({ field, func }) => `${field.name}: ${func}`)
+				.map((f) => `${f.field.name}: ${f.func}`)
 				.join(', ')} }`
 			if (isPublicSchema(schema)) {
 				return {

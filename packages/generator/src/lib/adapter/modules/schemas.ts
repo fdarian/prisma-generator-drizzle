@@ -12,12 +12,21 @@ export function generateSchemasModule(
 ) {
 	if (adapter.createSchemasModule == null) return undefined
 
+	const modelModules = [...modules.models, ...(modules.implicitModels ?? [])]
 	const schemas = [
 		...modules.enums.map((m) => m.dbSchema),
-		...[...modules.models, ...(modules.implicitModels ?? [])].map((m) =>
-			m.model.getSchema()
-		),
+		...modelModules.map((m) => m.model.getSchema()),
 	].filter((schema): schema is string => schema != null)
 
-	return adapter.createSchemasModule(schemas)
+	const schemasModule = adapter.createSchemasModule(schemas)
+	if (schemasModule == null) return undefined
+
+	const clash = modelModules.find((m) => m.name === schemasModule.name)
+	if (clash != null) {
+		throw new Error(
+			`Model module "${clash.name}" has the same name as the generated "${schemasModule.name}" module and would be overwritten; rename the model`
+		)
+	}
+
+	return schemasModule
 }

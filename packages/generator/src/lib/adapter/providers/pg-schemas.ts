@@ -27,6 +27,12 @@ export function getNonPublicSchemas(schemas: string[]) {
 			)
 		}
 
+		if (varName === 'pgSchema') {
+			throw new Error(
+				`@@schema("${schema}") maps to the variable "pgSchema", which clashes with the pgSchema import from drizzle-orm/pg-core`
+			)
+		}
+
 		const existing = bySchemaVar.get(varName)
 		if (existing != null) {
 			throw new Error(

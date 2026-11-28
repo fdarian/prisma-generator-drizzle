@@ -57,6 +57,12 @@ describe('getNonPublicSchemas', () => {
 			'does not start with a letter'
 		)
 	})
+
+	it('throws when the variable name clashes with the pgSchema import', () => {
+		expect(() => getNonPublicSchemas(['pg'])).toThrow(
+			'clashes with the pgSchema import'
+		)
+	})
 })
 
 describe('createPgSchemasModule', () => {
@@ -84,7 +90,9 @@ describe('createPgSchemasModule', () => {
 			].join('\n\n')
 		)
 	})
+})
 
+describe('getPgSchemaImport', () => {
 	it('imports relative modules with .js under nodenext', () => {
 		moduleResolution.current = 'nodenext'
 		const result = getPgSchemaImport('auth')

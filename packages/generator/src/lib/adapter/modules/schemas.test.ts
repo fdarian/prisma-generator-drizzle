@@ -13,8 +13,8 @@ function enumIn(dbSchema: string | null) {
 	return { dbSchema } as EnumModule
 }
 
-function modelIn(schema: string | null) {
-	return { model: { getSchema: () => schema } } as ModelModule
+function modelIn(schema: string | null, name = 'model') {
+	return { name, model: { getSchema: () => schema } } as ModelModule
 }
 
 describe('generateSchemasModule', () => {
@@ -50,5 +50,24 @@ describe('generateSchemasModule', () => {
 				models: [modelIn('auth')],
 			})
 		).toBe(undefined)
+	})
+
+	it('throws when a model module would overwrite the schemas module', () => {
+		expect(() =>
+			generateSchemasModule(postgresAdapter, {
+				enums: [],
+				models: [modelIn('auth'), modelIn(null, 'pg-schemas')],
+			})
+		).toThrow('same name as the generated "pg-schemas" module')
+	})
+
+	it('throws when an implicit model module would overwrite the schemas module', () => {
+		expect(() =>
+			generateSchemasModule(postgresAdapter, {
+				enums: [],
+				models: [modelIn('auth')],
+				implicitModels: [modelIn(null, 'pg-schemas')],
+			})
+		).toThrow('same name as the generated "pg-schemas" module')
 	})
 })

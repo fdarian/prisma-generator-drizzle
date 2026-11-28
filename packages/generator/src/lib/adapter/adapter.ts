@@ -23,7 +23,6 @@ export function createAdapter<TName extends string>(impl: {
 		Record<SchemaField['type'] | 'enum', (field: SchemaField) => FieldFunc>
 	>
 	extraModules?: Module[]
-	/** Declares the database schemas (from `@@schema`) that tables and enums are attached to */
 	createSchemasModule?: (schemas: string[]) => Module | undefined
 }) {
 	return {
