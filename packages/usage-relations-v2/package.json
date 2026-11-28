@@ -6,8 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"test": "vitest run",
-		"generate": "prisma generate --config prisma.config.ts",
-		"push": "rm -f prisma/test.db prisma/test.db-journal && prisma db push --config prisma.config.ts && prisma generate --config prisma.config.ts",
+		"generate": "bun prisma generate --config prisma.config.ts",
+		"push": "rm -f prisma/test.db prisma/test.db-journal && bun prisma db push --config prisma.config.ts && bun prisma generate --config prisma.config.ts",
 		"check:type": "tsrs --noEmit"
 	},
 	"dependencies": {
