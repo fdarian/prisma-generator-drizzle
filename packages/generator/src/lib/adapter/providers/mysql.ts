@@ -1,11 +1,17 @@
 import { camelCase, kebabCase } from 'lodash'
 import { getDbName } from '~/lib/prisma-helpers/getDbName'
+import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
 import { getDateMode } from '~/shared/date-mode'
 import { createAdapter } from '../adapter'
-import { createField, isDefaultFunc } from '../fields/createField'
+import {
+	type CreateFieldInput,
+	createField,
+	isDefaultFunc,
+} from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
+import { getNativeType, onTimeDefault, renderColumn } from './native-type'
 
 const coreModule = 'drizzle-orm/mysql-core'
 
@@ -29,6 +35,102 @@ const customBytesModule = createModule({
 		},
 	],
 })
+
+function createColumn(
+	field: SchemaField,
+	builder: string,
+	options?: Parameters<typeof renderColumn>[2],
+	onDefault?: CreateFieldInput['onDefault'],
+	onUpdatedAt?: CreateFieldInput['onUpdatedAt']
+) {
+	return createField({
+		field,
+		imports: [namedImport([builder], coreModule)],
+		func: renderColumn(builder, getDbName(field), options),
+		onDefault,
+		onUpdatedAt,
+	})
+}
+
+// MySQL rejects the `Z` suffix of an ISO string in DATETIME/TIMESTAMP values,
+// and a DATE/TIME column wants only its own part of it
+const stringModeUpdatedAt: Record<string, string> = {
+	datetime: "new Date().toISOString().replace('T', ' ').replace('Z', '')",
+	timestamp: "new Date().toISOString().replace('T', ' ').replace('Z', '')",
+	date: 'new Date().toISOString().slice(0, 10)',
+}
+
+function getUpdatedAtExpression(field: SchemaField, builder: string) {
+	// `time` has no mode: drizzle always types it as a string
+	if (builder === 'time') return 'new Date().toISOString().slice(11, 23)'
+	if (getDateMode(field) === 'string') return stringModeUpdatedAt[builder]
+}
+
+function currentExpression(keyword: string, fsp?: number) {
+	return fsp === undefined ? keyword : `${keyword}(${fsp})`
+}
+
+function createDateTimeColumn(
+	field: SchemaField,
+	builder: string,
+	options: { mode?: string; fsp?: number },
+	nowExpression = currentExpression('CURRENT_TIMESTAMP', options.fsp),
+	onLiteralDefault?: CreateFieldInput['onDefault']
+) {
+	return createColumn(
+		field,
+		builder,
+		options,
+		(field) => {
+			// https://github.com/drizzle-team/drizzle-orm/issues/921
+			if (
+				field.hasDefaultValue &&
+				isDefaultFunc(field) &&
+				field.default.name === 'now'
+			) {
+				return {
+					imports: [namedImport(['sql'], 'drizzle-orm')],
+					code: `.default(sql\`${nowExpression}\`)`,
+				}
+			}
+
+			const literal = onLiteralDefault?.(field)
+			if (literal) return literal
+
+			// Drizzle doesn't respect the timezone, different on postgres
+			// Might be caused by https://github.com/drizzle-team/drizzle-orm/issues/1442
+			if (field.type === 'DateTime') {
+				return {
+					code: `.$defaultFn(() => new Date('${field.default}'))`,
+				}
+			}
+		},
+		() => getUpdatedAtExpression(field, builder)
+	)
+}
+
+const intColumns: Record<string, { builder: string; unsigned?: true }> = {
+	UnsignedInt: { builder: 'int', unsigned: true },
+	SmallInt: { builder: 'smallint' },
+	UnsignedSmallInt: { builder: 'smallint', unsigned: true },
+	MediumInt: { builder: 'mediumint' },
+	UnsignedMediumInt: { builder: 'mediumint', unsigned: true },
+	TinyInt: { builder: 'tinyint' },
+	UnsignedTinyInt: { builder: 'tinyint', unsigned: true },
+	Year: { builder: 'year' },
+}
+
+const onAutoincrementDefault: CreateFieldInput['onDefault'] = (field) => {
+	if (
+		field.isId &&
+		isDefaultFunc(field) &&
+		field.default.name === 'autoincrement'
+	) {
+		return {
+			code: '.autoincrement()',
+		}
+	}
+}
 
 export const mysqlAdapter = createAdapter({
 	name: 'mysql',
@@ -61,22 +163,17 @@ export const mysqlAdapter = createAdapter({
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql/#bigint
 		BigInt(field) {
+			const isUnsigned = getNativeType(field)?.name === 'UnsignedBigInt'
+
 			return createField({
 				field,
 				imports: [namedImport(['bigint'], coreModule)],
 				func: (opts: { mode?: BigIntMode }) =>
-					`bigint('${getDbName(field)}', { mode: '${opts?.mode ?? 'bigint'}' })`,
-				onDefault(field) {
-					if (
-						field.isId &&
-						isDefaultFunc(field) &&
-						field.default.name === 'autoincrement'
-					) {
-						return {
-							code: '.autoincrement()',
-						}
-					}
-				},
+					renderColumn('bigint', getDbName(field), {
+						mode: `'${opts?.mode ?? 'bigint'}'`,
+						unsigned: isUnsigned ? true : undefined,
+					}),
+				onDefault: onAutoincrementDefault,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql/#boolean
@@ -96,72 +193,68 @@ export const mysqlAdapter = createAdapter({
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql#datetime
 		DateTime(field) {
-			return createField({
-				field,
-				imports: [namedImport(['datetime'], coreModule)],
-				func: `datetime('${getDbName(field)}', { mode: '${getDateMode(field)}', fsp: 3 })`, // biome-ignore format: keep one line
-				// MySQL rejects the `Z` suffix of an ISO string in a DATETIME value
-				onUpdatedAt: (field) =>
-					getDateMode(field) === 'string'
-						? "new Date().toISOString().replace('T', ' ').replace('Z', '')"
-						: undefined,
-				// https://github.com/drizzle-team/drizzle-orm/issues/921
-				onDefault: (field) => {
-					if (
-						field.hasDefaultValue &&
-						isDefaultFunc(field) &&
-						field.default.name === 'now'
-					) {
-						return {
-							imports: [namedImport(['sql'], 'drizzle-orm')],
-							code: '.default(sql`CURRENT_TIMESTAMP(3)`)',
-						}
-					}
+			const mode = `'${getDateMode(field)}'`
+			const native = getNativeType(field)
 
-					// Drizzle doesn't respect the timezone, different on postgres
-					// Might be caused by https://github.com/drizzle-team/drizzle-orm/issues/1442
-					if (field.type === 'DateTime') {
-						return {
-							code: `.$defaultFn(() => new Date('${field.default}'))`,
-						}
-					}
-				},
-			})
+			switch (native?.name) {
+				case 'DateTime':
+					return createDateTimeColumn(field, 'datetime', {
+						mode,
+						fsp: native.args[0],
+					})
+				case 'Timestamp':
+					return createDateTimeColumn(field, 'timestamp', {
+						mode,
+						fsp: native.args[0],
+					})
+				case 'Date':
+					// MySQL rejects CURRENT_TIMESTAMP as the default of DATE and TIME columns
+					return createDateTimeColumn(field, 'date', { mode }, '(CURRENT_DATE)')
+				case 'Time':
+					return createDateTimeColumn(
+						field,
+						'time',
+						{ fsp: native.args[0] },
+						`(${currentExpression('CURRENT_TIME', native.args[0])})`,
+						(field) => onTimeDefault(field, false)
+					)
+				default:
+					return createDateTimeColumn(field, 'datetime', { mode, fsp: 3 })
+			}
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql/#decimal
 		Decimal(field) {
-			return createField({
-				field,
-				imports: [namedImport(['decimal'], coreModule)],
-				func: `decimal('${getDbName(field)}', { precision: 65, scale: 30 })`,
-			})
+			const native = getNativeType(field)
+
+			if (native?.name === 'Decimal') {
+				return createColumn(field, 'decimal', {
+					precision: native.args[0],
+					scale: native.args[1],
+				})
+			}
+			return createColumn(field, 'decimal', { precision: 65, scale: 30 })
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql/#float
 		Float(field) {
-			return createField({
+			return createColumn(
 				field,
-				imports: [namedImport(['float'], coreModule)],
-				func: `float('${getDbName(field)}')`,
-			})
+				getNativeType(field)?.name === 'Double' ? 'double' : 'float'
+			)
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql#integer
 		Int(field) {
-			return createField({
+			const native = getNativeType(field)
+			const column = native && intColumns[native.name]
+			if (column == null) {
+				return createColumn(field, 'int', undefined, onAutoincrementDefault)
+			}
+
+			return createColumn(
 				field,
-				imports: [namedImport(['int'], coreModule)],
-				func: `int('${getDbName(field)}')`,
-				onDefault(field) {
-					if (
-						field.isId &&
-						isDefaultFunc(field) &&
-						field.default.name === 'autoincrement'
-					) {
-						return {
-							code: '.autoincrement()',
-						}
-					}
-				},
-			})
+				column.builder,
+				{ unsigned: column.unsigned },
+				onAutoincrementDefault
+			)
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql#json
 		Json(field) {
@@ -176,11 +269,22 @@ export const mysqlAdapter = createAdapter({
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql/#text
 		String(field) {
-			return createField({
-				field,
-				imports: [namedImport(['text'], coreModule)],
-				func: `text('${getDbName(field)}')`,
-			})
+			const native = getNativeType(field)
+
+			switch (native?.name) {
+				case 'VarChar':
+					return createColumn(field, 'varchar', { length: native.args[0] })
+				case 'Char':
+					return createColumn(field, 'char', { length: native.args[0] })
+				case 'TinyText':
+					return createColumn(field, 'tinytext')
+				case 'MediumText':
+					return createColumn(field, 'mediumtext')
+				case 'LongText':
+					return createColumn(field, 'longtext')
+				default:
+					return createColumn(field, 'text')
+			}
 		},
 	},
 	extraModules: [customBytesModule],

@@ -81,6 +81,26 @@ export async function testManyToMany({ db, schema }: TestContext) {
 			})
 		})
 
+		test('implicit m-n or join table with Int ids', async () => {
+			await db.delete(schema.intAuthorsToIntBooks)
+			await db.delete(schema.intAuthors)
+			await db.delete(schema.intBooks)
+			// --
+
+			await db.insert(schema.intAuthors).values({ id: 1 })
+			await db.insert(schema.intBooks).values({ id: 2 })
+			await db.insert(schema.intAuthorsToIntBooks).values({ A: 1, B: 2 })
+
+			const author_result = await db.query.intAuthors.findFirst({
+				where: (IntAuthor, { eq }) => eq(IntAuthor.id, 1),
+				with: { books: true },
+			})
+			expect(author_result).toStrictEqual({
+				id: 1,
+				books: [{ A: 1, B: 2 }],
+			})
+		})
+
 		// Prisma assigns A/B by model name order (MappedArticle < MappedTag),
 		// which is the reverse of the mapped table name order (a_tags < z_articles)
 		test('implicit m-n or join table with @@map models', async () => {

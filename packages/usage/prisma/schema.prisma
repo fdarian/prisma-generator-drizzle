@@ -56,6 +56,17 @@ model MappedTag {
   @@map("a_tags")
 }
 
+// Join table columns take the type of the ids they reference
+model IntAuthor {
+  id    Int       @id
+  books IntBook[]
+}
+
+model IntBook {
+  id      Int         @id
+  authors IntAuthor[]
+}
+
 // #endregion
 
 // #region Ignore
@@ -247,6 +258,56 @@ model Disambiguating_Currency {
   code      String                   @id @unique
   countries Disambiguating_Country[]
 }
+
+// #endregion
+
+// #region Native types
+// Lines prefixed with `// +mysql ` are only uncommented in the mysql schema
+
+// start -sqlite
+model NativeType {
+  id String @id
+
+  date        DateTime @db.Date
+  time        DateTime @db.Time
+  timePrecise DateTime @db.Time(3)
+  timestamp   DateTime @db.Timestamp(6)
+  varchar     String   @db.VarChar(255)
+  smallInt    Int      @db.SmallInt
+  decimal     Decimal  @db.Decimal(10, 2)
+  json        Json     @db.Json
+
+  // MySQL rejects CURRENT_TIMESTAMP as the default of DATE and TIME columns, so Prisma can't create these
+  dateNow     DateTime @default(now()) @db.Date // -mysql
+  timeNow     DateTime @default(now()) @db.Time(2) // -mysql
+  timestamptz DateTime @db.Timestamptz(6) // -mysql
+  char        String   @db.Char(8) // -mysql
+  uuid        String   @db.Uuid // -mysql
+  inet        String   @db.Inet // -mysql
+  real        Float    @db.Real // -mysql
+  varcharList String[] @db.VarChar(255) // -mysql
+
+  // +mysql datetime6     DateTime @db.DateTime(6)
+  // +mysql unsignedInt   Int      @db.UnsignedInt
+  // +mysql tinyInt       Int      @db.TinyInt
+  // +mysql year          Int      @db.Year
+  // +mysql mediumText    String   @db.MediumText
+  // +mysql double        Float    @db.Double
+}
+
+// start -mysql
+model UuidAuthor {
+  id    String     @id @db.Uuid
+  books UuidBook[]
+}
+
+model UuidBook {
+  id      String       @id @db.Uuid
+  authors UuidAuthor[]
+}
+// end -mysql
+
+// end -sqlite
 
 // #endregion
 

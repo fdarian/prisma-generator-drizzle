@@ -7,6 +7,7 @@ import { testFieldCustomization } from './shared/testFieldCustomization'
 import { testFields } from './shared/testFields'
 import { testIgnoreDecorator } from './shared/testIgnoreDecorator'
 import { testManyToMany } from './shared/testManyToMany'
+import { testNativeTypes } from './shared/testNativeTypes'
 import { testOneToMany } from './shared/testOneToMany'
 import { testOneToOne } from './shared/testOneToOne'
 import { testSelfReferring } from './shared/testSelfReferring'
@@ -26,3 +27,4 @@ testDefault(ctx)
 testFieldCustomization(ctx)
 testEnumMap(ctx)
 testUpdatedAt(ctx)
+testNativeTypes(ctx)

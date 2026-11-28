@@ -100,3 +100,38 @@ describe('postgres enum declaration', () => {
 		])
 	})
 })
+
+describe('postgres list fields', () => {
+	function bigIntField(documentation?: string) {
+		return {
+			name: 'ids',
+			dbName: null,
+			documentation,
+			isId: false,
+			isList: true,
+			isRequired: true,
+			hasDefaultValue: false,
+		} as unknown as SchemaField
+	}
+
+	function createBigInt(field: SchemaField) {
+		const bigInt = postgresAdapter.fields.BigInt
+		if (bigInt == null) throw new Error('postgres adapter has no BigInt field')
+		return bigInt(field)
+	}
+
+	it('appends .array() to a BigInt list', () => {
+		expect(createBigInt(bigIntField()).func).toBe(
+			"bigint('ids', { mode: 'bigint' }).array().notNull()"
+		)
+	})
+
+	it('honors the field mode on a BigInt list', () => {
+		const field = bigIntField(
+			'drizzle.custom { "field": { "mode": "number" } }'
+		)
+		expect(createBigInt(field).func).toBe(
+			"bigint('ids', { mode: 'number' }).array().notNull()"
+		)
+	})
+})

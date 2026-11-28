@@ -8,6 +8,7 @@ const schema = (await readFile(BASE_PATH, 'utf-8'))
 	.replace('postgresql', 'mysql')
 	.replace(/(\/\/ start -mysql\n)[\s\S]*?(\n\/\/ end -mysql)/g, '')
 	.replace(/^.*-mysql.*/gm, '')
+	.replace(/^(\s*)\/\/ \+mysql /gm, '$1')
 
 await mkdir(dirname(TARGET_PATH), { recursive: true })
 await writeFile(TARGET_PATH, schema)
