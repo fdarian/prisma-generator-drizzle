@@ -10,6 +10,8 @@ export type IndexFeatures = {
 	method: boolean
 	/** `primaryKey({ name })` */
 	primaryKeyName: boolean
+	/** What Prisma creates on the (A, B) columns of an implicit join table */
+	implicitJoinTableKey: 'primaryKey' | 'unique'
 }
 
 type DeclarationFunc = { imports: ImportValue[]; func: string }

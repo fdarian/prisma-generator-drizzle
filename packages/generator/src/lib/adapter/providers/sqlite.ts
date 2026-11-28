@@ -58,7 +58,12 @@ export const sqliteAdapter = createAdapter({
 	name: 'sqlite',
 	coreModule,
 	maxIdentifierLength: 10000,
-	indexFeatures: { sortOrder: false, method: false, primaryKeyName: false },
+	indexFeatures: {
+		sortOrder: false,
+		method: false,
+		primaryKeyName: false,
+		implicitJoinTableKey: 'unique',
+	},
 	getDeclarationFunc: {
 		enum(_, __) {
 			throw new Error('Prisma does not support enums')

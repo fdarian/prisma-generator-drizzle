@@ -27,6 +27,22 @@ export function getDefaultPrimaryKeyName(args: {
 	tableName: string
 	maxIdentifierLength: number
 }) {
-	const suffix = '_pkey'
-	return `${truncateBytes(args.tableName, args.maxIdentifierLength - suffix.length)}${suffix}`
+	return getTableSuffixedName({ ...args, suffix: '_pkey' })
+}
+
+/** Names of the constraints Prisma creates on implicit many-to-many join tables */
+export function getImplicitJoinTableConstraintName(args: {
+	tableName: string
+	suffix: '_AB_pkey' | '_AB_unique' | '_B_index'
+	maxIdentifierLength: number
+}) {
+	return getTableSuffixedName(args)
+}
+
+function getTableSuffixedName(args: {
+	tableName: string
+	suffix: string
+	maxIdentifierLength: number
+}) {
+	return `${truncateBytes(args.tableName, args.maxIdentifierLength - args.suffix.length)}${args.suffix}`
 }

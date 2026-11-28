@@ -4,6 +4,7 @@ import { logger } from '../logger'
 import {
 	getDefaultConstraintName,
 	getDefaultPrimaryKeyName,
+	getImplicitJoinTableConstraintName,
 } from './constraint-names'
 import { isIgnoredField } from './foreign-keys'
 import { getDbName } from './getDbName'
@@ -35,6 +36,10 @@ export function resolveIndexes(
 	model: SchemaModel,
 	adapter: IndexAdapter
 ): ResolvedIndex[] {
+	if (model.isImplicitJoinTable) {
+		return resolveImplicitJoinTableIndexes(model, adapter)
+	}
+
 	const resolved = schema.dmmf.datamodel.indexes.flatMap((index) => {
 		if (index.model !== model.dmmf.name) return []
 		const result = resolveIndex(schema, model, adapter, index)
@@ -45,6 +50,54 @@ export function resolveIndexes(
 		...resolved.filter((index) => index.kind === 'primaryKey'),
 		...resolved.filter((index) => index.kind === 'unique'),
 		...resolved.filter((index) => index.kind === 'index'),
+	]
+}
+
+/** The key on (A, B) and the index on B, as created by Prisma's schema calculator */
+export function resolveImplicitJoinTableIndexes(
+	model: SchemaModel,
+	adapter: IndexAdapter
+): ResolvedIndex[] {
+	const tableName = model.getDbName()
+	const maxIdentifierLength = adapter.maxIdentifierLength
+	const key = adapter.indexFeatures.implicitJoinTableKey
+	const columnsAB = [
+		{ key: 'A', desc: false },
+		{ key: 'B', desc: false },
+	]
+
+	return [
+		key === 'primaryKey'
+			? {
+					kind: 'primaryKey',
+					name: getImplicitJoinTableConstraintName({
+						tableName,
+						suffix: '_AB_pkey',
+						maxIdentifierLength,
+					}),
+					columns: columnsAB,
+					method: undefined,
+				}
+			: {
+					kind: 'unique',
+					name: getImplicitJoinTableConstraintName({
+						tableName,
+						suffix: '_AB_unique',
+						maxIdentifierLength,
+					}),
+					columns: columnsAB,
+					method: undefined,
+				},
+		{
+			kind: 'index',
+			name: getImplicitJoinTableConstraintName({
+				tableName,
+				suffix: '_B_index',
+				maxIdentifierLength,
+			}),
+			columns: [{ key: 'B', desc: false }],
+			method: undefined,
+		},
 	]
 }
 

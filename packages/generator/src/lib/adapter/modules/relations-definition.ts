@@ -30,7 +30,11 @@ export function generateRelationsDefinitionModules(
 
 	return {
 		implicitModels: declaration.implicit.map((dmmfModel) =>
-			createModelModule(adapter, schema, createSchemaModel({ dmmfModel }))
+			createModelModule(
+				adapter,
+				schema,
+				createSchemaModel({ dmmfModel, isImplicitJoinTable: true })
+			)
 		),
 		relations: createModule({
 			name: RELATIONS_MODULE_NAME,

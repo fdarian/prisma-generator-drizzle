@@ -484,3 +484,75 @@ describe('generateTableDeclaration constraints', () => {
 		expect(output.code).not.toContain('ExtraConfigValue')
 	})
 })
+
+describe('implicit join table', () => {
+	function joinTable(dbName: string) {
+		const dmmf = {
+			...dmmfModel('PostToTag', [scalar('A'), scalar('B')], dbName),
+			primaryKey: { name: null, fields: ['A', 'B'] },
+		}
+		const schema = createSchema({
+			astSchema: getSchema(''),
+			dmmf: {
+				datamodel: { models: [dmmf], enums: [], types: [], indexes: [] },
+			},
+		})
+		return {
+			schema,
+			model: createSchemaModel({ dmmfModel: dmmf, isImplicitJoinTable: true }),
+		}
+	}
+
+	test.each([
+		[
+			'postgres',
+			() => postgresAdapter,
+			'PgTableExtraConfigValue[] => [primaryKey({ name: "_PostToTag_AB_pkey", columns: [table.A, table.B] }), index("_PostToTag_B_index").on(table.B)]',
+		],
+		[
+			'mysql',
+			() => mysqlAdapter,
+			'MySqlTableExtraConfigValue[] => [uniqueIndex("_PostToTag_AB_unique").on(table.A, table.B), index("_PostToTag_B_index").on(table.B)]',
+		],
+		[
+			'sqlite',
+			() => sqliteAdapter,
+			'SQLiteTableExtraConfigValue[] => [uniqueIndex("_PostToTag_AB_unique").on(table.A, table.B), index("_PostToTag_B_index").on(table.B)]',
+		],
+	])('%s emits what Prisma creates', (_, getAdapter, expected) => {
+		const { schema, model } = joinTable('_PostToTag')
+		const output = generateTableDeclaration(getAdapter(), schema, model)
+		expect(output.code).toContain(expected)
+	})
+
+	test('does not read the primaryKey of the synthetic model', () => {
+		const { schema, model } = joinTable('_PostToTag')
+		expect(
+			resolveIndexes(schema, model, mysqlAdapter).map((i) => i.kind)
+		).toEqual(['unique', 'index'])
+	})
+
+	test.each([
+		['postgres', () => postgresAdapter, 63],
+		['mysql', () => mysqlAdapter, 64],
+	])(
+		'truncates the table name at the %s limit and keeps the suffix',
+		(_, getAdapter, limit) => {
+			const { schema, model } = joinTable(`_${'r'.repeat(80)}`)
+			const names = resolveIndexes(schema, model, getAdapter()).map(
+				(i) => i.name
+			)
+			const keySuffix =
+				getAdapter().indexFeatures.implicitJoinTableKey === 'primaryKey'
+					? '_AB_pkey'
+					: '_AB_unique'
+			expect(names).toEqual([
+				`_${'r'.repeat(limit - keySuffix.length - 1)}${keySuffix}`,
+				`_${'r'.repeat(limit - '_B_index'.length - 1)}_B_index`,
+			])
+			for (const name of names) {
+				expect(new TextEncoder().encode(name ?? '').length).toBe(limit)
+			}
+		}
+	)
+})

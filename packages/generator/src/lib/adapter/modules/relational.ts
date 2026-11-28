@@ -70,7 +70,11 @@ export function generateImplicitModules(
 	const models = collectImplicitJoinModels(
 		relationalModules.flatMap((module) => module.implicit)
 	).map((dmmfModel) => {
-		return createModelModule(adapter, schema, createSchemaModel({ dmmfModel }))
+		return createModelModule(
+			adapter,
+			schema,
+			createSchemaModel({ dmmfModel, isImplicitJoinTable: true })
+		)
 	})
 
 	const relational = models.flatMap((modelModule) => {
