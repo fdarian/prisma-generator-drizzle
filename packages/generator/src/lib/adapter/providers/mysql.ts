@@ -1,5 +1,4 @@
 import { camelCase, kebabCase } from 'lodash'
-import { getDbName } from '~/lib/prisma-helpers/getDbName'
 import type { SchemaField } from '~/lib/prisma-helpers/schema/schema-field'
 import { namedImport } from '~/lib/syntaxes/imports'
 import { createModule } from '~/lib/syntaxes/module'
@@ -47,7 +46,7 @@ function createColumn(
 	return createField({
 		field,
 		imports: [namedImport([builder], coreModule)],
-		func: renderColumn(builder, getDbName(field), options),
+		func: renderColumn(builder, field.getDbName(), options),
 		onDefault,
 		onUpdatedAt,
 	})
@@ -169,7 +168,7 @@ export const mysqlAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport([func], `./${kebabCase(field.type)}-enum`)],
-				func: `${func}('${getDbName(field)}')`,
+				func: `${func}('${field.getDbName()}')`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql/#bigint
@@ -180,7 +179,7 @@ export const mysqlAdapter = createAdapter({
 				field,
 				imports: [namedImport(['bigint'], coreModule)],
 				func: (opts: { mode?: BigIntMode }) =>
-					renderColumn('bigint', getDbName(field), {
+					renderColumn('bigint', field.getDbName(), {
 						mode: `'${opts?.mode ?? 'bigint'}'`,
 						unsigned: isUnsigned ? true : undefined,
 					}),
@@ -192,14 +191,14 @@ export const mysqlAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['boolean'], coreModule)],
-				func: `boolean('${getDbName(field)}')`,
+				func: `boolean('${field.getDbName()}')`,
 			})
 		},
 		Bytes(field) {
 			return createField({
 				field,
 				imports: [namedImport(['customBytes'], `./${customBytesModule.name}`)],
-				func: `customBytes('${getDbName(field)}')`,
+				func: `customBytes('${field.getDbName()}')`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/mysql#datetime
@@ -272,7 +271,7 @@ export const mysqlAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['json'], coreModule)],
-				func: `json('${getDbName(field)}')`,
+				func: `json('${field.getDbName()}')`,
 				onDefault: (field) => ({
 					code: `.$defaultFn(() => (${field.default}))`,
 				}),

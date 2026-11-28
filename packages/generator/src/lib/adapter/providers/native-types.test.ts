@@ -38,6 +38,7 @@ type FieldInput = {
 function makeField(input: FieldInput) {
 	return {
 		name: 'col',
+		getDbName: () => 'col',
 		kind: 'scalar',
 		type: input.type,
 		nativeType: input.nativeType ?? null,
