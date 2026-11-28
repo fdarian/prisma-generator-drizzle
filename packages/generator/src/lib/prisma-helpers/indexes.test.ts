@@ -301,8 +301,8 @@ describe('index arguments', () => {
 			}),
 		])
 		expect(resolved.columns).toEqual([
-			{ key: 'title', desc: true },
-			{ key: 'slug', desc: false },
+			{ key: 'title', desc: true, operatorClass: undefined },
+			{ key: 'slug', desc: false, operatorClass: undefined },
 		])
 		expect(resolved.method).toBe('hash')
 		expect(warn).not.toHaveBeenCalled()
@@ -324,7 +324,9 @@ describe('index arguments', () => {
 				dbName: 'title_desc',
 			}),
 		])
-		expect(resolved.columns).toEqual([{ key: 'title', desc: false }])
+		expect(resolved.columns).toEqual([
+			{ key: 'title', desc: false, operatorClass: undefined },
+		])
 		expect(warn).toHaveBeenCalledTimes(1)
 		expect(warn.mock.calls[0][0]).toBe(
 			'Skipped descending sort on title of index "title_desc" of Post, Drizzle cannot express it'
