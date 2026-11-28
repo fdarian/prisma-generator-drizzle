@@ -4,6 +4,7 @@ import { createModule } from '~/lib/syntaxes/module'
 import { getDateMode } from '~/shared/date-mode'
 import { createAdapter } from '../adapter'
 import { createField, isDefaultFunc } from '../fields/createField'
+import { createTableExtraConfig } from '../tableExtraConfig'
 
 const coreModule = 'drizzle-orm/sqlite-core'
 
@@ -56,16 +57,26 @@ const customBigIntModule = createModule({
 
 export const sqliteAdapter = createAdapter({
 	name: 'sqlite',
+	coreModule,
+	maxIdentifierLength: 10000,
 	getDeclarationFunc: {
 		enum(_, __) {
 			throw new Error('Prisma does not support enums')
 		},
-		table(name, fields) {
+		table(name, fields, _schema, extraConfigEntries) {
+			const extraConfig = createTableExtraConfig({
+				coreModule,
+				extraConfigValueType: 'SQLiteTableExtraConfigValue',
+				entries: extraConfigEntries,
+			})
 			return {
-				imports: [namedImport(['sqliteTable'], coreModule)],
+				imports: [
+					namedImport(['sqliteTable'], coreModule),
+					...extraConfig.imports,
+				],
 				func: `sqliteTable('${name}', { ${fields
 					.map(({ field, func }) => `${field.name}: ${func}`)
-					.join(', ')} })`,
+					.join(', ')} }${extraConfig.code})`,
 			}
 		},
 	},

@@ -11,6 +11,7 @@ import {
 	isDefaultFunc,
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
+import { createTableExtraConfig } from '../tableExtraConfig'
 import { getNativeType, onTimeDefault, renderColumn } from './native-type'
 
 const coreModule = 'drizzle-orm/mysql-core'
@@ -134,6 +135,8 @@ const onAutoincrementDefault: CreateFieldInput['onDefault'] = (field) => {
 
 export const mysqlAdapter = createAdapter({
 	name: 'mysql',
+	coreModule,
+	maxIdentifierLength: 64,
 	getDeclarationFunc: {
 		enum(_, values) {
 			return {
@@ -143,12 +146,20 @@ export const mysqlAdapter = createAdapter({
 					.join(', ')}])`,
 			}
 		},
-		table(name, fields) {
+		table(name, fields, _schema, extraConfigEntries) {
+			const extraConfig = createTableExtraConfig({
+				coreModule,
+				extraConfigValueType: 'MySqlTableExtraConfigValue',
+				entries: extraConfigEntries,
+			})
 			return {
-				imports: [namedImport(['mysqlTable'], coreModule)],
+				imports: [
+					namedImport(['mysqlTable'], coreModule),
+					...extraConfig.imports,
+				],
 				func: `mysqlTable('${name}', { ${fields
 					.map(({ field, func }) => `${field.name}: ${func}`)
-					.join(', ')} })`,
+					.join(', ')} }${extraConfig.code})`,
 			}
 		},
 	},

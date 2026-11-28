@@ -309,6 +309,147 @@ model UuidBook {
 
 // end -sqlite
 
+// #region Foreign keys
+
+// With @@map on the models and @map on the foreign key columns
+model ForeignKey_Author {
+  id       String               @id
+  articles ForeignKey_Article[] @relation("ForeignKey_Article_author")
+  reviews  ForeignKey_Article[] @relation("ForeignKey_Article_reviewer") // -sqlite
+
+  @@map("fk_authors")
+}
+
+model ForeignKey_Article {
+  id String @id
+
+  // Explicit referential actions
+  authorId String            @map("author_id")
+  author   ForeignKey_Author @relation("ForeignKey_Article_author", fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // Optional with a named constraint (SQLite has no named foreign keys)
+  reviewerId String?            @map("reviewer_id") // -sqlite
+  reviewer   ForeignKey_Author? @relation("ForeignKey_Article_reviewer", fields: [reviewerId], references: [id], map: "fk_articles_reviewer_custom_fkey") // -sqlite
+
+  @@map("fk_articles")
+}
+
+// Composite foreign key referencing a composite primary key
+model ForeignKey_Region {
+  country String
+  code    String
+  offices ForeignKey_Office[]
+
+  @@id([country, code])
+  @@map("fk_regions")
+}
+
+model ForeignKey_Office {
+  id          String            @id
+  countryCode String            @map("country_code")
+  regionCode  String            @map("region_code")
+  region      ForeignKey_Region @relation(fields: [countryCode, regionCode], references: [country, code])
+
+  @@map("fk_offices")
+}
+
+// Optional composite foreign key referencing a composite unique
+model ForeignKey_Warehouse {
+  id      String             @id
+  zone    String
+  aisle   String
+  shelves ForeignKey_Shelf[]
+
+  @@unique([zone, aisle])
+  @@map("fk_warehouses")
+}
+
+model ForeignKey_Shelf {
+  id        String                @id
+  zone      String?
+  aisle     String?
+  warehouse ForeignKey_Warehouse? @relation(fields: [zone, aisle], references: [zone, aisle])
+
+  @@map("fk_shelves")
+}
+
+// Single-column foreign keys pointing at each other: lazy callbacks across a module import cycle
+model ForeignKey_Chicken {
+  id      String             @id
+  eggId   String?
+  egg     ForeignKey_Egg?    @relation("ForeignKey_Chicken_egg", fields: [eggId], references: [id])
+  layedBy ForeignKey_Egg[]   @relation("ForeignKey_Egg_chicken")
+
+  @@map("fk_chickens")
+}
+
+model ForeignKey_Egg {
+  id        String               @id
+  chickenId String?
+  chicken   ForeignKey_Chicken?  @relation("ForeignKey_Egg_chicken", fields: [chickenId], references: [id])
+  hatchedBy ForeignKey_Chicken[] @relation("ForeignKey_Chicken_egg")
+
+  @@map("fk_eggs")
+}
+
+// Composite foreign keys pointing at each other: the `foreignKey()` config callbacks reference each other
+model ForeignKey_Host {
+  a      String
+  b      String
+  guestA String?
+  guestB String?
+  guest  ForeignKey_Guest?  @relation("ForeignKey_Host_guest", fields: [guestA, guestB], references: [a, b])
+  hosted ForeignKey_Guest[] @relation("ForeignKey_Guest_host")
+
+  @@id([a, b])
+  @@map("fk_hosts")
+}
+
+model ForeignKey_Guest {
+  a     String
+  b     String
+  hostA String?
+  hostB String?
+  host  ForeignKey_Host?   @relation("ForeignKey_Guest_host", fields: [hostA, hostB], references: [a, b])
+  hosts ForeignKey_Host[]  @relation("ForeignKey_Host_guest")
+
+  @@id([a, b])
+  @@map("fk_guests")
+}
+
+// Single-column target that is a @unique rather than the @id
+model ForeignKey_Account {
+  id       String               @id
+  email    String               @unique
+  sessions ForeignKey_Session[]
+
+  @@map("fk_accounts")
+}
+
+model ForeignKey_Session {
+  id           String             @id
+  accountEmail String             @map("account_email")
+  account      ForeignKey_Account @relation(fields: [accountEmail], references: [email])
+
+  @@map("fk_sessions")
+}
+
+// The default constraint name is longer than the identifier limit, so Prisma truncates it
+model ForeignKey_LongOwner {
+  id    String                @id
+  names ForeignKey_LongName[]
+
+  @@map("fk_long_owners")
+}
+
+model ForeignKey_LongName {
+  id      String               @id
+  ownerId String               @map("owner_column_with_a_long_name")
+  owner   ForeignKey_LongOwner @relation(fields: [ownerId], references: [id])
+
+  @@map("fk_a_rather_long_table_name_for_truncation")
+}
+
 // #endregion
 
 model FieldCustomization {

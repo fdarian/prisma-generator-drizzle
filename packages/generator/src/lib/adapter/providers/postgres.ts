@@ -11,6 +11,7 @@ import {
 	isDefaultFunc,
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
+import { createTableExtraConfig } from '../tableExtraConfig'
 import { getNativeType, onTimeDefault, renderColumn } from './native-type'
 import {
 	createPgSchemasModule,
@@ -92,6 +93,8 @@ function getUpdatedAtExpression(
 
 export const postgresAdapter = createAdapter({
 	name: 'postgres',
+	coreModule,
+	maxIdentifierLength: 63,
 	getDeclarationFunc: {
 		enum(name, values, schema) {
 			const args = `'${name}', [${values.map((v) => `'${v}'`).join(', ')}]`
@@ -106,18 +109,26 @@ export const postgresAdapter = createAdapter({
 				func: `${getPgSchemaVarName(schema)}.enum(${args})`,
 			}
 		},
-		table(name, fields, schema) {
+		table(name, fields, schema, extraConfigEntries) {
+			const extraConfig = createTableExtraConfig({
+				coreModule,
+				extraConfigValueType: 'PgTableExtraConfigValue',
+				entries: extraConfigEntries,
+			})
 			const args = `'${name}', { ${fields
 				.map((f) => `${f.field.name}: ${f.func}`)
-				.join(', ')} }`
+				.join(', ')} }${extraConfig.code}`
 			if (isPublicSchema(schema)) {
 				return {
-					imports: [namedImport(['pgTable'], coreModule)],
+					imports: [
+						namedImport(['pgTable'], coreModule),
+						...extraConfig.imports,
+					],
 					func: `pgTable(${args})`,
 				}
 			}
 			return {
-				imports: [getPgSchemaImport(schema)],
+				imports: [getPgSchemaImport(schema), ...extraConfig.imports],
 				func: `${getPgSchemaVarName(schema)}.table(${args})`,
 			}
 		},

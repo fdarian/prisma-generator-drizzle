@@ -34,8 +34,10 @@ export function createSchemaField(args: {
 		isRequired: dmmfField.isRequired,
 		isUpdatedAt: dmmfField.isUpdatedAt,
 		nativeType: dmmfField.nativeType,
+		/** `getDbName(field)` of the providers reads this, without it `@map` is ignored */
+		dbName: dmmfField.dbName,
 		getDbName() {
-			return dmmfField?.dbName ?? dmmfField?.name
+			return dmmfField.dbName ?? dmmfField.name
 		},
 	} as const
 
@@ -51,6 +53,8 @@ export function createSchemaField(args: {
 			relationName: dmmfField.relationName,
 			relationFromFields: dmmfField.relationFromFields,
 			relationToFields: dmmfField.relationToFields,
+			relationOnDelete: dmmfField.relationOnDelete,
+			relationOnUpdate: dmmfField.relationOnUpdate,
 		} as const
 	}
 

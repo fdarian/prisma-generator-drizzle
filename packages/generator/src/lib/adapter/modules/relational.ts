@@ -71,7 +71,11 @@ export function generateImplicitModules(
 		.flatMap((module) => module.implicit)
 		.reduce(deduplicateModels, [] as DMMF.Model[])
 		.map((dmmfModel) => {
-			return createModelModule(adapter, createSchemaModel({ dmmfModel }))
+			return createModelModule(
+				adapter,
+				schema,
+				createSchemaModel({ dmmfModel })
+			)
 		})
 
 	const relational = models.flatMap((modelModule) => {

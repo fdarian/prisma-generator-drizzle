@@ -476,6 +476,16 @@ Implicit many-to-many join tables follow Prisma and live in the schema of the mo
 
 MySQL and SQLite don't support `schemas` / `@@schema` in Prisma, so there is nothing to generate for them.
 
+### Relations and foreign keys
+
+Each relation that has `fields` and `references` becomes a foreign key constraint on the generated table, so `drizzle-kit` migrations include the same constraints Prisma creates:
+
+- Foreign keys are emitted as `foreignKey({ ... })` in the table's third argument, named like Prisma does (`{table}_{columns}_fkey`, truncated to the database's identifier limit; `@relation(map: "...")` overrides it), so `drizzle-kit` matches a database Prisma created.
+- A foreign key is only emitted when it references a single-column `@id` for now. References to a `@unique`, `@@unique` or composite `@@id` are skipped until those constraints are generated.
+- `onDelete` and `onUpdate` follow the schema. When they're not set, Prisma's defaults are used: `onDelete` is `restrict` for required relations and `set null` for optional ones, and `onUpdate` is `cascade`.
+- Implicit many-to-many join tables get `cascade` foreign keys on both columns. They're only generated when `relationalQuery` is enabled.
+- With `relationMode = "prisma"` in the datasource, no foreign keys are generated, matching Prisma.
+
 ## Examples
 1. [with-drizzle-prisma](./examples/with-drizzle-prisma/): using drizzle's prisma extension
 

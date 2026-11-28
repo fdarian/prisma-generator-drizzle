@@ -7,6 +7,9 @@ type DeclarationFunc = { imports: ImportValue[]; func: string }
 
 export function createAdapter<TName extends string>(impl: {
 	name: TName
+	coreModule: string
+	/** Identifier length limit of the database, constraint names are truncated to it */
+	maxIdentifierLength: number
 	getDeclarationFunc: {
 		enum: (
 			name: string,
@@ -16,7 +19,8 @@ export function createAdapter<TName extends string>(impl: {
 		table: (
 			name: string,
 			fields: FieldFunc[],
-			schema: string | null
+			schema: string | null,
+			extraConfigEntries: string[]
 		) => DeclarationFunc
 	}
 	fields: Partial<
