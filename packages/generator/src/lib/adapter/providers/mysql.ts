@@ -11,8 +11,8 @@ import {
 	isDefaultFunc,
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
-import { getNativeType, onTimeDefault, renderColumn } from './native-type'
 import { createTableExtraConfig } from '../tableExtraConfig'
+import { getNativeType, onTimeDefault, renderColumn } from './native-type'
 
 const coreModule = 'drizzle-orm/mysql-core'
 

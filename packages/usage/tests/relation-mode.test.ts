@@ -66,13 +66,12 @@ async function generate(relationMode: string | undefined) {
 test('the same schema emits foreign keys without relationMode', async () => {
 	const output = await generate(undefined)
 	expect(output).toContain("pgTable('Post'")
-	expect(output).toContain('.references(')
-	expect(output).toContain('foreignKey(')
+	expect(output).toContain('foreignKey({ name: "Post_authorId_fkey"')
+	expect(output).toContain('name: "post_reviewer"')
 })
 
 test('relationMode = "prisma" emits no foreign keys', async () => {
 	const output = await generate('prisma')
 	expect(output).toContain("pgTable('Post'")
-	expect(output).not.toContain('.references(')
 	expect(output).not.toContain('foreignKey(')
 })

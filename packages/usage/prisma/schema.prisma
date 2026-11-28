@@ -373,7 +373,7 @@ model ForeignKey_Shelf {
   @@map("fk_shelves")
 }
 
-// Single-column foreign keys pointing at each other: lazy `.references()` across a module import cycle
+// Single-column foreign keys pointing at each other: lazy callbacks across a module import cycle
 model ForeignKey_Chicken {
   id      String             @id
   eggId   String?
@@ -415,6 +415,39 @@ model ForeignKey_Guest {
 
   @@id([a, b])
   @@map("fk_guests")
+}
+
+// Single-column target that is a @unique rather than the @id
+model ForeignKey_Account {
+  id       String               @id
+  email    String               @unique
+  sessions ForeignKey_Session[]
+
+  @@map("fk_accounts")
+}
+
+model ForeignKey_Session {
+  id           String             @id
+  accountEmail String             @map("account_email")
+  account      ForeignKey_Account @relation(fields: [accountEmail], references: [email])
+
+  @@map("fk_sessions")
+}
+
+// The default constraint name is longer than the identifier limit, so Prisma truncates it
+model ForeignKey_LongOwner {
+  id    String                @id
+  names ForeignKey_LongName[]
+
+  @@map("fk_long_owners")
+}
+
+model ForeignKey_LongName {
+  id      String               @id
+  ownerId String               @map("owner_column_with_a_long_name")
+  owner   ForeignKey_LongOwner @relation(fields: [ownerId], references: [id])
+
+  @@map("fk_a_rather_long_table_name_for_truncation")
 }
 
 // #endregion

@@ -11,6 +11,7 @@ import {
 	isDefaultFunc,
 } from '../fields/createField'
 import type { BigIntMode } from '../fields/directives/custom'
+import { createTableExtraConfig } from '../tableExtraConfig'
 import { getNativeType, onTimeDefault, renderColumn } from './native-type'
 import {
 	createPgSchemasModule,
@@ -18,7 +19,6 @@ import {
 	getPgSchemaVarName,
 	isPublicSchema,
 } from './pg-schemas'
-import { createTableExtraConfig } from '../tableExtraConfig'
 
 const coreModule = 'drizzle-orm/pg-core'
 
