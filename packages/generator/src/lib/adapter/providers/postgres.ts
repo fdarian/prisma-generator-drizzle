@@ -94,7 +94,7 @@ function getUpdatedAtExpression(
 export const postgresAdapter = createAdapter({
 	name: 'postgres',
 	coreModule,
-	anyColumnType: 'AnyPgColumn',
+	maxIdentifierLength: 63,
 	getDeclarationFunc: {
 		enum(name, values, schema) {
 			const args = `'${name}', [${values.map((v) => `'${v}'`).join(', ')}]`
@@ -120,7 +120,10 @@ export const postgresAdapter = createAdapter({
 				.join(', ')} }${extraConfig.code}`
 			if (isPublicSchema(schema)) {
 				return {
-					imports: [namedImport(['pgTable'], coreModule), ...extraConfig.imports],
+					imports: [
+						namedImport(['pgTable'], coreModule),
+						...extraConfig.imports,
+					],
 					func: `pgTable(${args})`,
 				}
 			}

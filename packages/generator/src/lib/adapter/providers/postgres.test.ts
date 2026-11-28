@@ -50,7 +50,8 @@ describe('postgres table declaration', () => {
 		const result = postgresAdapter.getDeclarationFunc.table(
 			'User',
 			fields,
-			schema
+			schema,
+			[]
 		)
 
 		expect(result.func).toBe("pgTable('User', { id: text('id') })")
@@ -63,7 +64,8 @@ describe('postgres table declaration', () => {
 		const result = postgresAdapter.getDeclarationFunc.table(
 			'User',
 			fields,
-			'auth'
+			'auth',
+			[]
 		)
 
 		expect(result.func).toBe("authSchema.table('User', { id: text('id') })")

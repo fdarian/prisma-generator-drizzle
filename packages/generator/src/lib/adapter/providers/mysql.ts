@@ -136,7 +136,7 @@ const onAutoincrementDefault: CreateFieldInput['onDefault'] = (field) => {
 export const mysqlAdapter = createAdapter({
 	name: 'mysql',
 	coreModule,
-	anyColumnType: 'AnyMySqlColumn',
+	maxIdentifierLength: 64,
 	getDeclarationFunc: {
 		enum(_, values) {
 			return {
