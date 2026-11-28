@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
+import path from 'node:path'
 import { createTempHandler } from './utils/temp'
 
 const tempHandler = createTempHandler()
@@ -56,6 +57,60 @@ test('generates ./sub/multi/drizzle.ts', async () => {
 	)
 
 	expect(fs.existsSync(`.temp/${temp.name}/sub/multi/drizzle.ts`)).toBe(true)
+})
+
+test('exports a schema containing tables and relations', async () => {
+	const temp = await tempHandler.prepare()
+	fs.writeFileSync(
+		`.temp/${temp.name}/schema.prisma`,
+		`datasource db {
+			provider = "postgresql"
+		}
+
+		generator drizzle {
+			provider = "prisma-generator-drizzle"
+			output = "drizzle.ts"
+		}
+
+		model User {
+			id Int @id
+			posts Post[]
+			tags Tag[]
+		}
+
+		model Tag {
+			id Int @id
+			users User[]
+		}
+
+		model Post {
+			id Int @id
+			authorId Int
+			author User @relation(fields: [authorId], references: [id])
+		}`
+	)
+	execSync(
+		`pnpm exec prisma generate --schema .temp/${temp.name}/schema.prisma`
+	)
+
+	expect(fs.readFileSync(`.temp/${temp.name}/drizzle.ts`, 'utf-8')).toContain(
+		'export const schema = '
+	)
+
+	// Importing also proves `schema` is declared after the consts it references
+	const generated = await import(
+		/* @vite-ignore */ path.resolve(`.temp/${temp.name}/drizzle.ts`)
+	)
+	expect(Object.keys(generated.schema).sort()).toEqual([
+		'posts',
+		'postsRelations',
+		'tags',
+		'tagsRelations',
+		'tagsToUsers',
+		'tagsToUsersRelations',
+		'users',
+		'usersRelations',
+	])
 })
 
 function writeSchemaWithOutput(name: string, output: string) {

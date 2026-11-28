@@ -1,6 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { brand, object, parse, pipe, string, toLowerCase } from 'valibot'
+import {
+	brand,
+	object,
+	optional,
+	parse,
+	pipe,
+	string,
+	toLowerCase,
+} from 'valibot'
 import stripJsonComments from '~/lib/strip-json-comments'
 
 export const ModuleResolution = pipe(
@@ -14,15 +22,31 @@ export function resolveModuleResolution() {
 	if (!tsConfigPath) return
 
 	try {
-		const { compilerOptions } = parse(TsConfig, readTsConfig(tsConfigPath))
-		return compilerOptions.moduleResolution
+		const tsConfig = parse(TsConfig, readTsConfig(tsConfigPath))
+		return (
+			tsConfig.compilerOptions.moduleResolution ??
+			getModuleResolutionFromModule(tsConfig.compilerOptions.module)
+		)
 	} catch {
 		return
 	}
 }
+
+/** TypeScript infers `moduleResolution` from `module` when it isn't set */
+function getModuleResolutionFromModule(module: string | undefined) {
+	switch (module) {
+		case 'node16':
+			return 'node16'
+		case 'nodenext':
+		case 'node18':
+		case 'node20':
+			return 'nodenext'
+	}
+}
 const TsConfig = object({
 	compilerOptions: object({
-		moduleResolution: ModuleResolution,
+		moduleResolution: optional(ModuleResolution),
+		module: optional(pipe(string(), toLowerCase())),
 	}),
 })
 function readTsConfig(tsConfigPath: string) {
