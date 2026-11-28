@@ -25,6 +25,8 @@ jobs:
 
       - name: ⎔ Setup bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
 
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
@@ -86,6 +88,8 @@ jobs:
 
       - name: ⎔ Setup bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
 
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
