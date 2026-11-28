@@ -1,5 +1,5 @@
 import { logger as baseLogger } from '@prisma/sdk'
-import { GENERATOR_NAME } from 'src/constants'
+import { GENERATOR_NAME } from '~/constants'
 import { getGenerator } from '~/shared/generator-context'
 
 function isVerbose() {
